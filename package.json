@@ -1,0 +1,15 @@
+{
+  "name": "vc-scraper",
+  "version": "1.0.0",
+  "description": "VC data scraper for Apify",
+  "main": "src/apify/vc_scraper.js",
+  "dependencies": {
+    "apify": "^3.0.0",
+    "csv-writer": "^1.6.0",
+    "dotenv": "^16.5.0",
+    "node-fetch": "^2.7.0"
+  },
+  "scripts": {
+    "start": "node src/apify/vc_scraper.js"
+  }
+}
