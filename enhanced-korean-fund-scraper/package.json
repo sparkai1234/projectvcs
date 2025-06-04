@@ -1,0 +1,21 @@
+{
+  "name": "simple-korean-fund-scraper",
+  "version": "1.0.0",
+  "description": "Working Korean fund scraper adapted from successful Airtable version to Supabase",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.10"
+  },
+  "keywords": [
+    "korean",
+    "fund",
+    "scraper",
+    "supabase",
+    "vcs.go.kr"
+  ],
+  "author": "Enhanced Fund Scraper Team",
+  "license": "MIT"
+} 

@@ -1,0 +1,28 @@
+
+📊 DIVA INTELLIGENCE SUMMARY REPORT (Supabase)
+==============================================
+📈 Overall Statistics:
+   • Total Companies: 10
+   • Total Personnel: 86
+   • Average Company Size: 8.6
+   • Largest Company: 노틸러스인베스트먼트 (19 staff)
+
+👥 Professional Staff Analysis:
+   • Total Professional Staff: 42
+   • Average Professional Ratio: 52.1%
+   • Companies with >50% Professionals: 2
+
+📊 Company Size Distribution:
+   • Large (20+ staff): 0
+   • Medium (10-19 staff): 4
+   • Small (5-9 staff): 5
+   • Micro (<5 staff): 1
+
+🎯 Investment Capacity:
+   • High Capacity Companies: 4
+   • Medium Capacity Companies: 3
+   • Low Capacity Companies: 3
+
+📅 Data Quality:
+   • Average Data Quality Score: 100.0%
+   • Last Updated: 2025-06-04 23:41:11

@@ -91,3 +91,7 @@ src/apify/storage/
 test_output/
 results/
 output/ 
+# Added by Apify CLI
+storage
+node_modules
+.venv
