@@ -1,0 +1,75 @@
+{
+  "completion_timestamp": "2025-06-03T19:23:04.458308",
+  "system_scale": {
+    "vc_companies": 717,
+    "fund_records": 100,
+    "diva_tables": 3,
+    "total_records": 817
+  },
+  "data_quality": {
+    "fund_table_fields": 10,
+    "relationship_coverage": 6,
+    "avg_funds_per_vc": 1.2048192771084338,
+    "fund_to_vc_ratio": 0.1394700139470014
+  },
+  "fund_validation": {
+    "valid": true,
+    "total_records": 100,
+    "total_fields": 10,
+    "field_stats": {
+      "Company Name (Korean)": {
+        "populated": 100,
+        "percentage": 100.0
+      },
+      "Business Category": {
+        "populated": 58,
+        "percentage": 57.99999999999999
+      },
+      "Industry": {
+        "populated": 58,
+        "percentage": 57.99999999999999
+      },
+      "Status": {
+        "populated": 100,
+        "percentage": 100.0
+      },
+      "Name": {
+        "populated": 100,
+        "percentage": 100.0
+      },
+      "Founded": {
+        "populated": 100,
+        "percentage": 100.0
+      },
+      "Notes": {
+        "populated": 100,
+        "percentage": 100.0
+      },
+      "Operating Amount": {
+        "populated": 100,
+        "percentage": 100.0
+      },
+      "Company ID": {
+        "populated": 100,
+        "percentage": 100.0
+      },
+      "Data Type": {
+        "populated": 100,
+        "percentage": 100.0
+      }
+    }
+  },
+  "relationship_analysis": {
+    "total_fund_records": 100,
+    "funds_with_company_ids": 100,
+    "unique_vc_companies": 83,
+    "overlapping_company_ids": 6,
+    "avg_funds_per_vc": 1.2048192771084338
+  },
+  "category_analysis": {
+    "fund_type_distribution": {},
+    "investment_field_distribution": {},
+    "regional_distribution": {}
+  },
+  "system_status": "ENTERPRISE_READY"
+}
