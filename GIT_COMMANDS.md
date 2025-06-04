@@ -5,18 +5,18 @@
 ### Get Latest Changes
 ```bash
 cd C:\Users\a\projectvcs
-git pull origin main
+&"C:\Program Files\Git\bin\git.exe" pull origin main
 ```
 
 ### Check for Updates Available
 ```bash
-git fetch origin
-git status
+&"C:\Program Files\Git\bin\git.exe" fetch origin
+&"C:\Program Files\Git\bin\git.exe" status
 ```
 
 ### See What's Different
 ```bash
-git diff origin/main
+&"C:\Program Files\Git\bin\git.exe" diff origin/main
 ```
 
 ## 📤 **Upload Files FROM Local TO GitHub**
@@ -24,46 +24,61 @@ git diff origin/main
 ### Save Your Work to Cloud
 ```bash
 # Stage all changes
-git add .
+&"C:\Program Files\Git\bin\git.exe" add .
 
 # Commit with message
-git commit -m "Describe what you changed"
+&"C:\Program Files\Git\bin\git.exe" commit -m "Describe what you changed"
 
 # Push to GitHub
-git push origin main
+&"C:\Program Files\Git\bin\git.exe" push origin main
 ```
 
-### Quick One-Liner (After Initial Setup)
+### Quick Upload Workflow
 ```bash
-git add . && git commit -m "Update" && git push origin main
+&"C:\Program Files\Git\bin\git.exe" add .
+&"C:\Program Files\Git\bin\git.exe" commit -m "Update"
+&"C:\Program Files\Git\bin\git.exe" push origin main
 ```
 
 ## 🔍 **Check Status & History**
 
 ```bash
-git status           # See current changes
-git log --oneline    # See commit history  
-git remote -v        # Show GitHub connection
+&"C:\Program Files\Git\bin\git.exe" status           # See current changes
+&"C:\Program Files\Git\bin\git.exe" log --oneline    # See commit history  
+&"C:\Program Files\Git\bin\git.exe" remote -v        # Show GitHub connection
 ```
 
 ## 🚨 **Emergency Commands**
 
 ### Reset Local to Match GitHub Exactly
 ```bash
-git fetch origin
-git reset --hard origin/main
+&"C:\Program Files\Git\bin\git.exe" fetch origin
+&"C:\Program Files\Git\bin\git.exe" reset --hard origin/main
 ```
 
 ### Discard Local Changes
 ```bash
-git checkout -- .
+&"C:\Program Files\Git\bin\git.exe" checkout -- .
 ```
 
 ## 💡 **Daily Workflow**
 
-1. **Start work**: `git pull origin main`
+1. **Start work**: `&"C:\Program Files\Git\bin\git.exe" pull origin main`
 2. **Make changes**: Edit files in VS Code
-3. **Save to cloud**: `git add . && git commit -m "What I did" && git push origin main`
+3. **Save to cloud**: 
+   ```bash
+   &"C:\Program Files\Git\bin\git.exe" add .
+   &"C:\Program Files\Git\bin\git.exe" commit -m "What I did"
+   &"C:\Program Files\Git\bin\git.exe" push origin main
+   ```
+
+## 🛠️ **Alternative: Add Git to PATH (Optional)**
+
+To use just `git` instead of the full path, add Git to your system PATH:
+1. Open System Properties → Environment Variables
+2. Edit PATH variable
+3. Add: `C:\Program Files\Git\bin`
+4. Restart PowerShell
 
 ---
 *Your local folder: `C:\Users\a\projectvcs`*  
