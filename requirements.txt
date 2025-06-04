@@ -1,0 +1,61 @@
+# DIVA Intelligence System v2.0 - Production Dependencies
+# Core Data Processing
+requests>=2.31.0
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Database & API Integration
+supabase>=2.0.0
+airtable-python-wrapper>=0.15.3
+psycopg2-binary>=2.9.5
+
+# Web Scraping & Automation
+selenium>=4.15.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+webdriver-manager>=4.0.0
+
+# AI & NLP Processing
+openai>=1.0.0
+langchain>=0.1.0
+tiktoken>=0.5.0
+
+# Fuzzy Matching & Text Processing
+fuzzywuzzy>=0.18.0
+python-levenshtein>=0.20.0
+rapidfuzz>=3.5.0
+
+# Korean Language Processing
+konlpy>=0.6.0
+hangul-romanize>=1.0.0
+
+# Data Validation & Quality
+cerberus>=1.3.4
+jsonschema>=4.17.0
+
+# Utilities
+python-dotenv>=1.0.0
+click>=8.1.0
+rich>=13.7.0
+tqdm>=4.66.0
+
+# File Processing
+openpyxl>=3.1.0
+xlsxwriter>=3.1.0
+
+# Async & Concurrency
+asyncio>=3.4.3
+aiohttp>=3.9.0
+
+# Logging & Monitoring
+loguru>=0.7.0
+
+# Testing (Development)
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.12.0
+
+# Code Quality (Development)
+black>=23.0.0
+flake8>=6.0.0
+isort>=5.12.0 
