@@ -1,0 +1,36 @@
+{
+  "name": "diva-supabase-scrapers",
+  "version": "2.0.0",
+  "description": "Enhanced Korean VC & Fund scrapers for Supabase with comprehensive data extraction",
+  "main": "supabase_vc_scraper.js",
+  "scripts": {
+    "scrape-vc": "node supabase_vc_scraper.js",
+    "scrape-funds": "node supabase_fund_scraper.js",
+    "install-deps": "npm install"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.0",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": [
+    "korean-vc",
+    "venture-capital",
+    "fund-scraper",
+    "supabase",
+    "vcs.go.kr",
+    "fund-manager",
+    "representative"
+  ],
+  "author": "DIVA Intelligence System",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "projectvcs"
+  }
+} 

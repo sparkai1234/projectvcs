@@ -24,11 +24,12 @@ def display_menu():
     print("1. 🔍 Fuzzy Company Matching (Link VC/Fund/Contact data)")
     print("2. 🇰🇷 Korean Company Matcher (85% threshold - 회사 → VC Table)")
     print("3. 🌐 Test OpenAI Integration (Korean language)")
-    print("4. 📊 Run DIVA Personnel Data Scraper")
-    print("5. 🗄️ Database Migration/Setup")
-    print("6. ⚙️ Test API Configurations")
-    print("7. 📋 View System Status & Files")
-    print("8. 🆘 Help & Documentation")
+    print("4. 🤖 Comprehensive AI Analysis (All Supabase Tables)")
+    print("5. 📊 Run DIVA Personnel Data Scraper")
+    print("6. 🗄️ Database Migration/Setup")
+    print("7. ⚙️ Test API Configurations")
+    print("8. 📋 View System Status & Files")
+    print("9. 🆘 Help & Documentation")
     print("0. 🚪 Exit")
     print()
 
@@ -104,6 +105,23 @@ def test_openai():
     except Exception as e:
         print(f"❌ Error testing OpenAI: {e}")
 
+def run_comprehensive_ai():
+    """Run the comprehensive AI analysis interface"""
+    print("🤖 Starting Comprehensive AI Analysis...")
+    print("📊 Accessing all Supabase tables for intelligent queries")
+    print()
+    
+    try:
+        # Import and run the comprehensive AI interface
+        from supabase_openai_interface import SupabaseOpenAIInterface
+        interface = SupabaseOpenAIInterface()
+        interface.interactive_chat()
+    except ImportError as e:
+        print(f"❌ Error importing AI interface: {e}")
+        print("Make sure all dependencies are installed.")
+    except Exception as e:
+        print(f"❌ Error running AI interface: {e}")
+
 def show_system_status():
     """Show system status and available files"""
     print("📋 DIVA System Status")
@@ -163,7 +181,7 @@ def show_help():
     print("• api_config.py - API keys and configuration")
     print()
     print("💡 Getting Started:")
-    print("1. Test your API configs (option 6)")
+    print("1. Test your API configs (option 7)")
     print("2. Try Korean company matching (option 2)")
     print("3. Try general fuzzy matching (option 1)")
     print("4. Test OpenAI integration (option 3)")
@@ -179,7 +197,7 @@ def main():
         display_menu()
         
         try:
-            choice = input("👉 Enter your choice (0-8): ").strip()
+            choice = input("👉 Enter your choice (0-9): ").strip()
             print()
             
             if choice == "1":
@@ -189,16 +207,18 @@ def main():
             elif choice == "3":
                 test_openai()
             elif choice == "4":
+                run_comprehensive_ai()
+            elif choice == "5":
                 print("📊 DIVA Scraper - Feature coming soon!")
                 print("Check DIVA_SETUP_GUIDE.md for manual instructions")
-            elif choice == "5":
+            elif choice == "6":
                 print("🗄️ Database Migration - Feature coming soon!")
                 print("Check the .sql files for manual migration")
-            elif choice == "6":
-                test_api_config()
             elif choice == "7":
-                show_system_status()
+                test_api_config()
             elif choice == "8":
+                show_system_status()
+            elif choice == "9":
                 show_help()
             elif choice == "0":
                 print("👋 Goodbye! Happy analyzing!")

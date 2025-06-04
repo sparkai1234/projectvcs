@@ -1,205 +1,204 @@
-# 🔗 Company Relationship Analyzer
+# 🚀 DIVA Intelligence System v2.0 - Enhanced Data Integrity
 
-Fuzzy matching system to link companies across your **VC Table**, **Fund Table**, and **Contacts Table** in Airtable.
+> **Korean VC & Fund Intelligence Platform with Enhanced 대표펀드매니저 Data Extraction**
 
-## 🎯 What This Does
+## 📋 Overview
 
-Creates intelligent relationships between:
-- **VC Companies** (Company Name field)  
-- **Fund Companies** (Company Name field)
-- **Contact Companies** (회사 field)
+The DIVA Intelligence System is a comprehensive Korean venture capital and fund analysis platform that provides real-time data scraping, duplicate-free data integrity, and AI-powered insights for Korean VC ecosystem analysis.
 
-**Example Results:**
-```
-✨ Match found: 'ABC벤처파트너스' → 'ABC Venture Partners' (95%)
-✨ Match found: '삼성SDS' → 'Samsung SDS' (88%)
-✨ Match found: 'LG전자' → 'LG Electronics' (92%)
-```
+### 🎯 **Latest v2.0 Features (Enhanced Data Integrity):**
 
-## 🚀 Quick Start
-
-### 1. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 2. Configure Your Settings
-
-Edit `config.py` with your Airtable details:
-
-```python
-AIRTABLE_CONFIG = {
-    "API_KEY": "patYourActualAPIKey123...",  # ← Replace this
-    "BASE_ID": "appdR8V9lJaRW8VkR",        # ← Should be correct
-    "FUZZY_THRESHOLD": 80,                  # ← Adjust if needed
-    # ... other settings
-}
-```
-
-### 3. Run Analysis
-
-```bash
-python run_fuzzy_matcher.py
-```
-
-## 📊 Understanding Results
-
-### Match Quality Thresholds
-
-| Threshold | Match Quality | Use Case |
-|-----------|---------------|----------|
-| 90-100% | Excellent | High confidence matches |
-| 80-89% | Good | Most reliable for linking |
-| 70-79% | Fair | Review manually |
-| 60-69% | Poor | Requires verification |
-
-### Output Files
-
-1. **`company_relationship_report.md`** - Human-readable analysis
-2. **`company_relationships.json`** - Structured data for processing
-
-## 🎯 Use Cases
-
-### Scenario 1: Fund Analysis
-*"Which companies operated which funds?"*
-
-```
-Company: Samsung Venture Investment
-├── VC Records: 1 
-├── Fund Records: 3
-└── Contact Matches: 2
-    ├── 삼성벤처투자 (95% match)
-    └── Samsung VI (88% match)
-```
-
-### Scenario 2: Contact Network
-*"Who do I know at companies that operate funds?"*
-
-```
-Contact: 김철수 @ LG전자
-→ Matched to: LG Electronics (92%)
-  ├── VC Records: 1 (LG investment arm)
-  └── Fund Records: 2 (LG Innovation Fund, LG Tech Fund)
-```
-
-## ⚙️ Configuration Options
-
-### Fuzzy Matching Settings
-
-```python
-# In config.py
-"FUZZY_THRESHOLD": 80,        # Minimum similarity (60-90 recommended)
-"MAX_MATCHES_PER_CONTACT": 1, # Matches per contact company
-```
-
-### Table & Field Names
-
-**Must match your Airtable exactly:**
-
-```python
-"VC_TABLE": "VC Table",              # Your VC table name
-"FUND_TABLE": "Fund Table",          # Your fund table name  
-"CONTACTS_TABLE": "Contacts Table",  # Your contacts table name
-
-"VC_COMPANY_FIELD": "Company Name",     # VC company field
-"FUND_COMPANY_FIELD": "Company Name",   # Fund company field
-"CONTACTS_COMPANY_FIELD": "회사",       # Contact company field
-```
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-**"API Key Error"**
-- Ensure API key starts with `pat`
-- Check permissions in Airtable
-- Verify base access
-
-**"No Matches Found"** 
-- Lower threshold (try 70 or 60)
-- Check field names match exactly
-- Verify data exists in tables
-
-**"Field Not Found"**
-- Double-check table names
-- Verify field names are exact
-- Check for typos in Korean characters
-
-### Performance Tips
-
-**Large Datasets:**
-- Start with threshold 85+ 
-- Process in smaller batches
-- Monitor API rate limits
-
-**Low Match Rates:**
-- Try threshold 70-75
-- Check for name variations
-- Consider company name standardization
-
-## 📈 Sample Output
-
-```
-🔗 Company Relationship Analyzer
-==================================================
-📊 Configuration:
-   Base ID: appdR8V9lJaRW8VkR
-   Fuzzy Threshold: 80%
-   Tables: VC Table, Fund Table, Contacts Table
-
-🎯 ANALYSIS RESULTS
-========================================
-📈 Companies Found:
-   VC Companies: 45
-   Fund Companies: 23
-   Contact Companies: 127
-
-🔗 Matching Results:
-   Successful Matches: 34
-   Match Rate: 26.8%
-
-✨ Sample Matches:
-   1. 'ABC벤처파트너스' → 'ABC Venture Partners' (95%)
-   2. '삼성SDS' → 'Samsung SDS' (88%)
-   3. 'LG전자' → 'LG Electronics' (92%)
-   4. '네이버' → 'NAVER Corporation' (85%)
-   5. '카카오' → 'Kakao Corp' (91%)
-```
-
-## 🚀 Next Steps
-
-1. **Review Results**: Check `company_relationship_report.md`
-2. **Verify Matches**: Ensure fuzzy matches are accurate  
-3. **Adjust Threshold**: Fine-tune in `config.py`
-4. **Create Links**: Use results to build Airtable relationships
-5. **Automate**: Set up regular matching for new data
-
-## 📝 Advanced Usage
-
-### Custom Matching Logic
-
-You can modify `fuzzy_company_matcher.py` to:
-- Add custom preprocessing (remove common words)
-- Implement industry-specific matching
-- Add manual override rules
-- Include additional matching algorithms
-
-### Integration with Airtable Automations
-
-Use the JSON output to trigger Airtable automations that:
-- Create linked records automatically
-- Send notifications for high-confidence matches
-- Generate relationship reports
+- **🔒 Data Integrity**: Proper duplicate checking and handling for all scrapers
+- **📊 Enhanced Fund Manager Data**: Comprehensive 대표펀드매니저 (Fund Manager Representative) extraction
+- **🏢 Enhanced VC Data**: Improved 대표 (Company Representative) and operating amount extraction  
+- **🤖 AI-Powered Analysis**: GPT-4 integration for comprehensive VC ecosystem insights
+- **⚡ Direct Supabase Integration**: No Airtable dependency, faster performance
+- **📈 Real-time Quality Metrics**: Live tracking of data extraction success rates
 
 ---
 
-## 🤝 Support
+## 🏗️ **System Architecture**
 
-Having issues? Check:
-1. Your API key has correct permissions
-2. Table/field names match exactly  
-3. Python dependencies are installed
-4. Threshold settings are appropriate
+```
+vcs.go.kr (Korean VC Portal) 
+    ↓
+Enhanced Scrapers (Node.js)
+    ↓  
+Supabase Database (PostgreSQL)
+    ↓
+Comprehensive AI Interface (Python + OpenAI)
+    ↓
+Intelligent VC & Fund Analysis
+```
 
-**Perfect for Korean VC ecosystem data analysis!** 🇰🇷 
+---
+
+## 🚀 **Quick Start**
+
+### **1. Install Dependencies**
+```bash
+# Python dependencies
+pip install supabase openai fuzzywuzzy python-levenshtein
+
+# Node.js dependencies
+cd src/supabase
+npm install
+```
+
+### **2. Configure API Keys**
+Update `api_config.py` with your keys:
+- Supabase URL and Service Key
+- OpenAI API Key
+
+### **3. Run Enhanced Scrapers**
+```bash
+# Fund scraper with duplicate handling
+python run_supabase_fund_scraper.py --max-pages 5
+
+# VC scraper with duplicate handling  
+python run_supabase_vc_scraper.py --max-pages 3
+```
+
+### **4. Start AI Analysis**
+```bash
+python comprehensive_vc_openai_interface.py
+```
+
+---
+
+## 📊 **Current Database Status**
+
+- **✅ VC Companies**: ~717 records with enhanced representative data
+- **✅ Investment Funds**: ~3,700 records with 대표펀드매니저 information
+- **✅ Contact Database**: 16,391 records with fuzzy matching
+- **✅ Data Integrity**: Proper duplicate handling implemented
+
+---
+
+## 🔧 **Core Components**
+
+### **Enhanced Scrapers (`src/supabase/`)**
+- `supabase_fund_scraper.js` - Enhanced fund data with manager extraction
+- `supabase_vc_scraper.js` - Enhanced VC data with representative extraction
+- Both include comprehensive duplicate checking and data integrity
+
+### **Python Interfaces**
+- `comprehensive_vc_openai_interface.py` - Main AI analysis interface
+- `run_supabase_fund_scraper.py` - Fund scraper wrapper
+- `run_supabase_vc_scraper.py` - VC scraper wrapper
+
+### **Configuration**
+- `api_config.py` - API keys and database configuration
+- `SUPABASE_SCRAPERS_GUIDE.md` - Comprehensive setup guide
+
+---
+
+## 🎯 **Key Features**
+
+### **🔒 Data Integrity**
+- **Duplicate Detection**: Uses unique identifiers (`fund_id`, `company_id`)
+- **Smart Updates**: Only updates when new data is better than existing
+- **Quality Tracking**: Real-time metrics for data extraction success
+
+### **📊 Enhanced Data Extraction**
+- **Fund Manager Data**: Multiple source extraction for 대표펀드매니저
+- **VC Representative Data**: Comprehensive 대표 information extraction
+- **Operating Amounts**: Accurate preservation in 억원 units
+- **Investment Details**: Proper categorization and field mapping
+
+### **🤖 AI-Powered Analysis**
+- **Company Profiles**: Comprehensive VC company analysis
+- **Fund Portfolios**: Detailed fund manager and investment focus analysis
+- **Market Intelligence**: Investment trends and strategy insights
+- **Korean Language**: Native Korean language processing and analysis
+
+---
+
+## 📈 **Data Quality Metrics**
+
+### **Expected Results:**
+- **Fund Manager Coverage**: 70-80% of funds have 대표펀드매니저 data
+- **VC Representative Coverage**: 85-90% of companies have 대표 data  
+- **Operating Amount Accuracy**: 95%+ coverage with correct 억원 values
+- **Duplicate Prevention**: 100% unique records maintained
+
+---
+
+## 📂 **Project Structure**
+
+```
+📂 DIVA Intelligence System v2.0
+├── 📂 src/supabase/           # Enhanced scrapers with data integrity
+├── 📂 archive/                # Archived development files
+│   ├── airtable_*.js         # Original Airtable scrapers  
+│   ├── development/          # Development and test files
+│   ├── migration_files/      # Database migration scripts
+│   └── reports/              # Historical reports and data
+├── 📂 docs/                  # Documentation
+├── 📂 scripts/               # Utility scripts
+├── comprehensive_vc_openai_interface.py  # Main AI interface
+├── run_supabase_*_scraper.py # Scraper wrappers
+├── api_config.py             # Configuration
+└── SUPABASE_SCRAPERS_GUIDE.md # Setup guide
+```
+
+---
+
+## 🔧 **Configuration Options**
+
+### **Scraper Configuration:**
+```javascript
+const SCRAPER_CONFIG = {
+    maxPages: null,              // null = all pages
+    startPage: 1,                // Starting page
+    batchSize: 20,               // Records per batch  
+    delayBetweenRequests: 100,   // ms delay between requests
+    delayBetweenBatches: 300,    // ms delay between batches
+    enableDetailedScraping: true // Enhanced data extraction
+};
+```
+
+### **Usage Examples:**
+```bash
+# Quick test
+python run_supabase_fund_scraper.py --max-pages 2
+
+# Full production run
+python run_supabase_fund_scraper.py
+
+# No enhanced scraping (faster)
+python run_supabase_fund_scraper.py --no-detailed-scraping
+```
+
+---
+
+## 🎉 **Success Criteria**
+
+### **✅ System Health Indicators:**
+- [ ] Fund table: 3,000-4,000 unique records
+- [ ] VC table: 700-800 unique companies
+- [ ] 70%+ fund manager data coverage
+- [ ] 85%+ VC representative data coverage
+- [ ] Zero duplicate records
+- [ ] AI interface displays enhanced data
+
+---
+
+## 📖 **Documentation**
+
+- **`SUPABASE_SCRAPERS_GUIDE.md`** - Complete setup and usage guide
+- **`GIT_COMMANDS.md`** - Git workflow for the project
+- **`api_config.py`** - Configuration reference
+
+---
+
+## 🚀 **Getting Support**
+
+For issues, questions, or contributions:
+1. Check the comprehensive guides in the `docs/` folder
+2. Review the `SUPABASE_SCRAPERS_GUIDE.md` for detailed setup
+3. Examine the archived files for historical context
+
+---
+
+**Ready to analyze the Korean VC ecosystem with enhanced data integrity! 🎯** 
