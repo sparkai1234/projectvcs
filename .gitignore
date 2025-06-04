@@ -1,4 +1,53 @@
-# OS generated files
+# Environment and Config Files (SENSITIVE - DO NOT COMMIT)
+.env
+.env.local
+.env.production
+.env.staging
+config_local.py
+*_config_local.py
+
+# API Keys and Credentials (SENSITIVE)
+api_keys.json
+credentials.json
+secrets.json
+
+# Python Cache and Build Files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Node.js Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Operating System Files
 .DS_Store
 .DS_Store?
 ._*
@@ -6,102 +55,39 @@
 .Trashes
 ehthumbs.db
 Thumbs.db
-desktop.ini
 
-# Windows
+# Archive Directory (Development Files)
+archive_migration_files/
+
+# Large Data Files and Outputs
+*.csv
+*.xlsx
+*.json
+!package.json
+!package-lock.json
+!simple_fuzzy_results.json
+!company_relationships.json
+
+# Temporary Files
 *.tmp
 *.temp
-*.swp
-*.swo
-*~
-
-# IDEs and Editors
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-.atom/
-.vs/
-
-# Logs
-logs
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+*.bak
 
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Dependency directories
-node_modules/
-bower_components/
-vendor/
-
-# Build outputs
-dist/
-build/
-out/
-target/
-*.exe
-*.dll
-*.so
-*.dylib
-
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Package files
-*.7z
-*.dmg
-*.gz
-*.iso
-*.jar
-*.rar
-*.tar
-*.zip
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-.pytest_cache/
-
-# Java
-*.class
-*.jar
-*.war
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-# Database
+# Database Files
 *.db
 *.sqlite
 *.sqlite3
 
-# Cache and temporary files
-.cache/
-.temp/
-tmp/
-temp/
+# Reports and Analysis Files (Can be large)
+*_report_*.json
+*_analysis_*.json
+!system_completion_report_20250603_192304.json
 
-# Personal notes and TODO files
-TODO.md
-NOTES.md
-.personal/ 
+# Apify Storage (Can be large)
+src/apify/storage/
+
+# Test Output Files
+test_output/
+results/
+output/ 
