@@ -324,6 +324,10 @@ async function handlePersonnelStatus(page, config, supabase) {
     try {
         await setupAllFilters(page);
         
+        // Wait longer for data to load after filter setup
+        console.log('⏳ Waiting for data to load after filter setup...');
+        await sleep(5000);
+        
         // Add debug info about page state
         const pageInfo = await page.evaluate(() => {
             return {
@@ -340,6 +344,24 @@ async function handlePersonnelStatus(page, config, supabase) {
             const data = [];
             const tables = document.querySelectorAll('table');
             console.log(`Found ${tables.length} tables on page`);
+            
+            // Debug each table structure
+            tables.forEach((table, tableIndex) => {
+                const rows = table.querySelectorAll('tr');
+                const hasId = table.id;
+                const hasClass = table.className;
+                console.log(`Table ${tableIndex}: id="${hasId}" class="${hasClass}" rows=${rows.length}`);
+                
+                if (rows.length > 0) {
+                    const firstRow = rows[0];
+                    const cells = firstRow.querySelectorAll('td, th');
+                    console.log(`Table ${tableIndex} first row: ${cells.length} cells`);
+                    if (cells.length > 0) {
+                        const cellTexts = Array.from(cells).map(cell => cell.textContent.trim()).slice(0, 5);
+                        console.log(`Table ${tableIndex} first row content:`, cellTexts);
+                    }
+                }
+            });
             
             // Try different table selectors
             let rows = document.querySelectorAll('table tbody tr');
@@ -765,8 +787,23 @@ async function setupAllFilters(page) {
         // Click search button
         const searchButton = await page.$('button[type="submit"], .search-btn, input[type="submit"]');
         if (searchButton) {
+            console.log('🔍 Found and clicking search button...');
             await searchButton.click();
             await sleep(3000);
+            console.log('⏳ Waited 3s after search button click');
+        } else {
+            console.log('⚠️ No search button found - trying alternative selectors');
+            // Try other common search button selectors
+            const altButtons = await page.$$('button, input[type="button"]');
+            for (const btn of altButtons) {
+                const text = await page.evaluate(el => el.textContent || el.value, btn);
+                if (text && (text.includes('검색') || text.includes('조회') || text.includes('Search'))) {
+                    console.log(`🔍 Found alternative search button: "${text}"`);
+                    await btn.click();
+                    await sleep(3000);
+                    break;
+                }
+            }
         }
         
     } catch (error) {
