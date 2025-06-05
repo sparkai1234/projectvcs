@@ -324,6 +324,18 @@ async function handlePersonnelStatus(page, config, supabase) {
     try {
         await setupAllFilters(page);
         
+        // Add debug info about page state
+        const pageInfo = await page.evaluate(() => {
+            return {
+                url: window.location.href,
+                title: document.title,
+                hasTable: document.querySelectorAll('table').length > 0,
+                tableCount: document.querySelectorAll('table').length,
+                bodyText: document.body.textContent.substring(0, 500)
+            };
+        });
+        console.log('📋 Page debug info:', pageInfo);
+        
         const personnelData = await page.evaluate(() => {
             const data = [];
             const tables = document.querySelectorAll('table');
@@ -773,15 +785,27 @@ async function handlePaginationWrapper(page, config, dataType, supabase) {
         const maxPages = config.maxPages;
         
         while (currentPage < maxPages) {
-            // Look for next page button using proper CSS selectors and XPath
+            // Look for next page button using proper CSS selectors
             let nextButton = await page.$('.next:not(.disabled)');
             if (!nextButton) {
                 nextButton = await page.$('.page-link[href*="page"]:not(.disabled)');
             }
             if (!nextButton) {
-                // Use XPath for text-based selection as fallback
-                const [nextButtonXPath] = await page.$x('//a[contains(text(), "다음") and not(contains(@class, "disabled"))]');
-                nextButton = nextButtonXPath;
+                nextButton = await page.$('a[href*="page"]:not(.disabled)');
+            }
+            if (!nextButton) {
+                // Try to find any pagination-related links
+                const paginationLinks = await page.$$('a');
+                for (const link of paginationLinks) {
+                    const text = await page.evaluate(el => el.textContent.trim(), link);
+                    const href = await page.evaluate(el => el.href, link);
+                    const isDisabled = await page.evaluate(el => el.classList.contains('disabled'), link);
+                    
+                    if ((text.includes('다음') || text.includes('Next') || href.includes('page')) && !isDisabled) {
+                        nextButton = link;
+                        break;
+                    }
+                }
             }
             
             if (!nextButton) break;
