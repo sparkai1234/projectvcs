@@ -77,7 +77,16 @@ Actor.main(async () => {
     let supabaseClient = null;
     if (exportToSupabase) {
         const supabaseUrl = input.supabaseUrl || process.env.SUPABASE_URL || SUPABASE_CONFIG.url;
-        const supabaseKey = input.supabaseKey || process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const supabaseKey = input.supabaseKey || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
+        
+        console.log('🔍 SUPABASE CREDENTIAL DEBUG:');
+        console.log(`URL from input: ${input.supabaseUrl ? 'PROVIDED' : 'NOT PROVIDED'}`);
+        console.log(`Key from input: ${input.supabaseKey ? 'PROVIDED' : 'NOT PROVIDED'}`);
+        console.log(`URL from env SUPABASE_URL: ${process.env.SUPABASE_URL ? 'SET' : 'NOT SET'}`);
+        console.log(`Key from env SUPABASE_SERVICE_ROLE_KEY: ${process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'NOT SET'}`);
+        console.log(`Key from env SUPABASE_KEY: ${process.env.SUPABASE_KEY ? 'SET' : 'NOT SET'}`);
+        console.log(`Final URL: ${supabaseUrl}`);
+        console.log(`Final Key: ${supabaseKey ? 'AVAILABLE' : 'MISSING'}`);
         
         if (supabaseUrl && supabaseKey) {
             try {
@@ -85,9 +94,23 @@ Actor.main(async () => {
                 console.log('✅ Supabase client initialized successfully');
                 console.log(`📍 Supabase URL: ${supabaseUrl}`);
                 console.log(`🔑 Service Key: ${supabaseKey.substring(0, 20)}...`);
+                
+                // Test connection immediately
+                console.log('🧪 Testing Supabase connection...');
+                const { data, error } = await supabaseClient
+                    .from('vc_table')
+                    .select('count(*)', { count: 'exact', head: true });
+                    
+                if (error) {
+                    console.log('❌ Supabase connection test failed:', error.message);
+                } else {
+                    console.log('✅ Supabase connection test successful!');
+                }
+                
             } catch (error) {
                 console.error('❌ Failed to initialize Supabase client:', error.message);
                 console.log('⚠️ Continuing without Supabase integration...');
+                supabaseClient = null;
             }
         } else {
             console.log('⚠️ Missing Supabase credentials - continuing without database integration');
@@ -100,6 +123,7 @@ Actor.main(async () => {
     console.log(`📄 Max Pages: ${maxPages}`);
     console.log(`🎯 Data Source: ${dataSource}`);
     console.log(`💾 Export to Supabase: ${exportToSupabase}`);
+    console.log(`🔗 Supabase Client Ready: ${!!supabaseClient}`);
     console.log(`🧪 Test Mode: ${testMode}`);
     console.log(`🚀 Unlimited Extraction: ${unlimitedExtraction}`);
     console.log(`📍 Platform: Apify Cloud`);
@@ -259,6 +283,7 @@ async function scrapeVCSInvestorsAPI({ maxPages, testMode, unlimitedExtraction, 
                 console.log(`📊 Total investors so far: ${allInvestors.length}`);
                 
                 // Upsert to Supabase if enabled
+                console.log(`🔍 DEBUG: exportToSupabase=${exportToSupabase}, supabaseClient=${!!supabaseClient}`);
                 if (exportToSupabase && supabaseClient) {
                     console.log(`💾 Upserting ${investors.length} investors to Supabase...`);
                     let successCount = 0;
@@ -387,6 +412,7 @@ async function scrapeVCSFundsAPI({ maxPages, testMode, unlimitedExtraction, supa
                 console.log(`📊 Total funds so far: ${allFunds.length}`);
                 
                 // Upsert to Supabase if enabled
+                console.log(`🔍 DEBUG: exportToSupabase=${exportToSupabase}, supabaseClient=${!!supabaseClient}`);
                 if (exportToSupabase && supabaseClient) {
                     console.log(`💾 Upserting ${funds.length} funds to Supabase...`);
                     let successCount = 0;
