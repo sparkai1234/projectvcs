@@ -66,15 +66,17 @@ Actor.main(async () => {
     
     // Setup crawler
     const crawler = new PuppeteerCrawler({
-        launchOptions: {
-            headless: input.headless !== false,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--lang=ko-KR,ko,en-US,en',
-                '--accept-lang=ko-KR,ko,en-US,en'
-            ]
+        launchContext: {
+            launchOptions: {
+                headless: input.headless !== false,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--lang=ko-KR,ko,en-US,en',
+                    '--accept-lang=ko-KR,ko,en-US,en'
+                ]
+            }
         },
         
         requestHandlerTimeoutSecs: 300,
