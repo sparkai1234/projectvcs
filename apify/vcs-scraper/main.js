@@ -58,6 +58,39 @@ const SUPABASE_CONFIG = {
     client: null // Will be initialized when credentials are available
 };
 
+/**
+ * Parse Korean duration text to approximate ISO date
+ * "6년 1개월" -> null (can't convert duration to date)
+ * "2021-01-01" -> "2021-01-01" (already valid date)
+ */
+function parseKoreanDateToISO(dateString) {
+    if (!dateString) return null;
+    
+    // If it's already a valid ISO date format, return it
+    const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (isoDateRegex.test(dateString)) {
+        return dateString;
+    }
+    
+    // If it contains Korean duration text (년, 개월), return null
+    // We can't convert "6년 1개월" to a meaningful establishment date
+    if (dateString.includes('년') || dateString.includes('개월')) {
+        return null;
+    }
+    
+    // Try to parse other date formats
+    try {
+        const parsed = new Date(dateString);
+        if (!isNaN(parsed.getTime())) {
+            return parsed.toISOString().split('T')[0];
+        }
+    } catch (error) {
+        // Ignore parsing errors
+    }
+    
+    return null;
+}
+
 Actor.main(async () => {
     console.log('🇰🇷 VCS Weekly Scraper Actor Started - v2.2.0 - SUPABASE INTEGRATED');
     console.log(`🕐 Execution time: ${new Date().toISOString()}`);
@@ -650,7 +683,7 @@ function transformInvestorForSupabase(investorData) {
         // Location and representative info
         location: investorData.location || investorData.address || null,
         representative: investorData.representative || null,
-        established_date: investorData.establishment_date || null,
+        established_date: parseKoreanDateToISO(investorData.establishment_date),
         company_type: investorData.business_type || investorData.business_category || null,
         website_url: null, // VCS API doesn't provide website URLs
         
@@ -697,7 +730,7 @@ function transformFundForSupabase(fundData) {
         // Financial information
         commitment_amount: null, // VCS doesn't provide commitment amount
         fund_size: fundData.fund_scale || null,
-        establishment_date: fundData.establishment_date ? new Date(fundData.establishment_date).toISOString().split('T')[0] : null,
+        establishment_date: parseKoreanDateToISO(fundData.establishment_date),
         fund_status: fundData.fund_status || fundData.closing_status || null,
         representative: null, // VCS doesn't provide fund representative
         
