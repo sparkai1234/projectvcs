@@ -22,7 +22,8 @@
       "dependencies": {
     "apify": "^3.1.0",
     "crawlee": "^3.8.0",
-    "@supabase/supabase-js": "^2.38.0"
+    "@supabase/supabase-js": "^2.38.0",
+    "puppeteer": "^22.0.0"
   },
     "repository": {
         "type": "git",

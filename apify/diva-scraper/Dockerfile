@@ -1,5 +1,5 @@
-# Use Apify base image with Playwright browsers pre-installed
-FROM apify/actor-node:18
+# Use Apify base image with Puppeteer Chrome pre-installed
+FROM apify/actor-node-puppeteer-chrome:18
 
 # Copy package files
 COPY package*.json ./
