@@ -81,12 +81,12 @@ Actor.main(async () => {
         
         requestHandlerTimeoutSecs: 300,
         
-        handlePageFunction: async ({ page, request }) => {
+        requestHandler: async ({ page, request }) => {
             console.log(`🔍 Processing: ${request.url}`);
             
             try {
                 await page.waitForSelector('body', { timeout: 30000 });
-                await page.waitForTimeout(config.delay);
+                await sleep(config.delay);
                 
                 const url = request.url;
                 const userData = request.userData;
@@ -118,7 +118,7 @@ Actor.main(async () => {
             }
         },
         
-        handleFailedRequestFunction: async ({ request }) => {
+        failedRequestHandler: async ({ request }) => {
             console.error(`🚫 Request failed: ${request.url}`);
         }
     });
@@ -137,6 +137,13 @@ Actor.main(async () => {
     
     console.log('✅ Comprehensive DIVA Intelligence Scraper completed!');
 });
+
+/**
+ * Sleep helper function to replace page.waitForTimeout
+ */
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 /**
  * Get data sources based on configuration
@@ -703,12 +710,12 @@ async function setupAllFilters(page) {
         for (const select of selectElements) {
             try {
                 await select.select(''); // Empty value often means "전체"
-                await page.waitForTimeout(200);
+                await sleep(200);
             } catch (e) {
                 // Try selecting first option which is often "전체"
                 try {
                     await select.select('0');
-                    await page.waitForTimeout(200);
+                    await sleep(200);
                 } catch (e2) {
                     // Continue if selection fails
                 }
@@ -730,7 +737,7 @@ async function setupAllFilters(page) {
         const searchButton = await page.$('button[type="submit"], .search-btn, input[type="submit"]');
         if (searchButton) {
             await searchButton.click();
-            await page.waitForTimeout(3000);
+            await sleep(3000);
         }
         
     } catch (error) {
@@ -761,7 +768,7 @@ async function handlePaginationWrapper(page, config, dataType, supabase) {
             if (!isEnabled) break;
             
             await nextButton.click();
-            await page.waitForTimeout(config.delay);
+            await sleep(config.delay);
             currentPage++;
             
             console.log(`📄 Processing page ${currentPage} for ${dataType}...`);
