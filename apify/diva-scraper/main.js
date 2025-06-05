@@ -326,12 +326,24 @@ async function handlePersonnelStatus(page, config, supabase) {
         
         const personnelData = await page.evaluate(() => {
             const data = [];
-            const rows = document.querySelectorAll('table tbody tr');
+            const tables = document.querySelectorAll('table');
+            console.log(`Found ${tables.length} tables on page`);
+            
+            // Try different table selectors
+            let rows = document.querySelectorAll('table tbody tr');
+            if (rows.length === 0) {
+                rows = document.querySelectorAll('table tr');
+                console.log(`Fallback: Found ${rows.length} table rows`);
+            }
+            
+            console.log(`Found ${rows.length} total rows to process`);
             
             rows.forEach((row, index) => {
                 const cells = row.querySelectorAll('td');
+                console.log(`Row ${index}: ${cells.length} cells`);
+                
                 if (cells.length >= 6) {
-                    data.push({
+                    const rowData = {
                         companyName: cells[0]?.textContent?.trim(),
                         totalPersonnel: cells[1]?.textContent?.trim(),
                         professionalStaff: cells[2]?.textContent?.trim(),
@@ -339,7 +351,12 @@ async function handlePersonnelStatus(page, config, supabase) {
                         managementStaff: cells[4]?.textContent?.trim(),
                         referenceMonth: cells[5]?.textContent?.trim(),
                         rowIndex: index
-                    });
+                    };
+                    console.log(`Adding row data:`, rowData);
+                    data.push(rowData);
+                } else if (cells.length > 0) {
+                    console.log(`Row ${index} skipped - only ${cells.length} cells:`, 
+                        Array.from(cells).map(cell => cell.textContent?.trim()));
                 }
             });
             
@@ -756,8 +773,16 @@ async function handlePaginationWrapper(page, config, dataType, supabase) {
         const maxPages = config.maxPages;
         
         while (currentPage < maxPages) {
-            // Look for next page button
-            const nextButton = await page.$('a:contains("다음"), .next, .page-link:contains("다음")');
+            // Look for next page button using proper CSS selectors and XPath
+            let nextButton = await page.$('.next:not(.disabled)');
+            if (!nextButton) {
+                nextButton = await page.$('.page-link[href*="page"]:not(.disabled)');
+            }
+            if (!nextButton) {
+                // Use XPath for text-based selection as fallback
+                const [nextButtonXPath] = await page.$x('//a[contains(text(), "다음") and not(contains(@class, "disabled"))]');
+                nextButton = nextButtonXPath;
+            }
             
             if (!nextButton) break;
             
