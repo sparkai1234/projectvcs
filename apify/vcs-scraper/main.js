@@ -1,8 +1,10 @@
 /**
- * 🇰🇷 VCS WEEKLY SCRAPER - APIFY ACTOR v2.1.1 - HIGH-VOLUME API-POWERED (FIXED)
- * ===============================================================================
+ * 🇰🇷 VCS WEEKLY SCRAPER - APIFY ACTOR v2.1.2 - HIGH-VOLUME API-POWERED (PARAMS FIXED)
+ * =====================================================================================
  * 
- * CRITICAL SDK FIX UPDATE:
+ * CRITICAL API PARAMETERS FIX:
+ * - Fixed missing tabMenu parameter handling (like local scraper)
+ * - Enhanced debugging to see actual API responses
  * - Fixed Apify SDK v3 compatibility (Actor.main instead of Apify.main)
  * - Uses REAL VCS API endpoints (like proven local scraper)
  * - Direct /web/portal/investor/search API calls
@@ -45,7 +47,7 @@ const VCS_API_CONFIG = {
 };
 
 Actor.main(async () => {
-    console.log('🇰🇷 VCS Weekly Scraper Actor Started (Phase 1) - v2.1.1');
+    console.log('🇰🇷 VCS Weekly Scraper Actor Started (Phase 1) - v2.1.2');
     console.log(`🕐 Execution time: ${new Date().toISOString()}`);
     
     // Get input configuration
@@ -65,7 +67,7 @@ Actor.main(async () => {
     console.log(`💾 Export to Supabase: ${exportToSupabase}`);
     console.log(`🧪 Test Mode: ${testMode}`);
     console.log(`📍 Platform: Apify Cloud`);
-            console.log(`🔧 Optimization: v2.1.1 with REAL API ENDPOINTS (High-Volume + SDK Fixed)`);
+            console.log(`🔧 Optimization: v2.1.2 with REAL API ENDPOINTS (High-Volume + Params Fixed)`);
         console.log(`🎯 Target: ${VCS_API_CONFIG.baseUrl}${VCS_API_CONFIG.searchEndpoint}`);
     
     console.log('🚀 Starting VCS data extraction with API-POWERED workflow...');
@@ -77,7 +79,7 @@ Actor.main(async () => {
         await Actor.pushData({
             timestamp: new Date().toISOString(),
             source: 'VCS_WEEKLY_SCRAPER_APIFY_API_POWERED',
-            version: '2.1.1',
+            version: '2.1.2',
             updateMode,
             dataSource,
             success: true,
@@ -189,11 +191,20 @@ async function scrapeVCSInvestorsAPI({ maxPages, testMode }) {
         try {
             console.log(`📄 Processing investor page ${currentPage}...`);
             
-            // Build API URL with parameters
-            const params = new URLSearchParams({
+            // Build API URL with parameters (exactly like local scraper)
+            const formData = {
                 ...VCS_API_CONFIG.defaultParams,
-                tabMenu: '1', // Investors
+                tabMenu: '1',  // Critical: Investors tab
                 cp: currentPage.toString()
+            };
+            
+            const params = new URLSearchParams();
+            Object.entries(formData).forEach(([key, value]) => {
+                if (Array.isArray(value)) {
+                    value.forEach(v => params.append(key, v));
+                } else {
+                    params.append(key, value);
+                }
             });
             
             const apiUrl = `${VCS_API_CONFIG.baseUrl}${VCS_API_CONFIG.searchEndpoint}?${params.toString()}`;
@@ -278,11 +289,20 @@ async function scrapeVCSFundsAPI({ maxPages, testMode }) {
         try {
             console.log(`📄 Processing funds page ${currentPage}...`);
             
-            // Build API URL with parameters
-            const params = new URLSearchParams({
+            // Build API URL with parameters (exactly like local scraper)
+            const formData = {
                 ...VCS_API_CONFIG.defaultParams,
-                tabMenu: '2', // Funds
+                tabMenu: '2',  // Critical: Funds tab
                 cp: currentPage.toString()
+            };
+            
+            const params = new URLSearchParams();
+            Object.entries(formData).forEach(([key, value]) => {
+                if (Array.isArray(value)) {
+                    value.forEach(v => params.append(key, v));
+                } else {
+                    params.append(key, value);
+                }
             });
             
             const apiUrl = `${VCS_API_CONFIG.baseUrl}${VCS_API_CONFIG.searchEndpoint}?${params.toString()}`;
@@ -374,9 +394,21 @@ async function makeVCSAPIRequest(url) {
                 
                 if (res.statusCode === 200) {
                     try {
+                        // Debug: Show first part of response
+                        console.log(`🔍 Response preview: ${data.substring(0, 200)}...`);
+                        
                         const jsonData = JSON.parse(data);
+                        console.log(`📊 Parsed JSON keys: [${Object.keys(jsonData).join(', ')}]`);
+                        if (jsonData.list) {
+                            console.log(`📋 List length: ${jsonData.list.length}`);
+                        }
+                        if (jsonData.total !== undefined) {
+                            console.log(`📈 Total count: ${jsonData.total}`);
+                        }
+                        
                         resolve(jsonData);
                     } catch (parseError) {
+                        console.log(`❌ Raw response causing parse error: ${data}`);
                         reject(new Error(`JSON parse failed: ${parseError.message}`));
                     }
                 } else {
