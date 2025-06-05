@@ -1,5 +1,5 @@
 /**
- * 🇰🇷 VCS WEEKLY SCRAPER - APIFY ACTOR v2.1.3 - UNLIMITED HIGH-VOLUME EXTRACTION
+ * 🇰🇷 VCS WEEKLY SCRAPER - APIFY ACTOR v2.2.0 - SUPABASE INTEGRATED EXTRACTION
  * ===============================================================================
  * 
  * UNLIMITED EXTRACTION UPDATE:
@@ -18,6 +18,7 @@
  */
 
 const { Actor } = require('apify');
+const { createClient } = require('@supabase/supabase-js');
 const https = require('https');
 
 // VCS API Configuration (based on proven local scraper)
@@ -49,8 +50,16 @@ const VCS_API_CONFIG = {
     }
 };
 
+// Supabase Configuration
+const SUPABASE_CONFIG = {
+    url: 'https://udfgtccxbqmalgpqyxzz.supabase.co',
+    // Supabase credentials will come from Actor input or environment
+    key: null, // Will be set from input
+    client: null // Will be initialized when credentials are available
+};
+
 Actor.main(async () => {
-    console.log('🇰🇷 VCS Weekly Scraper Actor Started (Phase 1) - v2.1.3');
+    console.log('🇰🇷 VCS Weekly Scraper Actor Started - v2.2.0 - SUPABASE INTEGRATED');
     console.log(`🕐 Execution time: ${new Date().toISOString()}`);
     
     // Get input configuration
@@ -64,6 +73,28 @@ Actor.main(async () => {
         unlimitedExtraction = true // New parameter for complete dataset
     } = input;
     
+    // Initialize Supabase if credentials are provided
+    let supabaseClient = null;
+    if (exportToSupabase) {
+        const supabaseUrl = input.supabaseUrl || process.env.SUPABASE_URL || SUPABASE_CONFIG.url;
+        const supabaseKey = input.supabaseKey || process.env.SUPABASE_SERVICE_ROLE_KEY;
+        
+        if (supabaseUrl && supabaseKey) {
+            try {
+                supabaseClient = createClient(supabaseUrl, supabaseKey);
+                console.log('✅ Supabase client initialized successfully');
+                console.log(`📍 Supabase URL: ${supabaseUrl}`);
+                console.log(`🔑 Service Key: ${supabaseKey.substring(0, 20)}...`);
+            } catch (error) {
+                console.error('❌ Failed to initialize Supabase client:', error.message);
+                console.log('⚠️ Continuing without Supabase integration...');
+            }
+        } else {
+            console.log('⚠️ Missing Supabase credentials - continuing without database integration');
+            console.log('💡 To enable Supabase: provide supabaseUrl and supabaseKey in Actor input');
+        }
+    }
+    
     console.log('⚙️ Actor Configuration loaded:');
     console.log(`📊 Update Mode: ${updateMode}`);
     console.log(`📄 Max Pages: ${maxPages}`);
@@ -72,13 +103,13 @@ Actor.main(async () => {
     console.log(`🧪 Test Mode: ${testMode}`);
     console.log(`🚀 Unlimited Extraction: ${unlimitedExtraction}`);
     console.log(`📍 Platform: Apify Cloud`);
-            console.log(`🔧 Optimization: v2.1.3 with UNLIMITED EXTRACTION (Complete Dataset)`);
-        console.log(`🎯 Target: ${VCS_API_CONFIG.baseUrl}${VCS_API_CONFIG.searchEndpoint}`);
+    console.log(`🔧 Optimization: v2.1.3 with UNLIMITED EXTRACTION (Complete Dataset)`);
+    console.log(`🎯 Target: ${VCS_API_CONFIG.baseUrl}${VCS_API_CONFIG.searchEndpoint}`);
     
     console.log('🚀 Starting VCS data extraction with API-POWERED workflow...');
     
     try {
-        const results = await scrapeVCSWithAPI({ updateMode, maxPages, dataSource, testMode, unlimitedExtraction });
+        const results = await scrapeVCSWithAPI({ updateMode, maxPages, dataSource, testMode, unlimitedExtraction, supabaseClient, exportToSupabase });
         
         // Save final results to Apify dataset
         await Actor.pushData({
@@ -145,7 +176,7 @@ Actor.main(async () => {
 /**
  * API-powered VCS scraping function
  */
-async function scrapeVCSWithAPI({ updateMode, maxPages, dataSource, testMode, unlimitedExtraction }) {
+async function scrapeVCSWithAPI({ updateMode, maxPages, dataSource, testMode, unlimitedExtraction, supabaseClient, exportToSupabase }) {
     const startTime = Date.now();
     let totalInvestors = 0;
     let totalFunds = 0;
@@ -157,13 +188,13 @@ async function scrapeVCSWithAPI({ updateMode, maxPages, dataSource, testMode, un
         // Scrape investors if needed
         if (dataSource === 'investors' || dataSource === 'both') {
             console.log('\n👥 === SCRAPING INVESTORS (tabMenu=1) ===');
-            totalInvestors = await scrapeVCSInvestorsAPI({ maxPages, testMode, unlimitedExtraction });
+            totalInvestors = await scrapeVCSInvestorsAPI({ maxPages, testMode, unlimitedExtraction, supabaseClient, exportToSupabase });
         }
         
         // Scrape funds if needed  
         if (dataSource === 'funds' || dataSource === 'both') {
             console.log('\n💰 === SCRAPING FUNDS (tabMenu=2) ===');
-            totalFunds = await scrapeVCSFundsAPI({ maxPages, testMode, unlimitedExtraction });
+            totalFunds = await scrapeVCSFundsAPI({ maxPages, testMode, unlimitedExtraction, supabaseClient, exportToSupabase });
         }
         
         const executionTime = Math.round((Date.now() - startTime) / 1000);
@@ -185,7 +216,7 @@ async function scrapeVCSWithAPI({ updateMode, maxPages, dataSource, testMode, un
 /**
  * Scrape investors using VCS API
  */
-async function scrapeVCSInvestorsAPI({ maxPages, testMode, unlimitedExtraction }) {
+async function scrapeVCSInvestorsAPI({ maxPages, testMode, unlimitedExtraction, supabaseClient, exportToSupabase }) {
     console.log('📊 Starting investor API scraping...');
     
     let totalInvestors = 0;
@@ -226,6 +257,27 @@ async function scrapeVCSInvestorsAPI({ maxPages, testMode, unlimitedExtraction }
                 
                 console.log(`✅ Page ${currentPage}: ${investors.length} investors`);
                 console.log(`📊 Total investors so far: ${allInvestors.length}`);
+                
+                // Upsert to Supabase if enabled
+                if (exportToSupabase && supabaseClient) {
+                    console.log(`💾 Upserting ${investors.length} investors to Supabase...`);
+                    let successCount = 0;
+                    let errorCount = 0;
+                    
+                    for (const investor of investors) {
+                        const result = await upsertInvestorToSupabase(supabaseClient, investor);
+                        if (result.success) {
+                            successCount++;
+                        } else {
+                            errorCount++;
+                        }
+                        
+                        // Rate limiting for Supabase
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+                    
+                    console.log(`✅ Supabase upsert complete: ${successCount} success, ${errorCount} errors`);
+                }
                 
                 // Check pagination  
                 const total = response.total || 0;
@@ -292,7 +344,7 @@ async function scrapeVCSInvestorsAPI({ maxPages, testMode, unlimitedExtraction }
 /**
  * Scrape funds using VCS API
  */
-async function scrapeVCSFundsAPI({ maxPages, testMode, unlimitedExtraction }) {
+async function scrapeVCSFundsAPI({ maxPages, testMode, unlimitedExtraction, supabaseClient, exportToSupabase }) {
     console.log('💰 Starting funds API scraping...');
     
     let totalFunds = 0;
@@ -333,6 +385,27 @@ async function scrapeVCSFundsAPI({ maxPages, testMode, unlimitedExtraction }) {
                 
                 console.log(`✅ Page ${currentPage}: ${funds.length} funds`);
                 console.log(`📊 Total funds so far: ${allFunds.length}`);
+                
+                // Upsert to Supabase if enabled
+                if (exportToSupabase && supabaseClient) {
+                    console.log(`💾 Upserting ${funds.length} funds to Supabase...`);
+                    let successCount = 0;
+                    let errorCount = 0;
+                    
+                    for (const fund of funds) {
+                        const result = await upsertFundToSupabase(supabaseClient, fund);
+                        if (result.success) {
+                            successCount++;
+                        } else {
+                            errorCount++;
+                        }
+                        
+                        // Rate limiting for Supabase
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+                    
+                    console.log(`✅ Supabase upsert complete: ${successCount} success, ${errorCount} errors`);
+                }
                 
                 // Check pagination
                 const total = response.total || 0;
@@ -536,4 +609,153 @@ function transformFundData(apiData) {
         // Raw data for reference
         raw_api_data: JSON.stringify(apiData)
     };
+}
+
+/**
+ * Transform investor data for Supabase vc_table
+ */
+function transformInvestorForSupabase(investorData) {
+    return {
+        // Primary identifier - ensure uniqueness
+        company_id: investorData.company_id || investorData.registration_number || `vc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        company_name: investorData.company_name || 'Unknown Company',
+        company_name_en: null, // VCS doesn't provide English names
+        
+        // Location and representative info
+        location: investorData.location || investorData.address || null,
+        representative: investorData.representative || null,
+        established_date: investorData.establishment_date || null,
+        company_type: investorData.business_type || investorData.business_category || null,
+        website_url: null, // VCS API doesn't provide website URLs
+        
+        // Contact information as JSONB
+        contact_info: {
+            address: investorData.address || null,
+            zip_code: investorData.zip_code || null,
+            phone: investorData.phone || null,
+            fax: null,
+            email: null
+        },
+        
+        // Disclosure data as JSONB
+        disclosure_data: {
+            industry: investorData.industry || null,
+            business_category: investorData.business_category || null,
+            operating_scale: investorData.operating_scale || null,
+            operating_amount: investorData.operating_amount || null,
+            operating_amount_text: investorData.operating_amount_text || null,
+            strategy_planner: investorData.strategy_planner || null,
+            pf_angel: investorData.professional_angel || null,
+            investment_character: investorData.investment_character || null,
+            raw_data: JSON.parse(investorData.raw_api_data || '{}')
+        },
+        
+        // Metadata
+        apify_source: 'VCS_SCRAPER_V2.1.3_SUPABASE_INTEGRATED',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+    };
+}
+
+/**
+ * Transform fund data for Supabase fund_table
+ */
+function transformFundForSupabase(fundData) {
+    return {
+        // Use management company ID as the company_id to link to vc_table
+        company_id: fundData.management_company_id || fundData.fund_id || `fund_mgmt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        fund_name: fundData.fund_name || 'Unknown Fund',
+        fund_name_en: null, // VCS doesn't provide English names
+        fund_type: fundData.fund_type || null,
+        
+        // Financial information
+        commitment_amount: null, // VCS doesn't provide commitment amount
+        fund_size: fundData.fund_scale || null,
+        establishment_date: fundData.establishment_date ? new Date(fundData.establishment_date).toISOString().split('T')[0] : null,
+        fund_status: fundData.fund_status || fundData.closing_status || null,
+        representative: null, // VCS doesn't provide fund representative
+        
+        // Investment focus as array
+        investment_focus: fundData.investment_field ? [fundData.investment_field] : [],
+        
+        // Fund details as JSONB
+        fund_details: {
+            fund_code: fundData.fund_code || null,
+            management_company: fundData.management_company || null,
+            management_company_id: fundData.management_company_id || null,
+            fund_scale_text: fundData.fund_scale_text || null,
+            duration_years: fundData.duration_years || null,
+            investment_stage: fundData.investment_stage || null,
+            investment_region: fundData.investment_region || null,
+            closing_status: fundData.closing_status || null,
+            raw_data: JSON.parse(fundData.raw_api_data || '{}')
+        },
+        
+        // Metadata
+        apify_source: 'VCS_SCRAPER_V2.1.3_SUPABASE_INTEGRATED',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+    };
+}
+
+/**
+ * Upsert investor data to Supabase
+ */
+async function upsertInvestorToSupabase(supabaseClient, investorData) {
+    if (!supabaseClient) return { success: false, error: 'No Supabase client' };
+    
+    try {
+        const supabaseData = transformInvestorForSupabase(investorData);
+        
+        const { data, error } = await supabaseClient
+            .from('vc_table')
+            .upsert(supabaseData, {
+                onConflict: 'company_id',
+                ignoreDuplicates: false
+            })
+            .select();
+            
+        if (error) {
+            console.error(`❌ Supabase upsert error for ${supabaseData.company_name}:`, error.message);
+            return { success: false, error: error.message };
+        }
+        
+        console.log(`✅ Upserted investor: ${supabaseData.company_name}`);
+        return { success: true, data };
+        
+    } catch (error) {
+        console.error(`💥 Critical error upserting investor:`, error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Upsert fund data to Supabase
+ */
+async function upsertFundToSupabase(supabaseClient, fundData) {
+    if (!supabaseClient) return { success: false, error: 'No Supabase client' };
+    
+    try {
+        const supabaseData = transformFundForSupabase(fundData);
+        
+        const { data, error } = await supabaseClient
+            .from('fund_table')
+            .upsert(supabaseData, {
+                onConflict: 'fund_name', // Using fund_name as unique identifier
+                ignoreDuplicates: false
+            })
+            .select();
+            
+        if (error) {
+            console.error(`❌ Supabase upsert error for ${supabaseData.fund_name}:`, error.message);
+            return { success: false, error: error.message };
+        }
+        
+        console.log(`✅ Upserted fund: ${supabaseData.fund_name}`);
+        return { success: true, data };
+        
+    } catch (error) {
+        console.error(`💥 Critical error upserting fund:`, error.message);
+        return { success: false, error: error.message };
+    }
 } 
