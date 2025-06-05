@@ -1,15 +1,18 @@
 /**
- * 🇰🇷 VCS WEEKLY SCRAPER - APIFY ACTOR v2.1.2 - HIGH-VOLUME API-POWERED (PARAMS FIXED)
- * =====================================================================================
+ * 🇰🇷 VCS WEEKLY SCRAPER - APIFY ACTOR v2.1.3 - UNLIMITED HIGH-VOLUME EXTRACTION
+ * ===============================================================================
  * 
- * CRITICAL API PARAMETERS FIX:
+ * UNLIMITED EXTRACTION UPDATE:
+ * - Automatically extracts FULL dataset (717 investors + 3689 funds)
+ * - Smart pagination: calculates total pages from API response
+ * - No artificial maxPages limit for complete data
  * - Fixed missing tabMenu parameter handling (like local scraper)
  * - Enhanced debugging to see actual API responses
  * - Fixed Apify SDK v3 compatibility (Actor.main instead of Apify.main)
  * - Uses REAL VCS API endpoints (like proven local scraper)
  * - Direct /web/portal/investor/search API calls
  * - Full pagination support for complete dataset
- * - Targets 717+ investors and 3600+ funds (like local version)
+ * - Targets ALL available records (4,400+ total)
  * - Structured JSON responses instead of HTML parsing
  * - Professional API-based extraction approach
  */
@@ -47,17 +50,18 @@ const VCS_API_CONFIG = {
 };
 
 Actor.main(async () => {
-    console.log('🇰🇷 VCS Weekly Scraper Actor Started (Phase 1) - v2.1.2');
+    console.log('🇰🇷 VCS Weekly Scraper Actor Started (Phase 1) - v2.1.3');
     console.log(`🕐 Execution time: ${new Date().toISOString()}`);
     
     // Get input configuration
     const input = await Actor.getInput() || {};
     const {
         updateMode = 'incremental',
-        maxPages = 100,
+        maxPages = 999, // High default for complete extraction
         dataSource = 'both',
         exportToSupabase = false,
-        testMode = false
+        testMode = false,
+        unlimitedExtraction = true // New parameter for complete dataset
     } = input;
     
     console.log('⚙️ Actor Configuration loaded:');
@@ -66,20 +70,21 @@ Actor.main(async () => {
     console.log(`🎯 Data Source: ${dataSource}`);
     console.log(`💾 Export to Supabase: ${exportToSupabase}`);
     console.log(`🧪 Test Mode: ${testMode}`);
+    console.log(`🚀 Unlimited Extraction: ${unlimitedExtraction}`);
     console.log(`📍 Platform: Apify Cloud`);
-            console.log(`🔧 Optimization: v2.1.2 with REAL API ENDPOINTS (High-Volume + Params Fixed)`);
+            console.log(`🔧 Optimization: v2.1.3 with UNLIMITED EXTRACTION (Complete Dataset)`);
         console.log(`🎯 Target: ${VCS_API_CONFIG.baseUrl}${VCS_API_CONFIG.searchEndpoint}`);
     
     console.log('🚀 Starting VCS data extraction with API-POWERED workflow...');
     
     try {
-        const results = await scrapeVCSWithAPI({ updateMode, maxPages, dataSource, testMode });
+        const results = await scrapeVCSWithAPI({ updateMode, maxPages, dataSource, testMode, unlimitedExtraction });
         
         // Save final results to Apify dataset
         await Actor.pushData({
             timestamp: new Date().toISOString(),
             source: 'VCS_WEEKLY_SCRAPER_APIFY_API_POWERED',
-            version: '2.1.2',
+            version: '2.1.3',
             updateMode,
             dataSource,
             success: true,
@@ -89,13 +94,15 @@ Actor.main(async () => {
             executionTime: results.executionTime,
             platform: 'Apify Cloud',
             executionId: process.env.APIFY_ACT_RUN_ID,
-            optimization_version: '2.1.1',
-            breakthrough: 'API-POWERED + SDK FIXED: Real VCS endpoints for high-volume extraction',
+            optimization_version: '2.1.3',
+            breakthrough: 'UNLIMITED EXTRACTION: Complete dataset (717 investors + 3689 funds)',
             target_volume: {
-                expected_investors: '717+',
-                expected_funds: '3600+',
+                expected_investors: '717',
+                expected_funds: '3689',
+                total_expected: '4406',
                 achieved_investors: results.investors,
-                achieved_funds: results.funds
+                achieved_funds: results.funds,
+                achievement_rate: `${Math.round((results.totalRecords / 4406) * 100)}%`
             }
         });
 
@@ -107,7 +114,7 @@ Actor.main(async () => {
         console.log(`📅 Update mode: ${updateMode}`);
         console.log(`🏷️ Data source: ${dataSource}`);
         console.log(`📍 Platform: Apify Cloud`);
-        console.log(`🔧 Optimization: v2.1.1 with REAL API ENDPOINTS (High-Volume + SDK Fixed)`);
+        console.log(`🔧 Optimization: v2.1.3 with UNLIMITED EXTRACTION (Complete Dataset)`);
         console.log(`🎯 API Endpoint: ${VCS_API_CONFIG.baseUrl}${VCS_API_CONFIG.searchEndpoint}`);
         
         console.log('✅ VCS Weekly Scraper Actor completed with API-POWERED workflow');
@@ -138,7 +145,7 @@ Actor.main(async () => {
 /**
  * API-powered VCS scraping function
  */
-async function scrapeVCSWithAPI({ updateMode, maxPages, dataSource, testMode }) {
+async function scrapeVCSWithAPI({ updateMode, maxPages, dataSource, testMode, unlimitedExtraction }) {
     const startTime = Date.now();
     let totalInvestors = 0;
     let totalFunds = 0;
@@ -150,13 +157,13 @@ async function scrapeVCSWithAPI({ updateMode, maxPages, dataSource, testMode }) 
         // Scrape investors if needed
         if (dataSource === 'investors' || dataSource === 'both') {
             console.log('\n👥 === SCRAPING INVESTORS (tabMenu=1) ===');
-            totalInvestors = await scrapeVCSInvestorsAPI({ maxPages, testMode });
+            totalInvestors = await scrapeVCSInvestorsAPI({ maxPages, testMode, unlimitedExtraction });
         }
         
         // Scrape funds if needed  
         if (dataSource === 'funds' || dataSource === 'both') {
             console.log('\n💰 === SCRAPING FUNDS (tabMenu=2) ===');
-            totalFunds = await scrapeVCSFundsAPI({ maxPages, testMode });
+            totalFunds = await scrapeVCSFundsAPI({ maxPages, testMode, unlimitedExtraction });
         }
         
         const executionTime = Math.round((Date.now() - startTime) / 1000);
@@ -178,7 +185,7 @@ async function scrapeVCSWithAPI({ updateMode, maxPages, dataSource, testMode }) 
 /**
  * Scrape investors using VCS API
  */
-async function scrapeVCSInvestorsAPI({ maxPages, testMode }) {
+async function scrapeVCSInvestorsAPI({ maxPages, testMode, unlimitedExtraction }) {
     console.log('📊 Starting investor API scraping...');
     
     let totalInvestors = 0;
@@ -220,17 +227,26 @@ async function scrapeVCSInvestorsAPI({ maxPages, testMode }) {
                 console.log(`✅ Page ${currentPage}: ${investors.length} investors`);
                 console.log(`📊 Total investors so far: ${allInvestors.length}`);
                 
-                // Check pagination
+                // Check pagination  
                 const total = response.total || 0;
                 const pageSize = 10;
                 const totalPages = Math.ceil(total / pageSize);
                 
                 if (currentPage === 1) {
                     console.log(`📈 Total investors available: ${total}`);
-                    console.log(`📄 Total pages to process: ${Math.min(totalPages, maxPages)}`);
+                    if (unlimitedExtraction) {
+                        console.log(`📄 Total pages to process: ${totalPages} (UNLIMITED EXTRACTION)`);
+                    } else {
+                        console.log(`📄 Total pages to process: ${Math.min(totalPages, maxPages)} (limited by maxPages)`);
+                    }
                 }
                 
-                hasMorePages = currentPage < totalPages && currentPage < maxPages;
+                // Smart pagination: unlimited extraction or respect maxPages
+                if (unlimitedExtraction) {
+                    hasMorePages = currentPage < totalPages;
+                } else {
+                    hasMorePages = currentPage < totalPages && currentPage < maxPages;
+                }
                 currentPage++;
                 
                 // Rate limiting
@@ -276,7 +292,7 @@ async function scrapeVCSInvestorsAPI({ maxPages, testMode }) {
 /**
  * Scrape funds using VCS API
  */
-async function scrapeVCSFundsAPI({ maxPages, testMode }) {
+async function scrapeVCSFundsAPI({ maxPages, testMode, unlimitedExtraction }) {
     console.log('💰 Starting funds API scraping...');
     
     let totalFunds = 0;
@@ -325,10 +341,19 @@ async function scrapeVCSFundsAPI({ maxPages, testMode }) {
                 
                 if (currentPage === 1) {
                     console.log(`📈 Total funds available: ${total}`);
-                    console.log(`📄 Total pages to process: ${Math.min(totalPages, maxPages)}`);
+                    if (unlimitedExtraction) {
+                        console.log(`📄 Total pages to process: ${totalPages} (UNLIMITED EXTRACTION)`);
+                    } else {
+                        console.log(`📄 Total pages to process: ${Math.min(totalPages, maxPages)} (limited by maxPages)`);
+                    }
                 }
                 
-                hasMorePages = currentPage < totalPages && currentPage < maxPages;
+                // Smart pagination: unlimited extraction or respect maxPages
+                if (unlimitedExtraction) {
+                    hasMorePages = currentPage < totalPages;
+                } else {
+                    hasMorePages = currentPage < totalPages && currentPage < maxPages;
+                }
                 currentPage++;
                 
                 // Rate limiting
