@@ -67,10 +67,11 @@ Actor.main(async () => {
         async function scrapeVCSWithBrowser() {
             console.log('🌐 Starting browser-based VCS scraping...');
             
-            // Launch browser with Playwright directly (Apify 3.4.2+ compatibility)
-            const { firefox } = require('playwright');
-            const browser = await firefox.launch({
-                headless: VCS_CONFIG.browser.headless
+            // Launch browser with Playwright (compatible with Apify base image)
+            const { chromium } = require('playwright');
+            const browser = await chromium.launch({
+                headless: VCS_CONFIG.browser.headless,
+                args: ['--no-sandbox', '--disable-dev-shm-usage']
             });
             
             const context = await browser.newContext({
