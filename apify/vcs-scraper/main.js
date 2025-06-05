@@ -13,6 +13,7 @@
 
 const { Actor } = require('apify');
 const { createClient } = require('@supabase/supabase-js');
+const { playwright } = require('playwright');
 
 Actor.main(async () => {
     console.log('🇰🇷 VCS Weekly Scraper Actor Started (Phase 1)');
@@ -66,10 +67,10 @@ Actor.main(async () => {
         async function scrapeVCSWithBrowser() {
             console.log('🌐 Starting browser-based VCS scraping...');
             
-            // Launch browser with Apify
-            const browser = await Actor.launchPlaywright({
-                headless: VCS_CONFIG.browser.headless,
-                useChrome: false, // Use Firefox for better compatibility
+            // Launch browser with Playwright directly (Apify 3.4.2+ compatibility)
+            const { firefox } = require('playwright');
+            const browser = await firefox.launch({
+                headless: VCS_CONFIG.browser.headless
             });
             
             const context = await browser.newContext({
