@@ -319,7 +319,7 @@ async function handleFinancialStatements(page, config, supabase) {
  * Handle Personnel Status (인력현황)
  */
 async function handlePersonnelStatus(page, config, supabase) {
-    console.log('👥 Processing Professional Personnel data...');
+    console.log('👥 Processing Personnel Status data...');
     
     try {
         await setupAllFilters(page);
@@ -382,13 +382,13 @@ async function handlePersonnelStatus(page, config, supabase) {
                     return;
                 }
                 
-                if (cells.length >= 5) {
+                if (cells.length >= 4) {
                     const rowData = {
                         companyName: cells[0]?.textContent?.trim(),
-                        personalName: cells[1]?.textContent?.trim(),
-                        workExperience: cells[2]?.textContent?.trim(),
-                        professionalExperience: cells[3]?.textContent?.trim(),
-                        education: cells[4]?.textContent?.trim(),
+                        totalPersonnel: cells[1]?.textContent?.trim(),
+                        professionalStaff: cells[2]?.textContent?.trim(),
+                        investmentReview: cells[3]?.textContent?.trim(),
+                        managementSupport: cells[4]?.textContent?.trim() || '', // 5th column may not always exist
                         rowIndex: index
                     };
                     console.log(`Adding row data:`, rowData);
@@ -402,31 +402,31 @@ async function handlePersonnelStatus(page, config, supabase) {
             return data;
         });
         
-        console.log(`👥 Extracted ${personnelData.length} professional personnel records`);
+        console.log(`👥 Extracted ${personnelData.length} personnel status records`);
         
                 for (const record of personnelData) {
             const processedRecord = {
                 company_name: record.companyName,
-                personal_name: record.personalName,
-                work_experience: record.workExperience,
-                professional_experience: record.professionalExperience,
-                education: record.education,
+                total_personnel: parseInt(record.totalPersonnel) || 0,
+                professional_staff: parseInt(record.professionalStaff) || 0,
+                investment_review_staff: parseInt(record.investmentReview) || 0,
+                management_support_staff: parseInt(record.managementSupport) || 0,
                 extracted_at: new Date().toISOString(),
                 source_url: page.url()
             };
 
             await Actor.pushData({
                 ...processedRecord,
-                dataType: 'professional_personnel'
+                dataType: 'personnel_status'
             });
 
             if (supabase) {
-                await saveToSupabase(supabase, 'diva_professional_raw', processedRecord);
+                await saveToSupabase(supabase, 'diva_personnel_raw', processedRecord);
             }
         }
         
         if (page.url().includes('page=1') || !page.url().includes('page=')) {
-            await handlePaginationWrapper(page, config, 'professional_personnel', supabase);
+            await handlePaginationWrapper(page, config, 'personnel_status', supabase);
         }
         
     } catch (error) {
