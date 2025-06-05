@@ -1,8 +1,9 @@
 /**
- * 🇰🇷 VCS WEEKLY SCRAPER - APIFY ACTOR v2.1.0 - HIGH-VOLUME API-POWERED
- * =====================================================================
+ * 🇰🇷 VCS WEEKLY SCRAPER - APIFY ACTOR v2.1.1 - HIGH-VOLUME API-POWERED (FIXED)
+ * ===============================================================================
  * 
- * MAJOR BREAKTHROUGH UPDATE:
+ * CRITICAL SDK FIX UPDATE:
+ * - Fixed Apify SDK v3 compatibility (Actor.main instead of Apify.main)
  * - Uses REAL VCS API endpoints (like proven local scraper)
  * - Direct /web/portal/investor/search API calls
  * - Full pagination support for complete dataset
@@ -11,7 +12,7 @@
  * - Professional API-based extraction approach
  */
 
-const Apify = require('apify');
+const { Actor } = require('apify');
 const https = require('https');
 
 // VCS API Configuration (based on proven local scraper)
@@ -43,12 +44,12 @@ const VCS_API_CONFIG = {
     }
 };
 
-Apify.main(async () => {
-    console.log('🇰🇷 VCS Weekly Scraper Actor Started (Phase 1) - v2.1.0');
+Actor.main(async () => {
+    console.log('🇰🇷 VCS Weekly Scraper Actor Started (Phase 1) - v2.1.1');
     console.log(`🕐 Execution time: ${new Date().toISOString()}`);
     
     // Get input configuration
-    const input = await Apify.getInput() || {};
+    const input = await Actor.getInput() || {};
     const {
         updateMode = 'incremental',
         maxPages = 100,
@@ -64,8 +65,8 @@ Apify.main(async () => {
     console.log(`💾 Export to Supabase: ${exportToSupabase}`);
     console.log(`🧪 Test Mode: ${testMode}`);
     console.log(`📍 Platform: Apify Cloud`);
-    console.log(`🔧 Optimization: v2.1.0 with REAL API ENDPOINTS (High-Volume)`);
-    console.log(`🎯 Target: ${VCS_API_CONFIG.baseUrl}${VCS_API_CONFIG.searchEndpoint}`);
+            console.log(`🔧 Optimization: v2.1.1 with REAL API ENDPOINTS (High-Volume + SDK Fixed)`);
+        console.log(`🎯 Target: ${VCS_API_CONFIG.baseUrl}${VCS_API_CONFIG.searchEndpoint}`);
     
     console.log('🚀 Starting VCS data extraction with API-POWERED workflow...');
     
@@ -73,10 +74,10 @@ Apify.main(async () => {
         const results = await scrapeVCSWithAPI({ updateMode, maxPages, dataSource, testMode });
         
         // Save final results to Apify dataset
-        await Apify.pushData({
+        await Actor.pushData({
             timestamp: new Date().toISOString(),
             source: 'VCS_WEEKLY_SCRAPER_APIFY_API_POWERED',
-            version: '2.1.0',
+            version: '2.1.1',
             updateMode,
             dataSource,
             success: true,
@@ -86,8 +87,8 @@ Apify.main(async () => {
             executionTime: results.executionTime,
             platform: 'Apify Cloud',
             executionId: process.env.APIFY_ACT_RUN_ID,
-            optimization_version: '2.1.0',
-            breakthrough: 'API-POWERED: Real VCS endpoints for high-volume extraction',
+            optimization_version: '2.1.1',
+            breakthrough: 'API-POWERED + SDK FIXED: Real VCS endpoints for high-volume extraction',
             target_volume: {
                 expected_investors: '717+',
                 expected_funds: '3600+',
@@ -104,7 +105,7 @@ Apify.main(async () => {
         console.log(`📅 Update mode: ${updateMode}`);
         console.log(`🏷️ Data source: ${dataSource}`);
         console.log(`📍 Platform: Apify Cloud`);
-        console.log(`🔧 Optimization: v2.1.0 with REAL API ENDPOINTS (High-Volume)`);
+        console.log(`🔧 Optimization: v2.1.1 with REAL API ENDPOINTS (High-Volume + SDK Fixed)`);
         console.log(`🎯 API Endpoint: ${VCS_API_CONFIG.baseUrl}${VCS_API_CONFIG.searchEndpoint}`);
         
         console.log('✅ VCS Weekly Scraper Actor completed with API-POWERED workflow');
@@ -113,10 +114,10 @@ Apify.main(async () => {
         console.error('💥 VCS scraping failed:', error);
         
         // Save error information
-        await Apify.pushData({
+        await Actor.pushData({
             timestamp: new Date().toISOString(),
             source: 'VCS_WEEKLY_SCRAPER_APIFY_API_POWERED',
-            version: '2.1.0',
+            version: '2.1.1',
             success: false,
             error: error.message,
             errorStack: error.stack,
@@ -124,8 +125,8 @@ Apify.main(async () => {
             dataSource,
             platform: 'Apify Cloud',
             executionId: process.env.APIFY_ACT_RUN_ID,
-            optimization_version: '2.1.0',
-            breakthrough: 'FAILED: API-powered approach encountered error'
+            optimization_version: '2.1.1',
+            breakthrough: 'FAILED: API-powered + SDK fixed approach encountered error'
         });
         
         throw error;
@@ -249,7 +250,7 @@ async function scrapeVCSInvestorsAPI({ maxPages, testMode }) {
     // Store investors in Apify dataset
     if (allInvestors.length > 0) {
         console.log(`💾 Saving ${allInvestors.length} investors to Apify dataset...`);
-        await Apify.pushData({
+        await Actor.pushData({
             type: 'investors',
             count: allInvestors.length,
             data: allInvestors,
@@ -338,7 +339,7 @@ async function scrapeVCSFundsAPI({ maxPages, testMode }) {
     // Store funds in Apify dataset
     if (allFunds.length > 0) {
         console.log(`💾 Saving ${allFunds.length} funds to Apify dataset...`);
-        await Apify.pushData({
+        await Actor.pushData({
             type: 'funds',
             count: allFunds.length,
             data: allFunds,
