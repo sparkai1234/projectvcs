@@ -1,31 +1,28 @@
 {
-    "name": "korean-diva-scraper",
+    "name": "comprehensive-diva-scraper",
     "version": "1.0.0",
-    "description": "Korean DIVA Financial Data Scraper - Professional Apify Actor for Investment Performance & Regulatory Data",
+    "description": "Comprehensive DIVA Intelligence Scraper for Korean VC data extraction",
     "main": "main.js",
     "scripts": {
         "start": "node main.js",
         "test": "node main.js"
     },
-    "author": "Korean VC Intelligence System",
+    "author": "SparkAI VC Intelligence",
     "license": "MIT",
     "keywords": [
-        "korean-vc",
+        "korean",
+        "vc",
+        "venture-capital",
         "diva",
-        "financial-data",
-        "investment-performance",
-        "regulatory-compliance",
-        "apify-actor",
-        "weekly-automation",
-        "supabase-integration",
-        "playwright",
-        "browser-automation"
+        "scraper",
+        "intelligence",
+        "supabase",
+        "apify"
     ],
     "dependencies": {
-        "apify": "^3.1.0",
-        "crawlee": "^3.8.0",
-        "@supabase/supabase-js": "^2.38.0",
-        "playwright": "1.42.1"
+        "apify": "^3.0.0",
+        "@supabase/supabase-js": "^2.0.0",
+        "puppeteer": "^21.0.0"
     },
     "repository": {
         "type": "git",
