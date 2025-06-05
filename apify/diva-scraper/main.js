@@ -179,25 +179,47 @@ async function handleInvestmentPerformance(page, config, supabase) {
         // Wait for search form and set "전체보기" filters
         await setupAllFilters(page);
         
-        // Extract investment performance data
+        // Extract investment performance data  
         const performanceData = await page.evaluate(() => {
             const data = [];
-            const rows = document.querySelectorAll('table tbody tr');
+            const tables = document.querySelectorAll('table');
+            console.log(`Found ${tables.length} tables on page`);
+            
+            // Try different table selectors
+            let rows = document.querySelectorAll('table tbody tr');
+            if (rows.length === 0) {
+                rows = document.querySelectorAll('table tr');
+                console.log(`Fallback: Found ${rows.length} table rows`);
+            }
+            
+            console.log(`Found ${rows.length} total rows to process`);
             
             rows.forEach((row, index) => {
                 const cells = row.querySelectorAll('td');
-                if (cells.length >= 8) {
-                    data.push({
+                console.log(`Row ${index}: ${cells.length} cells`);
+                
+                // Skip header rows
+                if (cells.length === 0 || row.querySelector('th')) {
+                    console.log(`Row ${index} skipped - header or empty row`);
+                    return;
+                }
+                
+                if (cells.length >= 7) {
+                    const rowData = {
                         companyName: cells[0]?.textContent?.trim(),
-                        portfolioCompany: cells[1]?.textContent?.trim(),
-                        investmentAmount: cells[2]?.textContent?.trim(),
-                        investmentDate: cells[3]?.textContent?.trim(),
-                        currentStatus: cells[4]?.textContent?.trim(),
-                        exitAmount: cells[5]?.textContent?.trim(),
-                        exitDate: cells[6]?.textContent?.trim(),
-                        investmentReturn: cells[7]?.textContent?.trim(),
+                        individualAvoidanceCount: cells[1]?.textContent?.trim(),
+                        individualAmount: cells[2]?.textContent?.trim(),
+                        partnershipAvoidanceCount: cells[3]?.textContent?.trim(),
+                        partnershipAmount: cells[4]?.textContent?.trim(),
+                        totalAvoidanceCount: cells[5]?.textContent?.trim(),
+                        totalAmount: cells[6]?.textContent?.trim(),
                         rowIndex: index
-                    });
+                    };
+                    console.log(`Adding row data:`, rowData);
+                    data.push(rowData);
+                } else if (cells.length > 0) {
+                    console.log(`Row ${index} skipped - only ${cells.length} cells:`, 
+                        Array.from(cells).map(cell => cell.textContent?.trim()));
                 }
             });
             
@@ -210,13 +232,12 @@ async function handleInvestmentPerformance(page, config, supabase) {
         for (const record of performanceData) {
             const processedRecord = {
                 company_name: record.companyName,
-                portfolio_company: record.portfolioCompany,
-                investment_amount: parseKoreanAmount(record.investmentAmount),
-                investment_date: parseKoreanDate(record.investmentDate),
-                current_status: record.currentStatus,
-                exit_amount: parseKoreanAmount(record.exitAmount),
-                exit_date: parseKoreanDate(record.exitDate),
-                investment_return_amount: parseKoreanAmount(record.investmentReturn),
+                individual_avoidance_count: parseInt(record.individualAvoidanceCount) || 0,
+                individual_amount: parseKoreanAmount(record.individualAmount),
+                partnership_avoidance_count: parseInt(record.partnershipAvoidanceCount) || 0,
+                partnership_amount: parseKoreanAmount(record.partnershipAmount),
+                total_avoidance_count: parseInt(record.totalAvoidanceCount) || 0,
+                total_amount: parseKoreanAmount(record.totalAmount),
                 extracted_at: new Date().toISOString(),
                 source_url: page.url()
             };
