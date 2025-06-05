@@ -156,7 +156,7 @@ Actor.main(async () => {
                     
                     // Find table with fund/company data
                     for (const table of tables) {
-                        const headerText = table.textContent.toLowerCase();
+                        const headerText = table.textContent ? table.textContent.toLowerCase() : '';
                         if (headerText.includes('펀드명') || headerText.includes('운용사') || 
                             headerText.includes('결성일') || headerText.includes('결성총액')) {
                             targetTable = table;
@@ -191,7 +191,7 @@ Actor.main(async () => {
                                             duration: duration,
                                             extraction_date: new Date().toISOString(),
                                             source: 'VCS_WEEKLY_SCRAPER_OPTIMIZED',
-                                            page_number: currentPage
+                                            page_number: config.currentPageNumber || 1
                                         });
                                     }
                                 }
@@ -215,7 +215,7 @@ Actor.main(async () => {
                                         company_name: companyName,
                                         extraction_date: new Date().toISOString(),
                                         source: 'VCS_WEEKLY_SCRAPER_ALT',
-                                        page_number: currentPage
+                                        page_number: config.currentPageNumber || 1
                                     });
                                 }
                             } catch (error) {
@@ -225,7 +225,7 @@ Actor.main(async () => {
                     }
                     
                     return investors;
-                }, VCS_CONFIG);
+                }, { currentPageNumber: currentPage });
                 
                 if (pageInvestors.length > 0) {
                     allInvestors.push(...pageInvestors);
@@ -239,11 +239,12 @@ Actor.main(async () => {
                         return {
                             title: document.title,
                             url: window.location.href,
-                            bodyText: document.body.textContent.substring(0, 500),
+                            bodyText: document.body ? document.body.textContent.substring(0, 500) : 'No body content',
                             tableCount: document.querySelectorAll('table').length,
-                            hasResultContent: document.textContent.includes('펀드') || 
-                                            document.textContent.includes('운용사') ||
-                                            document.textContent.includes('투자')
+                            hasResultContent: document.textContent ? 
+                                (document.textContent.includes('펀드') || 
+                                 document.textContent.includes('운용사') ||
+                                 document.textContent.includes('투자')) : false
                         };
                     });
                     
@@ -360,12 +361,13 @@ Actor.main(async () => {
     
     const duration = Math.round((Date.now() - startTime) / 1000);
     const totalRecords = investors.length + funds.length;
+    let lastPageProcessed = 1; // Default value
     
     // Prepare comprehensive result data
     const resultData = {
         timestamp: new Date().toISOString(),
         source: 'VCS_WEEKLY_SCRAPER_APIFY_OPTIMIZED',
-        version: '2.0.0',
+        version: '2.0.1',
         updateMode,
         dataSource,
         investors: {
@@ -380,10 +382,10 @@ Actor.main(async () => {
             totalRecords,
             duration_seconds: duration,
             maxPages,
-            actualPages: Math.max(currentPage || 1),
+            actualPages: lastPageProcessed,
             platform: 'Apify Cloud',
             executionId: process.env.APIFY_ACT_RUN_ID,
-            optimization_version: '2.0.0',
+            optimization_version: '2.0.1',
             scraping_method: 'browser_table_extraction'
         }
     };
@@ -452,7 +454,7 @@ Actor.main(async () => {
     console.log(`📅 Update mode: ${updateMode}`);
     console.log(`🏷️ Data source: ${dataSource}`);
     console.log(`📍 Platform: Apify Cloud`);
-    console.log(`🔧 Optimization: v2.0.0 with real VCS selectors`);
+    console.log(`🔧 Optimization: v2.0.1 with bug fixes`);
     
     // Set structured output for Apify Console monitoring
     await Actor.setValue('OUTPUT', {
@@ -464,7 +466,7 @@ Actor.main(async () => {
             duration_seconds: duration,
             updateMode,
             dataSource,
-            optimization_version: '2.0.0'
+            optimization_version: '2.0.1'
         },
         data_sample: {
             first_investor: investors[0] || null,
