@@ -14,8 +14,8 @@ RUN npm --quiet set progress=false \
     && echo "NPM version:" \
     && npm --version
 
-# Install Playwright browsers
-RUN npx playwright install --with-deps
+# Install Playwright browsers (remove --with-deps due to permission issues)
+RUN npx playwright install
 
 # Copy source code and set working directory
 COPY . ./
