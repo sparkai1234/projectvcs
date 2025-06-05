@@ -721,8 +721,9 @@ function transformInvestorForSupabase(investorData) {
  */
 function transformFundForSupabase(fundData) {
     return {
-        // Use management company ID as the company_id to link to vc_table
-        company_id: fundData.management_company_id || fundData.fund_id || `fund_mgmt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        // Use null for company_id to avoid foreign key constraint issues
+        // Fund management companies often don't exist in vc_table
+        company_id: null,
         fund_name: fundData.fund_name || 'Unknown Fund',
         fund_name_en: null, // VCS doesn't provide English names
         fund_type: fundData.fund_type || null,
