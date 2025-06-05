@@ -2,6 +2,7 @@
   "name": "supabase-vc-fund-scrapers",
   "version": "2.0.0",
   "description": "Protected Supabase VC and Fund scrapers with data protection logic",
+  "type": "module",
   "main": "main.js",
   "scripts": {
     "start": "node main.js",
