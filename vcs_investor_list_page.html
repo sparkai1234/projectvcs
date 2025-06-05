@@ -1,0 +1,2077 @@
+<!DOCTYPE html><html lang="ko"><head>
+	    <meta charset="UTF-8">
+	    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	    
+	    <!-- SEO -->
+		
+
+
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="벤처투자종합포털">
+<meta property="og:title" content="투자자 검색 | 벤처투자매칭 | 벤처투자종합포털">
+
+
+<meta property="og:url" content="http://www.vcs.go.kr/web/portal/investor/list">
+<meta property="og:description" content="벤처투자종합포털,투자자 검색, 벤처투자종합포털">
+
+<meta property="og:image" content="http://www.vcs.go.kr/design/theme/portal/images/logo-200x200.gif">
+<meta property="og:image:height" content="200">
+<meta property="og:image:width" content="200">
+<meta name="name" content="투자자 검색 | 벤처투자매칭 | ">
+<meta name="keywords" content="벤처투자종합포털,투자자 검색">
+
+
+<meta name="description" content="벤처투자종합포털,투자자 검색, 벤처투자종합포털">
+
+<meta name="robots" content="index,follow">
+<meta name="googlebot" content="index,follow,snippet,archive">
+<link rel="image_src" href="http://www.vcs.go.kr/design/theme/portal/images/logo-200x200.gif">
+<link rel="canonical" href="https://www.vcs.go.kr">
+		<!-- //SEO -->
+	    
+	    <!-- 20230125 사이트탭 주석처리 kdh -->
+		<title>벤처투자종합포털</title>
+		
+		<!-- js -->
+	    <script type="text/javascript" src="/design/theme/portal/js/jquery-3.6.0.min.js"></script>
+	    <script type="text/javascript" src="/design/theme/portal/js/jquery-ui.min.js"></script>
+		<script type="text/javascript" src="/design/theme/portal/js/monthpicker.js"></script> <!-- monthpcker -->
+
+		
+    	
+	    <script type="text/javascript" src="/design/theme/portal/js/common.js"></script>
+	    <!-- kdh : kupload -->
+		<script type="text/javascript" src="/kupload/js/raonkupload.js"></script>
+		<!-- rMateChartH5 license -->
+		<script type="text/javascript" src="/rmate/chartH5Web_v6.0/LicenseKey/rMateChartH5License.js"></script>
+		<script type="text/javascript" src="/rmate/mapChartH5Web_v5.5/LicenseKey/rMateMapChartH5License.js"></script>
+		<!-- rMateChartH5 js -->
+		<script type="text/javascript" src="/rmate/chartH5Web_v6.0/rMateChartH5/JS/rMateChartH5.js"></script>
+		<script type="text/javascript" src="/rmate/mapChartH5Web_v5.5/rMateMapChartH5/JS/rMateMapChartH5.js"></script>
+		
+	    <!-- css -->
+	    <link type="text/css" rel="stylesheet" href="/design/theme/portal/css/jquery-ui.min.css">
+	    
+	    <link type="text/css" rel="stylesheet" href="/design/theme/portal/css/style.css">
+	    
+	    <!-- rMateChartH5 css -->
+		<link type="text/css" rel="stylesheet" href="/rmate/chartH5Web_v6.0/rMateChartH5/Assets/Css/rMateChartH5.css">
+		<link type="text/css" rel="stylesheet" href="/rmate/mapChartH5Web_v5.5/rMateMapChartH5/Assets/rMateMapChartH5.css">
+		
+		<!-- Google tag (gtag.js) -->
+		<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-XXZ0QP680J"></script>
+	
+	    <script>
+			var GLOBAL = {
+				APP_PATH:'/web/portal',
+				CONTEXT_PATH:'',
+				API_PATH:'/api',
+				siteId:'asa',
+				menuId:'M010100',
+				SECURITY_TOKEN_NAME:'_sToken',
+				SECURITY_TOKEN:'1749079538061_71eca434a04ad186c15807e6743c685e45ea1ce889b2374e9e0a5eb70f0c8252',
+				SECURITY_ASYNC_TOKEN_NAME:'',
+				SECURITY_ASYNC_COOKIE_NAME:'',
+				SITE_LOCALE:'ko_KR',
+				MOBILE:false
+			};
+        	var _func = null;
+			
+			function msg(str) {
+				$('#alpop_01 .pop_content').text(str);
+				$('#alpop_01').dialog("open");
+				popupOpenType = true;
+			}
+			
+			function callMsg(str, cb) {
+				//$('#alpop_01 .pop_content').text(str);
+				$('#alpop_01 .pop_content').html(str.replace(/\n/g, '<br/>'));
+				$('#alpop_01').dialog("open");
+				popupOpenType = true;
+				_func = cb;
+			}
+			
+			function cfrm(str, cb) {
+				//$('#alpop_03 .pop_content').text(str);
+				$('#alpop_03 .pop_content').html(str.replace(/\n/g, '<br/>'));
+				$('#alpop_03').dialog("open");
+				popupOpenType = true;
+				_func = cb;
+			}
+			
+			
+			
+			
+			
+			//statistics insert
+			function statisticsInsert(){
+				if( !GLOBAL.menuId ){
+					return;
+				}
+				$.ajax({
+					url : GLOBAL.APP_PATH + '/statistics' + GLOBAL.API_PATH + '/insert'
+					, type : 'post'
+					, data : {
+						menuId : GLOBAL.menuId
+						
+					}
+				});
+			}
+
+			jQuery(function($){
+				//통계자동
+				statisticsInsert();
+				
+			});
+			
+			window.dataLayer = window.dataLayer || [];
+			function gtag(){dataLayer.push(arguments);}
+			gtag('js', new Date());
+			gtag('config', 'G-XXZ0QP680J');
+		</script>
+	</head>
+	<body>
+		<div class="wrap">
+		    
+
+			<!-- skip nav -->
+			<div class="skip_nav" title="스킵 네비게이션">
+			    <ul>
+			        <li><a href="#nav" title="메뉴 바로가기">메뉴 바로가기</a></li>
+			        <li><a href="#conteiner" title="본문 바로가기">본문 바로가기</a></li>
+			    </ul>
+			</div>
+			
+			<!-- 상단팝업 -->
+		    <div class="top_pop_box" id="div_top_banner"></div>
+		    <!-- <div class="top_pop_box">
+		        <div class="pop_content">
+		            <span class="ico_notice"></span>
+		            <a href="" class="tit">
+		                <strong>[제목]</strong>
+		                <span>내용내용내용내용내용내용내용내용내용내용내용</span>
+		            </a>
+		        </div>
+		        <div class="pop_chk">
+		            <div class="chk_box">
+		                <span>
+		                    <input type="checkbox" id="chk_pop">
+		                    <label for="chk_pop">오늘 하루 안보기</label>
+		                </span>
+		            </div>
+		            <div class="close">
+		                <button><span>닫기</span></button>
+		            </div>
+		        </div>
+		    </div> -->
+			
+			<!-- header -->
+			<header>
+			    <div class="header_top">
+			        <h1><a href="/">벤처투자종합포털</a></h1>
+			        <nav id="nav">
+			        	
+
+
+
+
+
+
+
+
+
+<ul><li><a href="/web/portal/investor/list">벤처투자매칭</a><ul><li><a href="/web/portal/investor/list">투자자 검색</a></li><li><a href="/web/portal/company/list">투자유치 희망기업 검색</a></li><li><a href="/web/portal/bbs/onlineir/list">기업 홍보</a></li><li><a href="/web/portal/contents/M010402">통합공시</a><ul><li><a href="/web/portal/contents/M010402">- 통합공시</a></li><li><a href="/web/portal/electdiscls/list">- 벤처투자회사 전자공시</a></li></ul></li><li><a href="/web/portal/contents/M010501">벤처투자마트</a><ul><li><a href="/web/portal/contents/M010501">- 벤처투자마트란?</a></li><li><a href="/web/portal/bbs/martnotice/list">- 벤처투자마트 공지</a></li><li><a href="/web/portal/invstmart/1st/new">- 벤처투자마트 신청</a></li><li><a href="/web/portal/invstmart/list">- 신청 정보 확인</a></li><li><a href="/web/portal/bbs/martfaq/list">- 벤처투자마트 FAQ</a></li></ul></li><li><a href="/web/portal/contents/M010601">주식유통정보</a><ul><li><a href="/web/portal/contents/M010601">- VC구주유통망</a></li><li><a href="/web/portal/contents/M010602">- M&amp;A 정보망</a></li><li><a href="/web/portal/contents/M010603">- 비상장주식거래플랫폼</a></li></ul></li><li><a href="/web/portal/rsh/list">모태출자펀드 운용사 찾기</a></li></ul></li><li><a href="/web/portal/contents/M020100">투자가이드</a><ul><li><a href="/web/portal/contents/M020100">벤처/개인투자조합 가이드</a></li><li><a href="/web/portal/contents/M020200">벤처투자 가이드 A to Z</a></li><li><a href="/web/portal/invstguide/list">맞춤투자 가이드</a></li><li><a href="/web/portal/bbs/guidefaq/list">벤처투자 FAQ</a></li><li><a href="/web/portal/bbs/guidedic/list">용어사전</a></li><li><a href="/web/portal/contents/M020600">교육</a></li><li><a href="/web/portal/bbs/consult/list">벤처투자상담</a></li></ul></li><li><a href="/web/portal/contents/M030100">정보서비스</a><ul><li><a href="/web/portal/contents/M030100">정책</a></li><li><a href="/web/portal/contents/M030200">법령</a></li><li><a href="/web/portal/statistics/dashboard">통계</a><ul><li><a href="/web/portal/statistics/dashboard">- 대시보드</a></li><li><a href="/web/portal/statistics/list">- 투자실적</a></li></ul></li><li><a href="/web/portal/bbs/report/list">정보광장</a><ul><li><a href="/web/portal/bbs/report/list">- 통계/연구 보고서</a></li><li><a href="/web/portal/bbs/newsletter/list">- 뉴스레터 웹진</a></li><li><a href="/web/portal/bbs/issue/list">- 발행물</a></li><li><a href="/web/portal/bbs/form/list">- 자료실</a></li></ul></li><li><a href="/web/portal/recruitment/list">구인구직</a><ul><li><a href="/web/portal/recruitment/list">- 채용공고</a></li><li><a href="/web/portal/jobhunting/list">- 인력Pool</a></li></ul></li><li><a href="/web/portal/process/dash/list">업무처리지원</a><ul><li><a href="/web/portal/process/dash/list">- VC 근무경력 확인</a></li><li><a href="/web/portal/process/dash/TRlist">- VC 트렉레코드 확인</a></li><li><a href="https://tax.kban.or.kr" title="새창으로 열림" target="_blank">- 투자확인서발급시스템</a></li></ul></li></ul></li><li><a href="/web/portal/contents/M040101">벤처투자포털</a><ul><li><a href="/web/portal/contents/M040101">포털소개</a><ul><li><a href="/web/portal/contents/M040101">- 포털소개</a></li><li><a href="/web/portal/contents/M040102">- BI소개</a></li></ul></li><li><a href="/web/portal/bbs/notice/list">공지사항</a></li><li><a href="/web/portal/bbs/invtnotice/list">출자공고</a></li><li><a href="/web/portal/community/list">커뮤니티</a></li><li><a href="/web/portal/talk/list">벤처투자TALK</a></li><li><a href="/web/portal/contents/M040500">벤처투자 부당행위신고</a></li><li><a href="/web/portal/contents/M040600">유관기관 안내</a></li></ul></li></ul>
+			        </nav>
+			        <div class="util_box">
+			        	<ul class="btn_login_box">
+			        		
+				        	<li><a href="/web/portal/member/login;jsessionid=87AFFDB8BDA1ACC452ACEEA247CB8930.tomcat2">로그인</a></li>
+				        	<li><a href="/web/portal/member/signup;jsessionid=87AFFDB8BDA1ACC452ACEEA247CB8930.tomcat2">회원가입</a></li>
+				        	
+				        	
+		                </ul>
+		                <form id="headerSearch" action="/web/portal/search/list" method="get">
+			                <div class="search_box">
+			                    <div class="search_inp">
+			                        <input id="headerSearchKeyword" name="searchKeyword">
+			                        <label for="headerSearchKeyword" class="hidden">검색어 입력</label>
+			                    </div>
+			                    <button type="button" onclick="javascript:doSearch('header', '');">검색</button>
+			                </div>
+		                </form>
+		                <a href="/web/portal/sitemap/list;jsessionid=87AFFDB8BDA1ACC452ACEEA247CB8930.tomcat2" class="btn_sitemap" title="사이트맵">
+		                    <span></span>
+		                    <span></span>
+		                    <span></span>
+		                </a>
+		                <a href="javascript:void(0);" class="btn_allmenu" title="모바일 전체메뉴">
+		                    <span></span>
+		                    <span></span>
+		                    <span></span>
+		                </a>
+			        </div>
+			    </div>
+			    <div class="allmenu_box">
+			        <div class="allmenu_box_header">
+			            <div class="logo_m"><a href=""></a></div>
+			            <div class="allmenu_util">
+			                <ul>
+			                	
+			                	<li class="login"><a href="/web/portal/member/login;jsessionid=87AFFDB8BDA1ACC452ACEEA247CB8930.tomcat2">로그인</a></li>
+			                	<li class="join"><a href="/web/portal/member/signup;jsessionid=87AFFDB8BDA1ACC452ACEEA247CB8930.tomcat2">회원가입</a></li>
+					        	
+					        	
+			                </ul>
+			            </div>
+			        </div>
+			        
+
+
+
+
+
+
+
+
+
+<ul><li class="on"><a href="javascript:void(0);">벤처투자매칭</a><ul><li><a href="/web/portal/investor/list">투자자 검색</a></li><li class="on"><a href="/web/portal/company/list">투자유치 희망기업 검색</a></li><li><a href="/web/portal/bbs/onlineir/list">기업 홍보</a></li><li class="depth3"><a href="javascript:void(0);">통합공시</a><ul><li class="on"><a href="/web/portal/contents/M010402">통합공시</a></li><li><a href="/web/portal/electdiscls/list">벤처투자회사 전자공시</a></li></ul></li><li class="depth3"><a href="javascript:void(0);">벤처투자마트</a><ul><li><a href="/web/portal/contents/M010501">벤처투자마트란?</a></li><li class="on"><a href="/web/portal/bbs/martnotice/list">벤처투자마트 공지</a></li><li><a href="/web/portal/invstmart/1st/new">벤처투자마트 신청</a></li><li><a href="/web/portal/invstmart/list">신청 정보 확인</a></li><li><a href="/web/portal/bbs/martfaq/list">벤처투자마트 FAQ</a></li></ul></li><li class="depth3"><a href="javascript:void(0);">주식유통정보</a><ul><li><a href="/web/portal/contents/M010601">VC구주유통망</a></li><li class="on"><a href="/web/portal/contents/M010602">M&amp;A 정보망</a></li><li><a href="/web/portal/contents/M010603">비상장주식거래플랫폼</a></li></ul></li><li><a href="/web/portal/rsh/list">모태출자펀드 운용사 찾기</a></li></ul></li><li><a href="javascript:void(0);">투자가이드</a><ul><li><a href="/web/portal/contents/M020100">벤처/개인투자조합 가이드</a></li><li class="on"><a href="/web/portal/contents/M020200">벤처투자 가이드 A to Z</a></li><li><a href="/web/portal/invstguide/list">맞춤투자 가이드</a></li><li><a href="/web/portal/bbs/guidefaq/list">벤처투자 FAQ</a></li><li><a href="/web/portal/bbs/guidedic/list">용어사전</a></li><li><a href="/web/portal/contents/M020600">교육</a></li><li><a href="/web/portal/bbs/consult/list">벤처투자상담</a></li></ul></li><li><a href="javascript:void(0);">정보서비스</a><ul><li><a href="/web/portal/contents/M030100">정책</a></li><li class="on"><a href="/web/portal/contents/M030200">법령</a></li><li class="depth3"><a href="javascript:void(0);">통계</a><ul><li><a href="/web/portal/statistics/dashboard">대시보드</a></li><li class="on"><a href="/web/portal/statistics/list">투자실적</a></li></ul></li><li class="depth3"><a href="javascript:void(0);">정보광장</a><ul><li><a href="/web/portal/bbs/report/list">통계/연구 보고서</a></li><li class="on"><a href="/web/portal/bbs/newsletter/list">뉴스레터 웹진</a></li><li><a href="/web/portal/bbs/issue/list">발행물</a></li><li><a href="/web/portal/bbs/form/list">자료실</a></li></ul></li><li class="depth3"><a href="javascript:void(0);">구인구직</a><ul><li><a href="/web/portal/recruitment/list">채용공고</a></li><li class="on"><a href="/web/portal/jobhunting/list">인력Pool</a></li></ul></li><li class="depth3"><a href="javascript:void(0);">업무처리지원</a><ul><li><a href="/web/portal/process/dash/list">VC 근무경력 확인</a></li><li><a href="/web/portal/process/dash/TRlist">VC 트렉레코드 확인</a></li><li><a href="/web/portal/process/list">신청내역확인</a></li><li><a href="https://tax.kban.or.kr" title="새창으로 열림" target="_blank">투자확인서발급시스템</a></li></ul></li></ul></li><li><a href="javascript:void(0);">벤처투자포털</a><ul><li class="depth3"><a href="javascript:void(0);">포털소개</a><ul><li><a href="/web/portal/contents/M040101">포털소개</a></li><li class="on"><a href="/web/portal/contents/M040102">BI소개</a></li></ul></li><li class="on"><a href="/web/portal/bbs/notice/list">공지사항</a></li><li><a href="/web/portal/bbs/invtnotice/list">출자공고</a></li><li><a href="/web/portal/community/list">커뮤니티</a></li><li><a href="/web/portal/talk/list">벤처투자TALK</a></li><li><a href="/web/portal/contents/M040500">벤처투자 부당행위신고</a></li><li><a href="/web/portal/contents/M040600">유관기관 안내</a></li></ul></li></ul>
+			        <a href="" class="allmenu_close" title="닫기"><span></span><span></span></a>
+			    </div>
+			</header>
+			<div class="header_bg"></div>
+			
+			<!-- sns -->
+			<aside class="quick_box sns">
+		        <ul>
+		            <li class="ico_blog"><a href="https://blog.naver.com/vcs_official" target="_blank" title="네이버 블로그 바로가기"></a></li>
+		            <li class="ico_facebook"><a href="https://www.facebook.com/vcs.kvca" target="_blank" title="페이스북 바로가기"></a></li>
+		            <li class="ico_instar"><a href="https://www.instagram.com/vcs_kvca/" target="_blank" title="인스타그램 바로가기"></a></li>
+		        </ul>
+		    </aside>
+			
+			<!-- quick menu -->
+			<aside class="quick_box">
+			    <ul>
+			        <li class="btn_bell">
+			        	<a href="javascript:void(0);" class="dialog-link" data-type="note" data-popid="quick_01">알림<span id="quick_note_new" style="display: none;"></span></a>
+			        </li>
+			        <li class="btn_bookmark">
+			        	<a href="javascript:void(0);" class="dialog-link" data-type="bmk" data-popid="quick_02">즐겨찾기</a>
+			        </li>
+			        <li class="btn_chatbot">
+			        	<a href="javascript:fn_bnrPopup();">챗봇</a>
+			        </li>
+			        <li class="ico_remotecontrol">
+			        	<a href="https://113366.com/" target="_blank" title="원격서비스 바로가기" style="background-image: url(../../../../design/theme/portal/images/ico/ico_remotecontrol.png);">원격서비스</a>
+			        </li>
+			        <li class="btn_top">
+			        	<a href="javascript:void(0);"><span>TOP</span></a>
+			        </li>
+			    </ul>
+			</aside>
+		
+		    <!-- conteiner -->
+		    <div id="container" class="container
+		    
+		     type_01
+		    
+		    
+		    
+		    
+		    
+		    ">
+		        
+		        <!-- sub title -->
+		        <div class="tit_box sub_tit">
+		            <h2>벤처투자매칭</h2>
+		        </div>
+		        <!-- //sub title -->
+		
+		        <!-- main content -->
+		        <div class="content_box">
+		        	<!-- location -->
+					<div class="location">
+						
+
+
+
+
+
+
+
+
+
+
+<ul><li class="home"><a href="/">home</a></li><li class=""><a href="javascript:void(0);">벤처투자매칭</a><ul><li><a href="/web/portal/investor/list">벤처투자매칭</a></li><li><a href="/web/portal/contents/M020100">투자가이드</a></li><li><a href="/web/portal/contents/M030100">정보서비스</a></li><li><a href="/web/portal/contents/M040101">벤처투자포털</a></li></ul></li><li class="selected"><a href="javascript:void(0);">투자자 검색</a><ul><li><a href="/web/portal/investor/list">투자자 검색</a></li><li><a href="/web/portal/company/list">투자유치 희망기업 검색</a></li><li><a href="/web/portal/bbs/onlineir/list">기업 홍보</a></li><li><a href="/web/portal/contents/M010402">통합공시</a></li><li><a href="/web/portal/contents/M010501">벤처투자마트</a></li><li><a href="/web/portal/contents/M010601">주식유통정보</a></li><li><a href="/web/portal/rsh/list">모태출자펀드 운용사 찾기</a></li></ul></li></ul>
+					</div>
+					
+					<div class="inner">
+						<div class="tit_box">
+		                    <h3>투자자 검색</h3>
+			                <span>투자자를 검색합니다.</span>
+		                </div>
+		                
+		                <!-- content -->
+		                <form id="investorSearch" onsubmit="return false;" action="/web/portal/investor/list;jsessionid=87AFFDB8BDA1ACC452ACEEA247CB8930.tomcat2" method="get">
+		                <input id="sortOrder" name="sortOrder" type="hidden" value="">
+		                <input id="sortDirection" name="sortDirection" type="hidden" value="">
+		                
+		                <input id="tabMenu" name="tabMenu" type="hidden" value="1">
+		                <input id="cp" name="cp" type="hidden" value="1">
+		                
+		                <!-- 주요투자업종 -->
+		                <div class="search_item">
+		                    <div class="tit_box row">
+		                        <h4><span></span>주요투자업종</h4>
+		                        <div class="btn_box">
+		                            <a href="javascript:void(0);" class="btn_white" id="resetBtn">초기화</a>
+		                        </div>
+		                    </div>
+		
+		                    <ul class="chk_list img">
+		                        <li>
+		                            <span class="img"><img src="/design/theme/portal/images/ico/ico_search_01.png" alt=""></span>
+		                            <div class="chk_box">
+		                                <span>
+		                                    <input type="checkbox" class="chk_All" id="comIndCdArr">
+		                                    <label for="comIndCdArr">전체</label>
+		                                </span>
+		                            </div>
+		                        </li>
+		                        
+	                        	<li>
+		                            <span class="img"><img src="/design/theme/portal/images/ico/ico_search_01.png" alt=""></span>
+		                            <div class="chk_box">
+		                                <span>
+		                                    <input id="comIndCdArr1" name="comIndCdArr" type="checkbox" value="1"><label for="comIndCdArr1">ICT제조</label><input type="hidden" name="_comIndCdArr" value="on">
+		                                </span>
+		                            </div>
+		                        </li>
+		                        
+	                        	<li>
+		                            <span class="img"><img src="/design/theme/portal/images/ico/ico_search_02.png" alt=""></span>
+		                            <div class="chk_box">
+		                                <span>
+		                                    <input id="comIndCdArr2" name="comIndCdArr" type="checkbox" value="2"><label for="comIndCdArr2">ICT서비스</label><input type="hidden" name="_comIndCdArr" value="on">
+		                                </span>
+		                            </div>
+		                        </li>
+		                        
+	                        	<li>
+		                            <span class="img"><img src="/design/theme/portal/images/ico/ico_search_03.png" alt=""></span>
+		                            <div class="chk_box">
+		                                <span>
+		                                    <input id="comIndCdArr3" name="comIndCdArr" type="checkbox" value="3"><label for="comIndCdArr3">전기/기계/장비</label><input type="hidden" name="_comIndCdArr" value="on">
+		                                </span>
+		                            </div>
+		                        </li>
+		                        
+	                        	<li>
+		                            <span class="img"><img src="/design/theme/portal/images/ico/ico_search_04.png" alt=""></span>
+		                            <div class="chk_box">
+		                                <span>
+		                                    <input id="comIndCdArr4" name="comIndCdArr" type="checkbox" value="4"><label for="comIndCdArr4">화학/소재</label><input type="hidden" name="_comIndCdArr" value="on">
+		                                </span>
+		                            </div>
+		                        </li>
+		                        
+	                        	<li>
+		                            <span class="img"><img src="/design/theme/portal/images/ico/ico_search_05.png" alt=""></span>
+		                            <div class="chk_box">
+		                                <span>
+		                                    <input id="comIndCdArr5" name="comIndCdArr" type="checkbox" value="5"><label for="comIndCdArr5">바이오/의료</label><input type="hidden" name="_comIndCdArr" value="on">
+		                                </span>
+		                            </div>
+		                        </li>
+		                        
+	                        	<li>
+		                            <span class="img"><img src="/design/theme/portal/images/ico/ico_search_06.png" alt=""></span>
+		                            <div class="chk_box">
+		                                <span>
+		                                    <input id="comIndCdArr6" name="comIndCdArr" type="checkbox" value="6"><label for="comIndCdArr6">영상/공연/음반</label><input type="hidden" name="_comIndCdArr" value="on">
+		                                </span>
+		                            </div>
+		                        </li>
+		                        
+	                        	<li>
+		                            <span class="img"><img src="/design/theme/portal/images/ico/ico_search_07.png" alt=""></span>
+		                            <div class="chk_box">
+		                                <span>
+		                                    <input id="comIndCdArr7" name="comIndCdArr" type="checkbox" value="7"><label for="comIndCdArr7">게임</label><input type="hidden" name="_comIndCdArr" value="on">
+		                                </span>
+		                            </div>
+		                        </li>
+		                        
+	                        	<li>
+		                            <span class="img"><img src="/design/theme/portal/images/ico/ico_search_08.png" alt=""></span>
+		                            <div class="chk_box">
+		                                <span>
+		                                    <input id="comIndCdArr8" name="comIndCdArr" type="checkbox" value="8"><label for="comIndCdArr8">유통/서비스</label><input type="hidden" name="_comIndCdArr" value="on">
+		                                </span>
+		                            </div>
+		                        </li>
+		                        
+	                        	<li>
+		                            <span class="img"><img src="/design/theme/portal/images/ico/ico_search_09.png" alt=""></span>
+		                            <div class="chk_box">
+		                                <span>
+		                                    <input id="comIndCdArr9" name="comIndCdArr" type="checkbox" value="9"><label for="comIndCdArr9">기타</label><input type="hidden" name="_comIndCdArr" value="on">
+		                                </span>
+		                            </div>
+		                        </li>
+		                        
+		                    </ul>
+		                </div>
+		
+		                <!-- 소재지 -->
+		                <div class="search_item">
+		                    <div class="tit_box">
+		                        <h4><span></span>소재지</h4>
+		                    </div>
+		
+		                    <ul class="chk_list type_03">
+		                        <li>
+		                            <div class="chk_box chk_list_more_btn1">
+		                                <span>
+		                                    <input type="checkbox" class="chk_All" id="invstComLocCdArr" value="all">
+		                                    <label for="invstComLocCdArr">전체</label>
+		                                </span>
+		                                
+		                                	<span>
+			                                    <input id="invstComLocCdArr1" name="invstComLocCdArr" type="checkbox" value="1"><label for="invstComLocCdArr1">수도권</label><input type="hidden" name="_invstComLocCdArr" value="on">
+			                                </span>
+		                                
+		                                	<span>
+			                                    <input id="invstComLocCdArr2" name="invstComLocCdArr" type="checkbox" value="2"><label for="invstComLocCdArr2">5대 광역시</label><input type="hidden" name="_invstComLocCdArr" value="on">
+			                                </span>
+		                                
+		                                	<span>
+			                                    <input id="invstComLocCdArr3" name="invstComLocCdArr" type="checkbox" value="3"><label for="invstComLocCdArr3">그 외 지방</label><input type="hidden" name="_invstComLocCdArr" value="on">
+			                                </span>
+		                                
+		                                <span class="chk_btn">
+		                                    <button type="button">더보기 +</button>
+		                                </span>
+		                            </div>
+		                            <div class="chk_list_more">
+		                                <div class="chk_box">
+		                                    
+			                                <span>
+			                                    <input id="localCdArr1" name="localCdArr" data-upper="1" type="checkbox" value="01"><label for="localCdArr1">서울</label><input type="hidden" name="_localCdArr" value="on">
+			                                </span>
+			                                
+			                                <span>
+			                                    <input id="localCdArr2" name="localCdArr" data-upper="1" type="checkbox" value="09"><label for="localCdArr2">경기</label><input type="hidden" name="_localCdArr" value="on">
+			                                </span>
+			                                
+			                                <span>
+			                                    <input id="localCdArr3" name="localCdArr" data-upper="1" type="checkbox" value="04"><label for="localCdArr3">인천</label><input type="hidden" name="_localCdArr" value="on">
+			                                </span>
+			                                
+			                                <span>
+			                                    <input id="localCdArr4" name="localCdArr" data-upper="2" type="checkbox" value="02"><label for="localCdArr4">부산</label><input type="hidden" name="_localCdArr" value="on">
+			                                </span>
+			                                
+			                                <span>
+			                                    <input id="localCdArr5" name="localCdArr" data-upper="2" type="checkbox" value="03"><label for="localCdArr5">대구</label><input type="hidden" name="_localCdArr" value="on">
+			                                </span>
+			                                
+			                                <span>
+			                                    <input id="localCdArr6" name="localCdArr" data-upper="2" type="checkbox" value="05"><label for="localCdArr6">광주</label><input type="hidden" name="_localCdArr" value="on">
+			                                </span>
+			                                
+			                                <span>
+			                                    <input id="localCdArr7" name="localCdArr" data-upper="2" type="checkbox" value="06"><label for="localCdArr7">대전</label><input type="hidden" name="_localCdArr" value="on">
+			                                </span>
+			                                
+			                                <span>
+			                                    <input id="localCdArr8" name="localCdArr" data-upper="2" type="checkbox" value="07"><label for="localCdArr8">울산</label><input type="hidden" name="_localCdArr" value="on">
+			                                </span>
+			                                
+			                                <span>
+			                                    <input id="localCdArr9" name="localCdArr" data-upper="3" type="checkbox" value="08"><label for="localCdArr9">강원</label><input type="hidden" name="_localCdArr" value="on">
+			                                </span>
+			                                
+			                                <span>
+			                                    <input id="localCdArr10" name="localCdArr" data-upper="3" type="checkbox" value="10"><label for="localCdArr10">경남</label><input type="hidden" name="_localCdArr" value="on">
+			                                </span>
+			                                
+			                                <span>
+			                                    <input id="localCdArr11" name="localCdArr" data-upper="3" type="checkbox" value="11"><label for="localCdArr11">경북</label><input type="hidden" name="_localCdArr" value="on">
+			                                </span>
+			                                
+			                                <span>
+			                                    <input id="localCdArr12" name="localCdArr" data-upper="3" type="checkbox" value="12"><label for="localCdArr12">전남</label><input type="hidden" name="_localCdArr" value="on">
+			                                </span>
+			                                
+			                                <span>
+			                                    <input id="localCdArr13" name="localCdArr" data-upper="3" type="checkbox" value="13"><label for="localCdArr13">전북</label><input type="hidden" name="_localCdArr" value="on">
+			                                </span>
+			                                
+			                                <span>
+			                                    <input id="localCdArr14" name="localCdArr" data-upper="3" type="checkbox" value="14"><label for="localCdArr14">제주</label><input type="hidden" name="_localCdArr" value="on">
+			                                </span>
+			                                
+			                                <span>
+			                                    <input id="localCdArr15" name="localCdArr" data-upper="3" type="checkbox" value="15"><label for="localCdArr15">충남</label><input type="hidden" name="_localCdArr" value="on">
+			                                </span>
+			                                
+			                                <span>
+			                                    <input id="localCdArr16" name="localCdArr" data-upper="3" type="checkbox" value="16"><label for="localCdArr16">충북</label><input type="hidden" name="_localCdArr" value="on">
+			                                </span>
+			                                
+			                                <span>
+			                                    <input id="localCdArr17" name="localCdArr" data-upper="3" type="checkbox" value="17"><label for="localCdArr17">세종</label><input type="hidden" name="_localCdArr" value="on">
+			                                </span>
+			                                
+			                                <span>
+			                                    <input id="localCdArr18" name="localCdArr" data-upper="3" type="checkbox" value="99"><label for="localCdArr18">기타/해외</label><input type="hidden" name="_localCdArr" value="on">
+			                                </span>
+			                                
+		                                </div>
+		                            </div>
+		                        </li>
+		                    </ul>
+		                </div>
+		
+		                <!-- 운용규모 -->
+		                <div class="search_item">
+		                    <div class="tit_box">
+		                        <h4><span></span>투자사 운영규모</h4>
+		                    </div>
+		
+		                    <ul class="chk_list type_03">
+		                        <li>
+		                            <div class="chk_box">
+		                                <span>
+		                                	<input type="checkbox" class="chk_All" id="operScaleCdArr">
+		                                    <label for="operScaleCdArr">전체</label>
+		                                </span>
+		                                
+		                                <span>
+		                                    <input id="operScaleCdArr1" name="operScaleCdArr" type="checkbox" value="1"><label for="operScaleCdArr1">100억원 미만</label><input type="hidden" name="_operScaleCdArr" value="on">
+		                                </span>
+		                                
+		                                <span>
+		                                    <input id="operScaleCdArr2" name="operScaleCdArr" type="checkbox" value="2"><label for="operScaleCdArr2">100억원 이상 ~ 300억원 미만</label><input type="hidden" name="_operScaleCdArr" value="on">
+		                                </span>
+		                                
+		                                <span>
+		                                    <input id="operScaleCdArr3" name="operScaleCdArr" type="checkbox" value="3"><label for="operScaleCdArr3">300억원 이상 ~ 500억원 미만</label><input type="hidden" name="_operScaleCdArr" value="on">
+		                                </span>
+		                                
+		                                <span>
+		                                    <input id="operScaleCdArr4" name="operScaleCdArr" type="checkbox" value="4"><label for="operScaleCdArr4">500억원 이상 ~ 1,000억원 미만</label><input type="hidden" name="_operScaleCdArr" value="on">
+		                                </span>
+		                                
+		                                <span>
+		                                    <input id="operScaleCdArr5" name="operScaleCdArr" type="checkbox" value="5"><label for="operScaleCdArr5">1,000억원 이상</label><input type="hidden" name="_operScaleCdArr" value="on">
+		                                </span>
+		                                
+		                            </div>
+		                        </li>
+		                    </ul>
+		                </div>
+		
+		                <div class="search_item_more">
+		                    <!-- 투자성격 -->
+		                    <div class="search_item">
+		                        <div class="tit_box">
+		                            <h4><span></span>투자성격</h4>
+		                        </div>
+		
+		                        <ul class="chk_list type_01">
+		                            <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input type="checkbox" class="chk_All" id="invstCharcCdArr">
+			                                    <label for="invstCharcCdArr">전체</label>
+		                                    </span>
+		                                </div>
+		                            </li>
+		                            
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr1" name="invstCharcCdArr" type="checkbox" value="01"><label for="invstCharcCdArr1">일반</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr2" name="invstCharcCdArr" type="checkbox" value="02"><label for="invstCharcCdArr2">4차산업</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr3" name="invstCharcCdArr" type="checkbox" value="03"><label for="invstCharcCdArr3">소재·부품·장비</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr4" name="invstCharcCdArr" type="checkbox" value="04"><label for="invstCharcCdArr4">바이오·헬스케어</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr5" name="invstCharcCdArr" type="checkbox" value="05"><label for="invstCharcCdArr5">환경</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr6" name="invstCharcCdArr" type="checkbox" value="06"><label for="invstCharcCdArr6">ICT</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr7" name="invstCharcCdArr" type="checkbox" value="07"><label for="invstCharcCdArr7">스포츠</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr8" name="invstCharcCdArr" type="checkbox" value="08"><label for="invstCharcCdArr8">스케일업</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr9" name="invstCharcCdArr" type="checkbox" value="09"><label for="invstCharcCdArr9">기술·특허</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr10" name="invstCharcCdArr" type="checkbox" value="10"><label for="invstCharcCdArr10">특수산업</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr11" name="invstCharcCdArr" type="checkbox" value="11"><label for="invstCharcCdArr11">에너지</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr12" name="invstCharcCdArr" type="checkbox" value="12"><label for="invstCharcCdArr12">유니콘</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr13" name="invstCharcCdArr" type="checkbox" value="13"><label for="invstCharcCdArr13">코넥스</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr14" name="invstCharcCdArr" type="checkbox" value="14"><label for="invstCharcCdArr14">일자리</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr15" name="invstCharcCdArr" type="checkbox" value="15"><label for="invstCharcCdArr15">해외</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr16" name="invstCharcCdArr" type="checkbox" value="16"><label for="invstCharcCdArr16">세컨더리</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr17" name="invstCharcCdArr" type="checkbox" value="17"><label for="invstCharcCdArr17">M&amp;A</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr18" name="invstCharcCdArr" type="checkbox" value="18"><label for="invstCharcCdArr18">지역</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr19" name="invstCharcCdArr" type="checkbox" value="19"><label for="invstCharcCdArr19">여성</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr20" name="invstCharcCdArr" type="checkbox" value="20"><label for="invstCharcCdArr20">창업초기</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr21" name="invstCharcCdArr" type="checkbox" value="21"><label for="invstCharcCdArr21">청년</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr22" name="invstCharcCdArr" type="checkbox" value="22"><label for="invstCharcCdArr22">재창업</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr23" name="invstCharcCdArr" type="checkbox" value="23"><label for="invstCharcCdArr23">사회적기업</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr24" name="invstCharcCdArr" type="checkbox" value="24"><label for="invstCharcCdArr24">문화</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr25" name="invstCharcCdArr" type="checkbox" value="25"><label for="invstCharcCdArr25">특정기업</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr26" name="invstCharcCdArr" type="checkbox" value="26"><label for="invstCharcCdArr26">유망서비스</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr27" name="invstCharcCdArr" type="checkbox" value="27"><label for="invstCharcCdArr27">신성장</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr28" name="invstCharcCdArr" type="checkbox" value="99"><label for="invstCharcCdArr28">기타</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr29" name="invstCharcCdArr" type="checkbox" value="28"><label for="invstCharcCdArr29">AI·빅데이터</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr30" name="invstCharcCdArr" type="checkbox" value="29"><label for="invstCharcCdArr30">AR·VR</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr31" name="invstCharcCdArr" type="checkbox" value="30"><label for="invstCharcCdArr31">로봇·자동차 </label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr32" name="invstCharcCdArr" type="checkbox" value="31"><label for="invstCharcCdArr32">해양·수산</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+	                                <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input id="invstCharcCdArr33" name="invstCharcCdArr" type="checkbox" value="32"><label for="invstCharcCdArr33">지분유동화</label><input type="hidden" name="_invstCharcCdArr" value="on">
+		                                    </span>
+		                                </div>
+		                            </li>
+	                                
+		                        </ul>
+		                    </div>
+		
+		                    <!-- 업력 -->
+		                    <div class="search_item">
+		                        <div class="tit_box">
+		                            <h4><span></span>업력</h4>
+		                        </div>
+		
+		                        <ul class="chk_list type_03">
+		                            <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input type="checkbox" class="chk_All" id="comBzcarrCdArr">
+			                                    <label for="comBzcarrCdArr">전체</label>
+		                                    </span>
+		                                    
+		                                    <span>
+		                                    	<input id="comBzcarrCdArr1" name="comBzcarrCdArr" type="checkbox" value="1"><label for="comBzcarrCdArr1">창업일로부터 1년이하</label><input type="hidden" name="_comBzcarrCdArr" value="on">
+		                                    </span>
+		                                    
+		                                    <span>
+		                                    	<input id="comBzcarrCdArr2" name="comBzcarrCdArr" type="checkbox" value="2"><label for="comBzcarrCdArr2">1년 초과 ~ 3년 이하</label><input type="hidden" name="_comBzcarrCdArr" value="on">
+		                                    </span>
+		                                    
+		                                    <span>
+		                                    	<input id="comBzcarrCdArr3" name="comBzcarrCdArr" type="checkbox" value="3"><label for="comBzcarrCdArr3">3년 초과 ~ 5년 이하</label><input type="hidden" name="_comBzcarrCdArr" value="on">
+		                                    </span>
+		                                    
+		                                    <span>
+		                                    	<input id="comBzcarrCdArr4" name="comBzcarrCdArr" type="checkbox" value="4"><label for="comBzcarrCdArr4">5년 초과 ~ 7년 이하</label><input type="hidden" name="_comBzcarrCdArr" value="on">
+		                                    </span>
+		                                    
+		                                    <span>
+		                                    	<input id="comBzcarrCdArr5" name="comBzcarrCdArr" type="checkbox" value="5"><label for="comBzcarrCdArr5">7년 초과 ~ 14년이하</label><input type="hidden" name="_comBzcarrCdArr" value="on">
+		                                    </span>
+		                                    
+		                                    <span>
+		                                    	<input id="comBzcarrCdArr6" name="comBzcarrCdArr" type="checkbox" value="6"><label for="comBzcarrCdArr6">14년 초과</label><input type="hidden" name="_comBzcarrCdArr" value="on">
+		                                    </span>
+		                                    
+		                                </div>
+		                            </li>
+		                        </ul>
+		                    </div>
+		
+		                    <!-- 투자자 구분 -->
+		                    <div class="search_item">
+		                        <div class="tit_box">
+		                            <h4><span></span>투자자 구분</h4>
+		                        </div>
+		
+		                        <ul class="chk_list type_02">
+		                            <li>
+		                                <div class="chk_box">
+		                                    <span>
+		                                    	<input type="checkbox" class="chk_All" id="invstorTpCdArr">
+			                                    <label for="invstorTpCdArr">전체</label>
+		                                    </span>
+		                                    
+		                                    <span>
+		                                    	<input id="invstorTpCdArr1" name="invstorTpCdArr" type="checkbox" value="1"><label for="invstorTpCdArr1">벤처투자회사</label><input type="hidden" name="_invstorTpCdArr" value="on">
+		                                    </span>
+		                                    
+		                                    <span>
+		                                    	<input id="invstorTpCdArr2" name="invstorTpCdArr" type="checkbox" value="2"><label for="invstorTpCdArr2">신기술사</label><input type="hidden" name="_invstorTpCdArr" value="on">
+		                                    </span>
+		                                    
+		                                    <span>
+		                                    	<input id="invstorTpCdArr3" name="invstorTpCdArr" type="checkbox" value="3"><label for="invstorTpCdArr3">CRC</label><input type="hidden" name="_invstorTpCdArr" value="on">
+		                                    </span>
+		                                    
+		                                    <span>
+		                                    	<input id="invstorTpCdArr4" name="invstorTpCdArr" type="checkbox" value="4"><label for="invstorTpCdArr4">LLC</label><input type="hidden" name="_invstorTpCdArr" value="on">
+		                                    </span>
+		                                    
+		                                    <span>
+		                                    	<input id="invstorTpCdArr5" name="invstorTpCdArr" type="checkbox" value="5"><label for="invstorTpCdArr5">해외VC</label><input type="hidden" name="_invstorTpCdArr" value="on">
+		                                    </span>
+		                                    
+		                                    <span>
+		                                    	<input id="invstorTpCdArr6" name="invstorTpCdArr" type="checkbox" value="6"><label for="invstorTpCdArr6">개인</label><input type="hidden" name="_invstorTpCdArr" value="on">
+		                                    </span>
+		                                    
+		                                    <span>
+		                                    	<input id="invstorTpCdArr7" name="invstorTpCdArr" type="checkbox" value="7"><label for="invstorTpCdArr7">기타법인</label><input type="hidden" name="_invstorTpCdArr" value="on">
+		                                    </span>
+		                                    
+		                                    <span>
+		                                    	<input id="invstorTpCdArr8" name="invstorTpCdArr" type="checkbox" value="9"><label for="invstorTpCdArr8">기타운용사</label><input type="hidden" name="_invstorTpCdArr" value="on">
+		                                    </span>
+		                                    
+		                                </div>
+		                            </li>
+		                        </ul>
+		                    </div>
+		                    
+		                    <!-- 명칭검색 -->
+		                    <div class="search_item">
+		                        <div class="tit_box">
+		                            <h4><span></span>명칭검색</h4>
+		                        </div>
+		
+		                        <div class="search_form_group">
+		                            <div class="search_form_box">
+		                                <div class="sel_box">
+		                                    <label for="sc" class="hidden">선택</label>
+		                                    <select id="sc" name="sc" title="검색어 구분을 선택하세요">
+		                                        <option value="operInstNm">투자사</option>
+		                                        <option value="fundNm">펀드명</option>
+		                                    </select>
+		                                </div>
+		                                <div class="inp_box">
+		                                    <label for="sv" class="hidden">명칭검색</label>
+		                                    <input id="sv" name="sv" title="검색어를 입력하세요" type="text" value="">
+		                                </div>
+		                            </div>
+		                        </div>
+		                    </div>
+		                </div>
+		                </form>
+		
+						<!-- 검색조건 -->
+						<div class="search_word_box">
+		                    <div class="search_word" id="div_search_word">
+		                        <span class="tit">선택된 검색조건</span>
+		                    </div>
+		                </div>
+		
+		
+		                <div class="board_infobox search_item">
+		                    <div class="btn_box">
+		                        <button type="button" class="more">전문검색</button>
+		                    </div>
+		                    <div class="btn_box">
+		                        <button type="button" class="btn_blue" id="searchBtn">검색</button>
+		                    </div>
+		                </div>
+		                
+		                <!-- tab -->
+		                <div class="tab_group hidden" id="div_tab_group">
+		                    <div class="tab_btn">
+		                        <ul>
+		                            <li class="li_tab" id="li_tab_1">
+		                            	<a href="" rel="tab_content_1">투자사 보기</a>
+		                            </li>
+		                            <li class="li_tab" id="li_tab_2">
+		                            	<a href="" rel="tab_content_2">펀드/조합 보기</a>
+		                            </li>
+		                        </ul>
+		                    </div>
+		                    <div class="tab_content">
+		                        <!-- 첫번째 탭 -->
+		                        <div class="div_tab_content tab_content_1" id="div_tab_content_1">
+		                            <!-- 리스트 -->
+		                            <div class="tbl_card_list type_02">
+		                                <!-- 테이블 상단정보 -->
+		                                <div class="list_info">
+		                                    <ul>
+		                                        <li class="li_sort" id="li_OPER_INST_NM">
+		                                            <div class="btn_box">
+		                                                <button class="arrow" id="OPER_INST_NM">투자사명 순</button>
+		                                            </div>
+		                                        </li>
+		                                        <li class="li_sort" id="li_FOUND_ST">
+		                                            <div class="btn_box">
+		                                                <button class="arrow" id="FOUND_ST">업력 순</button>
+		                                            </div>
+		                                        </li>
+		                                        <li class="li_sort" id="li_OPER_BOUND_AMT">
+		                                            <div class="btn_box">
+		                                                <button class="arrow" id="OPER_BOUND_AMT">운영규모 순</button>
+		                                            </div>
+		                                        </li>
+		                                    </ul>
+		                                    <div class="total">전체<strong id="strong_tab_total_1"></strong>건</div>
+		                                </div>
+		                                <!-- //테이블 상단정보 -->
+		                                
+		                                <ul class="ul_tab" id="ul_tab_1"></ul>
+		                            </div>
+		                            <!-- //리스트 -->
+		
+		                            <!-- paging -->
+		                            <div class="board_btn">
+		                                <div class="paging_box">
+		                                    <ul class="ul_paging" id="ul_paging_1"></ul>
+		                                </div>
+		                            </div>
+		                            <!-- //paging -->
+		                        </div>
+		                        <!-- //첫번째 탭 -->
+		
+		                        <!-- 두번째 탭 -->
+		                        <div class="div_tab_content tab_content_2" id="div_tab_content_2">
+		                            <!-- 리스트 -->
+		                            <div class="tbl_card_list type_04">
+		                                <!-- 테이블 상단정보 -->
+		                                <div class="list_info">
+		                                    <ul>
+		                                    	<!-- 230113 버튼추가 -->
+		                                        <li class="li_sort" id="li_FUND_NM">
+		                                            <div class="btn_box">
+		                                                <button class="arrow" id="FUND_NM">펀드명 순</button>
+		                                            </div>
+		                                        </li>
+		                                        <li class="li_sort" id="li_REG_DD">
+		                                            <div class="btn_box">
+		                                                <button class="arrow" id="REG_DD">등록일자 순</button>
+		                                            </div>
+		                                        </li>
+		                                        <!-- 230113 버튼추가 -->
+		                                        <li class="li_sort" id="li_FORM_TOTAMT">
+		                                            <div class="btn_box">
+		                                                <button class="arrow" id="FORM_TOTAMT">결성총액 순</button>
+		                                            </div>
+		                                        </li>
+		                                        <!-- 포털 수정 5차 230113  
+		                                        <li class="li_sort" id="li_INVST_RTO">
+		                                            <div class="btn_box">
+		                                                <button class="arrow" id="INVST_RTO">소진비율</button>
+		                                            </div>
+		                                        </li>
+		                                         -->
+		                                    </ul>
+		                                    <div class="total">전체<strong id="strong_tab_total_2"></strong>건</div>
+		                                </div>
+		                                <!-- //테이블 상단정보 -->
+		                                <ul class="ul_tab" id="ul_tab_2"></ul>
+		                            </div>
+		                            <!-- //리스트 -->
+		
+		                            <!-- paging -->
+		                            <div class="board_btn">
+		                                <div class="paging_box">
+		                                	<ul class="ul_paging" id="ul_paging_2"></ul>
+		                                </div>
+		                            </div>
+		                            <!-- //paging -->
+		                        </div>
+		                        <!-- //두번째 탭 -->
+		                    </div>
+		                </div>
+		                <!-- //tab -->
+		                <!-- //content -->
+					</div>
+		        </div>
+		        <!-- //main content -->
+		    </div>
+			
+
+
+		    <!-- footer -->
+		    <footer>
+		    	
+            	
+		        <div class="footer_top">
+		            <ul class="footer_link">
+		                <li><a href="/web/portal/contents/M090000;jsessionid=87AFFDB8BDA1ACC452ACEEA247CB8930.tomcat2"><strong>개인정보처리방침</strong></a></li>
+		                <li><a href="/web/portal/contents/M100000;jsessionid=87AFFDB8BDA1ACC452ACEEA247CB8930.tomcat2">서비스 이용약관</a></li>
+		                <li><a href="/web/portal/contents/M110000;jsessionid=87AFFDB8BDA1ACC452ACEEA247CB8930.tomcat2">이메일무단수집거부</a></li>
+		                <li><a href="/web/portal/contents/M120000;jsessionid=87AFFDB8BDA1ACC452ACEEA247CB8930.tomcat2">저작권보호방침</a></li>
+		            </ul>
+		            <div class="familysite_box">
+		                <div class="family_select">
+		                    <select id="familyUrl" title="관련사이트">
+		                    	<option value="">관련사이트</option>
+		                    	<option value="https://www.mss.go.kr">중소벤처기업부</option>
+		                        <option value="https://www.kvic.or.kr">한국벤처투자</option>
+		                        <option value="https://www.kvca.or.kr">한국벤처캐피탈협회</option>
+		                        <option value="https://home.kban.or.kr">한국엔젤투자협회</option>
+		                        <option value="https://www.kised.or.kr">창업진흥원</option>
+		                        <option value="https://www.k-startup.go.kr">K-Startup</option>
+		                        <option value="https://www.k-ac.or.kr">초기투자엑셀러레이터협회</option>
+		                    </select>
+		                </div>
+		                <button id="focusibleLast" class="moveUrlBtn">GO</button>
+		            </div>
+		        </div>
+		        
+		        <div class="footer_bottom">
+		            <address>(06595) 서울특별시 서초구 서초대로 45길 16 VR빌딩 2층</address>
+		            <div class="tel_num">
+		                <dl>
+		                    <dt>TEL : </dt>
+		                    <dd>02)3017-7052</dd>
+		                </dl>
+		                <dl>
+		                    <dt>FAX : </dt>
+		                    <dd>02)2156-2110/2111</dd>
+		                </dl>
+		                <dl>
+		                	<dt>EMAIL : </dt>
+		                	<dd>vcic@kvca.or.kr</dd>
+		                </dl>
+		            </div>
+		            <span>Copyright(C) 2022 KVCA. All Rights Reserved.</span>
+		        </div>
+		        
+		        <script type="text/javascript">
+			        jQuery(function($) {
+						$(".moveUrlBtn").on("click", function(e) {
+							if($("#familyUrl").val() != "") window.open($("#familyUrl").val());
+						})
+						
+						$(".quick_box .dialog-link").on("click", function(e) { //퀵-퀵메뉴선택
+							e.preventDefault();
+							var type = $(this).data("type");
+							var popId = $(this).data("popid");
+							searchQuick(type, popId);
+						});
+						
+						$("#add_bmk_btn").on("click", function(e){ //퀵-즐겨찾기 추가
+							e.preventDefault();
+							addQuickBmk(); //즐겨찾기 추가
+						});
+						
+						$(".quick_login_btn").on("click", function(e){ //퀵-로그인 페이지 이동
+							var url = GLOBAL.APP_PATH + "/member/login";
+							location.href = url;
+						});
+						
+						$(".quick_list_btn").on("click", function(e){ //퀵-목록 페이지 이동
+							var type = $(this).data("type");
+							var url = GLOBAL.APP_PATH;
+							if(type=="note") { //알림
+								url = url + "/mypage/note/reception/list";
+							}
+							else { //즐겨찾기
+								url = url + "/mypage/bookmark/list";
+							}
+							location.href = url;
+						});
+						
+						$("#alpop_01").find(".btn_mint").click(function() {
+							if(_func != null) _func();
+							_func = null;
+						})
+						
+						$("#alpop_03").find(".btn_mint").click(function() {
+							$('#alpop_03').dialog("close");
+							if(_func != null) _func();
+							_func = null;
+						})
+						
+						$("#headerSearchKeyword").on("keyup", function(e) {
+							if(e.keyCode == 13) doSearch('header', '');
+						})
+						
+						$("#mainSearchKeyword").on("keyup", function(e) {
+							if(e.keyCode == 13) doSearch('main', '');
+						})
+						
+						
+						
+						
+						
+					});
+					function SSO_Login(dialog){
+						$('#' + dialog).dialog("open");
+
+					}
+					$(document).ready(function () {
+						$(window).on("resize", function () {
+							$(".ui-dialog:visible").each(function () {
+								$(this).position({
+									my: "center",
+									at: "center",
+									of: window
+								});
+							});
+						});
+					});
+			        
+			        // 통합검색
+					function doSearch(type, str) {
+						if(type == "header") {
+							if($("#headerSearchKeyword").val() != "") {
+								$("#headerSearch").submit();
+							}
+						} else if(type == "main") {
+							if(str != "") {
+								$("#mainSearchKeyword").val(str);
+							}
+							$("#mainSearch").submit();
+						}
+					}
+			        
+			        
+					
+					/* kdh:퀵메뉴 작업 영역 시작*/
+					function searchQuick(type, popId) { //퀵메뉴 팝업
+						var loginChk = JSON.parse("true");
+						if(loginChk) {
+							$("#"+popId).dialog("open");
+							return;
+						}
+						
+						var url = GLOBAL.APP_PATH + "/quick/list";
+						var param = { "type": type };
+						$.ajax({
+							url : url
+							, type : 'get'
+							, dataType: 'json'
+							, data: param
+						}).done(function(result) {
+							setQuickList(result, popId);
+							$("#"+popId).dialog("open");
+						}).fail(function(result){
+							onShowToast('퀙메뉴 조회에 실패하였습니다.[fail]');
+						});
+					}
+					
+					function setQuickList(data, popId) { //퀵메뉴 목록 세팅
+		                var length = data.length;
+		                if(length!=undefined && length>=0) {
+		                	if(popId=="quick_01") { //알림
+		                		$("#ul_pop_note").empty(); //영역초기화
+		                		var url = GLOBAL.APP_PATH + "/mypage/note/reception/view?noteReceptionId=";
+		                		var html = '';
+		                		
+		                		if(length>0) {
+		                			for(var i=0; i<length; i++) {
+				                		html += '<li>';
+				                		html += '	<a href="'+ url + data[i].noteReceptionId +'">';
+				                		html += '		<span class="pop_state">'+data[i].codeName+'</span>';
+				                		html += 		data[i].quickNoteTitle;
+				                		html += '	</a>';
+			                		if(!data[i].noteOpen) {
+				                		html += '	<span class="state_box"><span class="state_box red">NEW</span></span>';			                			
+			                		}
+				                		html += '</li>';
+				                	}
+		                		}
+		                		else {
+		                			html += '<li>';
+		                			html += '	데이터가 존재하지 않습니다.';
+		                			html += '</li>';
+		                		}
+		                		
+		                		$("#ul_pop_note").html(html);
+		                	}
+		                	else if(popId=="quick_02") { //즐겨찾기
+		                		$("#ul_pop_bmk").empty();
+			                	var html = '';
+			                	
+			                	if(length>0) {
+			                		for(var i=0; i<length; i++) {
+				                		var menuName = data[i].menuName;
+				                		var menuLink = data[i].menuLink;
+				                		
+				                		html += '<li>';
+				                		if(menuName==undefined || menuName==null || menuName=="" ||
+				                		   menuLink==undefined || menuLink==null || menuLink=="") {
+				                			html += '	삭제되었거나 찾을 수 없는 메뉴입니다.';
+				                		}
+				                		else {
+				                			html += '	<a href="'+menuLink+'">'+menuName+'</a>';
+				                		}
+				                		html += '</li>';
+				                	}
+			                	}
+			                	else {
+			                		html += '<li>';
+		                			html += '	데이터가 존재하지 않습니다.';
+		                			html += '</li>';
+			                	}
+			                	
+			                	$("#ul_pop_bmk").html(html);
+		                	}
+		                }
+					}
+
+					function addQuickBmk() { //즐겨찾기 추가
+						var menuId = "M010100";
+						var url = window.location.pathname;
+						if( url==(GLOBAL.APP_PATH+"/main") ) {
+							menuId = "M000000";
+						}
+						
+						$.ajax({
+							url : GLOBAL.APP_PATH + "/quick/addbmk"
+							, type : 'get'
+							, dataType: 'json'
+							, data: { "menuId": menuId, "url": url }
+						}).done(function(result) {
+							callMsg(result.text, function() {
+									if(result.success) {
+										searchQuick("bmk", "quick_02"); //즐겨찾기 재조회
+									}
+								});
+						}).fail(function(result){
+							onShowToast('즐겨찾기 불러오기를 실패하였습니다.[fail]');
+						});
+					}
+					
+					
+					/* kdh:퀵메뉴 작업 영역 끝*/
+					
+					function fn_bnrPopup() { //챗봇
+
+						alert("벤처투자종합포털 챗봇 서비스 점검 중입니다.\n최대한 빠른 시일 내에 서비스를 제공하겠습니다.");
+						return false;
+
+						var bnrId = "vk7as5ycVJljlNu";
+						var url = "http://www.chatbot.go.kr/chatbotPop.ndo?bnrId="+bnrId;
+						var popTarget = "bnrPopup";
+						var wnd = window.open("", popTarget, "width=550, height=800");
+						var referLink = document.createElement('a');
+						referLink.href = url;
+						referLink.target = popTarget;
+						document.body.appendChild(referLink);
+						referLink.click();
+					}
+		        </script>
+		    </footer>
+		    
+			<!-- 간편로그인 팝업 -->
+			
+
+			<!-- 알림 팝업 -->
+			
+
+			<!-- 즐겨찾기 팝업 -->
+			
+			
+			<!-- 경고팝업 -->
+			
+			
+			<!-- 경고팝업 2 -->
+			
+			
+			<!-- 경고팝업 3 -->
+			
+			
+			<!-- 토스트 메세지 -->
+			<div class="toast_box"><div class="txt"></div></div>
+			
+			
+		</div>
+	
+	
+	<script type="text/javascript">
+		jQuery(function($) {
+			setLocCount(); //소재지 구분 별 개수, 소재지(하위)영역 표시여부
+			setReqText(); //검색조건 키워드 세팅
+		
+			
+			$("#resetBtn").on("click", function(e){ //검색 초기화
+				$("#investorSearch input[type='checkbox']").prop("checked", false); //체크박스
+				$("#sc,#sv").val(""); //검색어
+				$("#div_search_word .word_box").remove(); //검색조건 키워드
+			});
+			
+			$("#invstComLocCdArr,input[name='invstComLocCdArr']").on("click", function(e){ //체크박스(소재지 상위)
+				var value = $(this).val();
+				var checkedAt = $(this).is(":checked");
+				var length = $("input[name='localCdArr']").length;
+				
+				if( value=="all" ) { //전체
+					$("#localCdArr").prop("checked", checkedAt);
+					for(var i=0; i<length; i++) {
+						$("input[name='localCdArr']").eq(i).prop("checked", checkedAt);
+					}
+				}
+				else { //수도권,광역시,그 외
+					for(var i=0; i<length; i++) {
+						var target = $("input[name='localCdArr']").eq(i);
+						if( value==target.data("upper") ) {
+							target.prop("checked", checkedAt);
+						}
+					}
+				}
+				
+				$('.chk_list_more').addClass('on');
+				$('.chk_list_more_btn1 .chk_btn').addClass('on');
+			});
+			
+			$("#localCdArr,input[name='localCdArr']").on("click", function(e){ //체크박스(소재지 하위)
+				var value = $(this).val();
+				var checkedAt = $(this).is(":checked");
+				var length = $("input[name='localCdArr']").length;
+				
+				if( value=="all" ) { //전체
+					$("#invstComLocCdArr,input[name='invstComLocCdArr']").prop("checked", checkedAt);
+				}
+				else { //각 지역
+					var loc = $(this).data("upper");
+					var target = $("input[name='invstComLocCdArr']").eq(loc-1);
+					if( checkedAt ) {
+						var count = 0;
+						for(var i=0; i<length; i++) {
+							var localCdArr = $("input[name='localCdArr']").eq(i);
+							if( loc==localCdArr.data("upper") && localCdArr.is(":checked") ) {
+								count += 1;
+							}
+						}
+
+						if( loc=="1" ) {
+							if( count==loc1_tot ) {
+								target.prop("checked", true);
+							}
+							else {
+								$("#invstComLocCdArr").prop("checked", false);
+								target.prop("checked", false);
+							}
+						}
+						else if( loc=="2" ) {
+							if( count==loc2_tot ) {
+								target.prop("checked", true);
+							}
+							else {
+								$("#invstComLocCdArr").prop("checked", false);
+								target.prop("checked", false);
+							}
+						}
+						else if( loc=="3" ){
+							if( count==loc3_tot ) {
+								target.prop("checked", true);
+							}
+							else {
+								$("#invstComLocCdArr").prop("checked", false);
+								target.prop("checked", false);
+							}
+						}
+					}
+					else {
+						$("#invstComLocCdArr").prop("checked", checkedAt);
+						target.prop("checked", checkedAt);
+					}
+				}
+			});
+			
+			$("input[type='checkbox']").on("change", function(){ //체크박스
+				setReqText(); //검색조건 키워드세팅
+				if( !$(this).is(":checked") ) {
+					var target = this.name;
+					if( target == undefined || target == null || target == "" ) {
+						return;
+					}
+					$("#"+target).prop("checked", false);
+				}
+			});
+			
+			$(".chk_All").on("click", function(){ //전체선택
+				var target = this.id;
+				if( target == undefined || target == null || target == "" ) {
+					return;
+				}
+				var checkAt = $(this).is(":checked");
+				$("input:checkbox[name='" + target + "']").prop("checked", checkAt);
+			});
+			
+			$('.chk_list_more_btn1 .chk_btn button').on('click', function(){ //소재지 더보기 버튼
+		        $(this).parent().toggleClass('on');
+		        $('.chk_list_more').toggleClass('on');
+		    });
+			
+			$(".li_tab").on("click", function(e){ //탭메뉴
+				var rel = e.target.rel;
+				if( rel!=undefined && rel!=null && rel!='' ) {
+					//1:투자사목록, 2:펀드/조합목록
+					$("#sortOrder").val("");
+					$("#sortDirection").val("");
+					$("#tabMenu").val( (rel=="tab_content_2")?"2":"1" );
+					
+					doSearchList("1", "Y"); //폼 검색
+				}
+			});
+			
+			$(".arrow").on("click", function(e){ //정렬순서
+				var btnId = e.target.id;
+				var sortDir = $("#li_"+btnId).hasClass("on")?"ASC":"DESC";
+				$("#sortOrder").val(btnId);
+				$("#sortDirection").val(sortDir);
+				
+				doSearchList("1", "Y"); //폼 검색
+			});
+			
+			$("#sv").on("keyup", function(e){ //검색어
+				if( e.keyCode=="13" ) { //엔터
+					doSearchList("1", "Y");
+				}
+			});
+			
+			$("#searchBtn").on("click", function(e){ // 검색
+				var chkLength = $("#investorSearch input[type='checkbox']:checked").length; //체크박스
+				var svLength = $("#investorSearch #sv").val().trim().length; //검색어
+				var scVal = $("#investorSearch #sc").val(); //검색어 타입
+				
+				if( chkLength<1 && svLength<1 ) {
+					//체크박스와 검색어 모두 미입력상태일 경우 검색불가
+					msg("검색 조건을 선택해 주세요.");
+					return;
+				}
+				if( scVal=="" && svLength>0 ) {
+					//검색어 입력했는데 타입이 '선택'일 경우
+					msg("검색어 타입을 선택해주세요.");
+					return;
+				}
+				
+				if( scVal=="fundNm" ) { //펀드명이면 2번째 탭 포커싱
+					$("#sortOrder").val("");
+					$("#sortDirection").val("");
+					$("#tabMenu").val("2");
+				}
+				doSearchList("1", "Y"); //폼 검색
+			});
+		});
+		
+		var loc1_tot = 0, loc2_tot = 0, loc3_tot = 0; //소재지 별 개수
+		var loc1_chk = 0, loc2_chk = 0, loc3_chk = 0; //소재지 별 체크개수
+		
+		function setLocCount() {
+			//소재지(상위) 별 개수
+			$("input[name='localCdArr']").each(function(i, data){
+				var loc = $(this).data("upper");
+				var chk = $(this).is(":checked");
+				if(loc=="3") {
+					loc3_tot += 1;
+					if(chk) {
+						loc3_chk += 1;
+					}
+				}
+				else if(loc=="2") {
+					loc2_tot += 1;
+					if(chk) {
+						loc2_chk += 1;
+					}
+				}
+				else {
+					loc1_tot += 1;
+					if(chk) {
+						loc1_chk += 1;
+					}
+				}
+			});
+			//소재지(상위) 영역 체크
+			if(loc1_tot==loc1_chk) { //수도권
+				$("#invstComLocCdArr1").attr("checked", true);
+			}
+			if(loc2_tot==loc2_chk) { //5대광역시
+				$("#invstComLocCdArr2").attr("checked", true);
+			}
+			if(loc3_tot==loc3_chk) { //지방
+				$("#invstComLocCdArr3").attr("checked", true);
+			}
+			if( $("input[name='invstComLocCdArr']:checked").length==3 ) { //전체
+				$("#invstComLocCdArr").attr("checked", true);
+			}
+			
+			//소재지(하위) 영역 체크
+			if( $("input[name='localCdArr']:checked").length>0 ) {
+				$('.chk_list_more').addClass('on');
+				$('.chk_list_more_btn1 .chk_btn').addClass('on');
+			}
+		}
+		
+		function doSearchList(cp, scrollYn) { //폼 검색
+			var tabMenu = $("#tabMenu").val();
+			var sortOrder = $("#sortOrder").val();
+			var sortDirection = $("#sortDirection").val();
+			if( cp!=undefined && cp!=null && cp!="" ) {
+				$("#cp").val(cp);
+			}
+			
+			$("#div_tab_group").removeClass("hidden"); //전체 DIV
+			$(".li_tab").removeClass("on"); //탭메뉴
+			$("#li_tab_"+tabMenu).addClass("on");
+			$(".div_tab_content").removeClass("on"); //탭 별 DIV
+			$("#div_tab_content_"+tabMenu).addClass("on");
+			$(".li_sort").removeClass("on, desc"); //정렬버튼
+			
+			if( sortOrder!="" && sortDirection!="DESC" ) {
+				$("#li_"+sortOrder).addClass("on");
+			} else {
+				$("#li_"+sortOrder).addClass("desc");
+			}
+			
+			if( sortOrder == null || sortOrder == '' 
+				|| sortDirection == null || sortDirection == '' ) {
+				if( tabMenu=="2" ) {
+					//$("#li_INVST_PD").addClass("on");
+					//$("#li_FUND_NM").addClass("on"); //230125 펀드명 내림차순으로 변경
+					$("#li_FUND_NM").addClass("desc"); //230125 펀드명 정렬버튼 포커스추가
+				} else {
+					$("#li_OPER_INST_NM").addClass("on");
+				}
+			}
+			
+			//컨텐츠, 페이징
+			$.ajax({
+				url : '/web/portal/investor/search'
+				, type: 'get'
+				, dataType: 'json'
+				, data: $("#investorSearch").serialize()
+			}).done(function(result){
+				var total = result.total;
+				var search = result.investorSearch;
+				var queryString = result.queryString;
+				var html = '';
+				
+				//컨텐츠
+				html = '';
+				if( tabMenu=="1" ) { //투자사
+					if( total<1 ) {
+						html += '<li class="nodata">';
+						html += '	데이터가 존재하지 않습니다.';
+						html += '</li>';
+					} else {
+						result.list.forEach(function(v) {
+							html += '<li>';
+							html += '	<a href="/web/portal/investor/view/' + v.operInstId + '?cp=' + search.cp + queryString + '&searchAt=Y">';
+							html += '	<div class="state_box type_02">';
+						if( v.comIndNm!=null && v.comIndNm!="" ) {
+							html += '		<span class="skyblue">' + v.comIndNm + '</span>';
+						}
+						if( v.sigunguNm!=null && v.sigunguNm!="" ) {
+							html += '		<span class="apricot">' + v.sigunguNm + '</span>';
+						}
+						if( v.operInstTpNm!=null && v.operInstTpNm!="" ) {
+							html += '		<span class="brown">' + v.operInstTpNm +'</span>';
+						}
+						if( v.strtplanerYn=="Y" ) {
+							html += '		<span class="lightgreen">창업기획자</span>';
+						}
+						if( v.pfAnglYn=="Y" ) {
+							html += '		<span class="mauve">전문엔젤</span>';
+						}
+							html += '	</div>';
+							html += '	<div class="tit">' + v.operInstNm + '</div>';
+							html += '	<div class="info">';
+						if( v.foundYy!=null && v.foundYy!="" ) {
+							html += '		<span>업력 ' + v.foundYy + '</span>';
+						} else {
+							html += '		<span>업력 -</span>';
+						}
+						if( v.operBoundAmt!=null && v.operBoundAmt!="" ) {
+							html += '		<span>운영규모 ' + setComma(v.operBoundAmt) + '억원</span>';
+						} else {
+							html += '		<span>운영규모 -</span>';
+						}
+						/* if( v.repEmail!=null && v.repEmail!="" ) {
+							html += '		<span>이메일 ' + v.repEmail + '</span>';
+						} else {
+							html += '		<span>이메일 -</span>';
+						} */
+							html += '	</div>';
+							html += '	</a>';
+							html += '</li>';
+						});
+						
+					}
+				} else { //펀드조합
+					if( total<1 ) {
+						html += '<li class="nodata">';
+						html += '	데이터가 존재하지 않습니다.';
+						html += '</li>';
+					} else {
+						result.list.forEach(function(v) {
+							html += '<li>';
+							// 조합정보 팝업창으로 확인
+							html += '	<a href="javascript:fundDetail(\''+v.fundId+'\');">';
+							html += '	<div class="state_box type_02">';
+						if( v.invstFldTpNm!=null && v.invstFldTpNm!="" ) {
+							html += '		<span class="skyblue">';
+							html += '								' + v.invstFldTpNm;
+							if(v.invstFldDtlTpNm!=null && v.invstFldDtlTpNm!="") {
+								if( v.invstFldDtlTpNm=="부품소재" ) {
+							html += '								/소재·부품';
+											} else {
+							html += '								/' + v.invstFldDtlTpNm;	
+											}
+							}
+							html += '		</span>';
+						}
+						if( v.mfundId!=undefined && v.mfundId!=null && v.mfundId!="" ) { //230207 모태펀드 추가
+							html += '		<span class="green">모태출자펀드</span>';
+						}
+							html += '	</div>';
+							html += '	<div class="tit">';
+							html += '		' + v.fundNm + '<span>' + v.operInstNm + '</span>';
+							html += '	</div>';
+							html += '	<div class="info">';
+							html += '		<span>등록일자 ';
+						if( v.regDd!=null && v.regDd!="" ) {
+							html += '			' + v.regDd;
+						} else {
+							html += '			·';
+						}
+							//html += '			 ~ ';
+							html += '		</span>';
+							html += '		<span>';
+						if( v.expDd!=null && v.expDd!="" ) {
+							html += '			만기일자 ';
+							html += '			' + v.expDd;
+						} else {
+							html += '			·';
+						}
+							html += '		</span>';
+						/* 포탈 수정 5차 230113
+						if( v.invstRto!=null && v.invstRto!="" ) {
+							html += '		<span>소진비율 ' + v.invstRto + '%</span>';
+						} else {
+							html += '		<span>소진비율 -</span>';
+						}
+						 */
+						if( v.formTotamt!=null && v.formTotamt!="" ) {
+							html += '		<span>결성총액 ' + setComma(v.formTotamt) + '억원</span>';
+						} else {
+							html += '		<span>결성총액 -</span>';
+						}
+							html += '	</div>';
+						/* if( v.invstCharcNm!=null && v.invstCharcNm!="" ) {
+							html += '	<div class="hashtag">';
+							html += '		<span>#' + v.invstCharcNm + '</span>';
+							html += '	</div>';
+						} */
+							html += '</a>';
+							html += '</li>';
+						});
+					}
+				}
+				$(".ul_tab").empty(); //컨텐츠
+				$("#ul_tab_"+tabMenu).append(html);
+				
+				//페이징
+				var cp = $("#cp").val();
+				html = '';
+				if( total>0 ) {
+					var firstPage = '1'; //첫 페이지
+					var lastPage = Math.ceil(Number(total)/10); //마지막 페이지
+					var listPage = []; //현재 페이지영역
+					for(var i = 1; i <= 10; i++) {
+						var j = i + ((Math.ceil(cp/10)-1)*10);
+						if(Math.ceil(Number(total)/10) >= j) {
+							listPage.push(j);
+						}
+					}
+					
+					if( listPage.length>0 ) {
+						var pageLength = listPage.length;
+						var prevPage = (listPage[0]=='1')?'1':(listPage[0]-1);
+						var nextPage = (listPage[pageLength-1]==lastPage)?lastPage:(listPage[pageLength-1]+1);
+						html += '<li class="prev_all"><a href="javascript:doSearchList(\'' + firstPage + '\', \'Y\');" title="최신페이지로 이동"></a></li>';
+						html += '<li class="prev"><a href="javascript:doSearchList(\'' + prevPage + '\', \'Y\');" title="이전페이지로 이동"></a></li>';
+						for(var i=0; i<pageLength; i++) {
+							var pageValue = listPage[i];
+							var onAt = (cp==pageValue)?"on":"";
+							html += '<li class="' + onAt + '" id="page' + pageValue + '">';
+							html += '	<a href="javascript:doSearchList(\'' + pageValue + '\', \'Y\');">' + pageValue + '</a>';
+							html += '</li>';
+						}
+						html += '<li class="next"><a href="javascript:doSearchList(\'' + nextPage + '\', \'Y\');" title="다음페이지로 이동"></a></li>';
+						html += '<li class="next_all"><a href="javascript:doSearchList(\'' + lastPage + '\', \'Y\');" title="마지막페이지로 이동"></a></li>';
+					}
+				}
+				$(".ul_paging").empty(); //페이징
+				$("#ul_paging_"+tabMenu).append(html);
+				
+				//전체 건수
+				$("#strong_tab_total_"+tabMenu).text(total);
+				
+				if( scrollYn!=undefined && scrollYn!=null & scrollYn=="Y" ) {
+					doScroll(); //스크롤 이동
+				}
+			}).fail(function(result){
+				console.log("fail", result);
+			});
+		}
+		
+		function doScroll() { //스크롤 이동
+			var targetH = $("#searchBtn").offset().top;
+			var headerH = $(".header_top").height();
+			var resultH = targetH;
+			if( headerH!=undefined && headerH!=null && headerH<targetH ) {
+				resultH = targetH - headerH;
+			}
+			$('html').animate({ scrollTop : resultH }, 500);
+		}
+		
+		function setComma(value) { //천단위 콤마
+			var valArr = value.split(".");
+			//정수
+			var valInt = valArr[0];
+			valInt = valInt.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+			
+			//소수점
+			var valDec = valArr[1];
+			
+			//값 세팅 및 리턴(소수점 값이 0이면 정수만 출력되도록 함)
+			value = (valDec>"0")?(valInt+"."+valDec):valInt;
+			if(value=="-0") {
+				value = "0";
+			}
+			
+			return value;
+		}
+		
+		function setReqText() { //선택된 검색조건 키워드영역 세팅
+			$("input[type='checkbox']").each(function(i, data){
+				if( data.className=="chk_All" ) { //체크박스 '전체'는 제외
+					//console.log("className :: chk_all.. return");
+					return;
+				}
+				if( data.name=="invstComLocCdArr" ) { //체크박스 '소재지(상위)'는 제외
+					//console.log("name :: invstComLocCdArr.. return");
+					return;
+				}
+				
+				var wordId = 'word_box_' + data.id; //검색조건 키워드아이디
+				if( data.checked ) { //체크되었다면 키워드 추가
+					if( $("#"+wordId).length==0 ) {
+						var html = '';
+						html += '<div class="word_box" id="' + wordId + '">';
+						//html += '	<a href="javascript:void(0);">';
+						html += ',\t\t' + $("label[for='"+data.id+"']").text();
+						//html += '	</a>';
+						html += '</div>';
+						$("#div_search_word").append(html);
+					}
+				} else { //키워드 삭제
+					$("#"+wordId).remove();
+				}
+			});
+			
+			var divLength = $("#div_search_word .word_box").length;
+			if( divLength>0 ) { //첫번째 검색조건어 쉼표제거
+				var replaceText = $("#div_search_word .word_box").first().text().replace(",","");
+				$("#div_search_word .word_box").first().text(replaceText);
+			}
+		}
+		
+		
+		
+		// 조합정보 팝업창으로 확인
+		function fundDetail(fundId){
+			var width = 750;
+			var height = 590;
+			var left = (window.screen.width / 2) - (width/2);
+			var top = (window.screen.height / 8);
+			var param = fundId
+
+			var windowStatus = 'width='+width+', height='+height+', left='+left+', top='+top+', scrollbars=yes, status=yes, resizable=yes, titlebar=no';
+	    	const url = '/web/portal/investor/fundPop/'+param;
+		
+			window.open(url,"조합정보",windowStatus);
+		}		
+	</script>
+<div tabindex="-1" role="dialog" class="ui-dialog ui-corner-all ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable ui-resizable" aria-describedby="alpop_01" aria-labelledby="ui-id-1" style="display: none; position: fixed;"><div class="ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix ui-draggable-handle"><span id="ui-id-1" class="ui-dialog-title">&nbsp;</span><button type="button" class="ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close" title="Close"><span class="ui-button-icon ui-icon ui-icon-closethick"></span><span class="ui-button-icon-space"> </span>Close</button></div><div id="alpop_01" class="dialog alpop_box ui-dialog-content ui-widget-content">
+			    <div class="pop_header">
+			        <span class="img1"></span>
+			    </div>
+			
+			    <div class="pop_content"></div>
+			
+			    <div class="pop_footer">
+			        <div class="btn_box">
+			            <button class="btn_mint pop_close">확인</button>
+			        </div>
+			    </div>
+			</div><div class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><div class="ui-dialog-buttonset"><button type="button" class="ui-button ui-corner-all ui-widget">닫기</button></div></div><div class="ui-resizable-handle ui-resizable-n" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-e" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-s" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-w" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-se ui-icon ui-icon-gripsmall-diagonal-se" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-sw" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-ne" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-nw" style="z-index: 90;"></div></div><div tabindex="-1" role="dialog" class="ui-dialog ui-corner-all ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable ui-resizable" aria-describedby="alpop_02" aria-labelledby="ui-id-2" style="display: none; position: fixed;"><div class="ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix ui-draggable-handle"><span id="ui-id-2" class="ui-dialog-title">&nbsp;</span><button type="button" class="ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close" title="Close"><span class="ui-button-icon ui-icon ui-icon-closethick"></span><span class="ui-button-icon-space"> </span>Close</button></div><div id="alpop_02" class="dialog alpop_box ui-dialog-content ui-widget-content">
+			    <div class="pop_header">
+			        <span class="img2"></span>
+			    </div>
+			
+			    <div class="pop_content"></div>
+			
+			    <div class="pop_footer">
+			        <div class="btn_box">
+			            <button class="btn_mint pop_close">확인</button>
+			        </div>
+			    </div>
+			</div><div class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><div class="ui-dialog-buttonset"><button type="button" class="ui-button ui-corner-all ui-widget">닫기</button></div></div><div class="ui-resizable-handle ui-resizable-n" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-e" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-s" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-w" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-se ui-icon ui-icon-gripsmall-diagonal-se" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-sw" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-ne" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-nw" style="z-index: 90;"></div></div><div tabindex="-1" role="dialog" class="ui-dialog ui-corner-all ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable ui-resizable" aria-describedby="alpop_03" aria-labelledby="ui-id-3" style="display: none; position: fixed;"><div class="ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix ui-draggable-handle"><span id="ui-id-3" class="ui-dialog-title">&nbsp;</span><button type="button" class="ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close" title="Close"><span class="ui-button-icon ui-icon ui-icon-closethick"></span><span class="ui-button-icon-space"> </span>Close</button></div><div id="alpop_03" class="dialog alpop_box ui-dialog-content ui-widget-content">
+			    <div class="pop_header">
+			        <span class="img3"></span>
+			    </div>
+			
+			    <div class="pop_content"></div>
+			
+			    <div class="pop_footer">
+			        <div class="btn_box">
+			            <button class="btn_gray pop_close">취소</button>
+			            <button class="btn_mint">확인</button>
+			        </div>
+			    </div>
+			</div><div class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><div class="ui-dialog-buttonset"><button type="button" class="ui-button ui-corner-all ui-widget">닫기</button></div></div><div class="ui-resizable-handle ui-resizable-n" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-e" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-s" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-w" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-se ui-icon ui-icon-gripsmall-diagonal-se" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-sw" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-ne" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-nw" style="z-index: 90;"></div></div><div tabindex="-1" role="dialog" class="ui-dialog ui-corner-all ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable ui-resizable" aria-describedby="SSO_Login" aria-labelledby="ui-id-4" style="display: none; position: fixed;"><div class="ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix ui-draggable-handle"><span id="ui-id-4" class="ui-dialog-title">&nbsp;</span><button type="button" class="ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close" title="Close"><span class="ui-button-icon ui-icon ui-icon-closethick"></span><span class="ui-button-icon-space"> </span>Close</button></div><div id="SSO_Login" class="quick_dialog none_border ui-dialog-content ui-widget-content">
+			    <!-- pop_header -->
+			    <div class="pop_header">
+					<div>
+						<h5 class="mb10">중소벤처24 통합로그인 사이트</h5>
+						<small style="font-weight: 400">한 번의 로그인으로 중소벤처기업부 모든 사이트를 바로 이용할 수 있습니다.</small>
+					</div>
+					<a href="javascript:void(0);" onclick="$('#SSO_Login').dialog('close')"><img src="/design/common/images/asset/close.png" alt="닫기" width="16px"></a>
+			    </div>
+			    <!-- //pop_header -->
+			
+			    <!-- pop_content -->
+			    <div class="pop_content a-block">
+					<a href="https://www.vcs.go.kr/magicsso/requestAuthEx.jsp?RelayState=https://www.smes.go.kr/magicsso/requestConnect.jsp" target="_blank"><dl>
+						<dt><span class="ico_gvmnt"></span>중소벤처24</dt>
+						<dd>증명서 및 사업신청 통화서비스 제공</dd>
+					</dl></a>
+					<a href="https://www.vcs.go.kr/magicsso/requestAuthEx.jsp?RelayState=https://sso.sbiz.or.kr/magicsso/requestConnect.jsp?RelayState=/sso/agentLoginAction.do?reqSite=edu" target="_blank"><dl>
+						<dt><span class="ico_edu"></span>소상공인지식배움터</dt>
+						<dd>소상공인 단계별 맞춤형 교육 제공</dd>
+					</dl></a>
+					<a href="https://www.vcs.go.kr/magicsso/requestAuthEx.jsp?RelayState=https://www.ultari.go.kr/magicsso/requestConnect.jsp" target="_blank"><dl>
+						<dt><span class="ico_hands"></span>기술보호울타리</dt>
+						<dd>기술보호 정부사업 정보 제공</dd>
+			        </dl></a>
+					<a href="https://www.vcs.go.kr/magicsso/requestAuthEx.jsp?RelayState=https://www.bizinfo.go.kr/magicsso/requestConnect.jsp" target="_blank"><dl>
+						<dt><span class="ico_buliding"></span>기업마당</dt>
+						<dd>중소기업 지원정책 정보 제공</dd>
+			        </dl></a>
+
+
+
+
+					<a href="https://www.vcs.go.kr/magicsso/requestAuthEx.jsp?RelayState=https://sso.sbiz.or.kr/magicsso/requestConnect.jsp?RelayState=/sso/agentLoginAction.do?reqSite=sg" target="_blank"><dl>
+						<dt><span class="ico_shops"></span>상권정보시스템</dt>
+						<dd>업종별 상권분석 정보 제공</dd>
+			        </dl></a>
+					<a href="https://www.vcs.go.kr/magicsso/requestAuthEx.jsp?RelayState=https://sso.sbiz.or.kr/magicsso/requestConnect.jsp?RelayState=/sso/agentLoginAction.do?reqSite=sbiz" target="_blank"><dl>
+						<dt><span class="ico_chat"></span>소상공인마당</dt>
+						<dd>창업 및 운영 정보 제공</dd>
+			        </dl></a>
+					<a href="https://www.vcs.go.kr/magicsso/requestAuthEx.jsp?RelayState=https://www.smart-factory.kr/magicsso/requestConnect.jsp" target="_blank"><dl>
+						<dt><span class="ico_chip"></span>스마트공장<br class="mb-only">사업관리시스템</dt>
+						<dd>스마트공장 시스템 사업 정보 제공</dd>
+			        </dl></a>
+					<a href="https://www.vcs.go.kr/magicsso/requestAuthEx.jsp?RelayState=https://www.smtech.go.kr/front/magicsso/requestConnect.jsp" target="_blank"><dl>
+						<dt><span class="ico_writingpencil"></span>중소기업 기술개발사업 <br class="mb-only">종합관리시스템</dt>
+						<dd>기술개발지원사업 정보 제공</dd>
+			        </dl></a>
+					<a href="https://www.vcs.go.kr/magicsso/requestAuthEx.jsp?RelayState=https://www.smes.go.kr/sanhakin/magicsso/requestConnect.jsp?RelayState=/sanhakin/connApi/connClient.jsp" target="_blank"><dl>
+						<dt><span class="ico_HR"></span>중소기업 인력지원사업 <br class="mb-only">종합관리시스템</dt>
+						<dd>인력 지원사업 정보 제공</dd>
+			        </dl></a>
+					<a href="https://www.vcs.go.kr/magicsso/requestAuthEx.jsp?RelayState=https://sminfo.mss.go.kr/magicsso/requestConnect.jsp" target="_blank"><dl>
+						<dt><span class="ico_searchdoc"></span>중소기업현황<br class="mb-only">정보시스템</dt>
+						<dd>중소기업확인서 신청 및 발급 제공</dd>
+			        </dl></a>
+					<a href="https://www.vcs.go.kr/magicsso/requestAuthEx.jsp?RelayState=https://www.kosmes.or.kr/magicsso/requestConnect.jsp" target="_blank"><dl>
+						<dt><span class="ico_handwithstar"></span>중소벤처기업진흥공단</dt>
+						<dd>기업 자금 운영지원 정보 제공</dd>
+			        </dl></a>
+					<a href="https://www.vcs.go.kr/magicsso/requestAuthEx.jsp?RelayState=https://www.smes.go.kr/binet/magicsso/requestConnect.jsp?RelayState=https://www.smes.go.kr/binet/connApi/connClient.jsp" target="_blank"><dl>
+						<dt><span class="ico_dataroom"></span>창업보육센터 <br class="mb-only">네트워크시스템</dt>
+						<dd>창업지원 종합정보 제공</dd>
+			        </dl></a>
+					<a href="https://www.vcs.go.kr/magicsso/requestAuthEx.jsp?RelayState=https://cert.k-startup.go.kr/magicsso/requestConnect.jsp?RelayState=/uat/uia/ssoLoginByCi.do" target="_blank"><dl>
+						<dt><span class="ico_searchmobile"></span>창업기업 확인시스템</dt>
+						<dd>창업기업 확인시스템</dd>
+			        </dl></a>
+				</div>
+			    <!-- //pop_content -->
+				<div class="pop_footer">
+					<ul class="" style="flex: 2 1">
+						<li>중소벤처24 통합로그인 사이트는 중소벤처기업부 각 사이트를 한번의 회원 인증으로 편리하게 이용할 수 있도록 하는 통합 인증(Single Sign On) 서비스입니다.</li>
+						<li>중소벤처24 통합회원으로 가입하시면 보다 쉽고 빠르게 사이트를 이용하실 수 있습니다.</li>
+					</ul>
+					<div class="btn_box" style="flex:1 0">
+						<button type="button" class="btn_blue" onclick="window.open('https://www.smes.go.kr/main/mber/selectMemberType')" target="_blank">중소벤처24 통합회원 <br class="mb-only">가입하기</button>
+					</div>
+				</div>
+			</div><div class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><div class="ui-dialog-buttonset"><button type="button" class="ui-button ui-corner-all ui-widget">닫기</button></div></div><div class="ui-resizable-handle ui-resizable-n" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-e" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-s" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-w" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-se ui-icon ui-icon-gripsmall-diagonal-se" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-sw" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-ne" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-nw" style="z-index: 90;"></div></div><div tabindex="-1" role="dialog" class="ui-dialog ui-corner-all ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable ui-resizable" aria-describedby="quick_01" aria-labelledby="ui-id-5" style="display: none; position: fixed;"><div class="ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix ui-draggable-handle"><span id="ui-id-5" class="ui-dialog-title">&nbsp;</span><button type="button" class="ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close" title="Close"><span class="ui-button-icon ui-icon ui-icon-closethick"></span><span class="ui-button-icon-space"> </span>Close</button></div><div id="quick_01" class="quick_dialog ui-dialog-content ui-widget-content">
+			    <!-- pop_header -->
+			    <div class="pop_header">
+			        <h5 class="alarm"><span></span>알림</h5>
+			        <div class="more">
+			        	
+			        </div>
+			    </div>
+			    <!-- //pop_header -->
+
+			    <!-- pop_content -->
+			    <div class="pop_content">
+			        <div class="pop_list">
+			        	
+			        		로그인 후 알림 기능을 이용하실 수 있습니다.
+			        	
+			        	
+			        </div>
+			        <div class="btn_box">
+			        	
+			        		<button type="button" class="quick_login_btn">로그인 페이지 이동</button>
+			        	
+			        </div>
+			    </div>
+			    <!-- //pop_content -->
+			</div><div class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><div class="ui-dialog-buttonset"><button type="button" class="ui-button ui-corner-all ui-widget">닫기</button></div></div><div class="ui-resizable-handle ui-resizable-n" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-e" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-s" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-w" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-se ui-icon ui-icon-gripsmall-diagonal-se" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-sw" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-ne" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-nw" style="z-index: 90;"></div></div><div tabindex="-1" role="dialog" class="ui-dialog ui-corner-all ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable ui-resizable" aria-describedby="quick_02" aria-labelledby="ui-id-6" style="display: none; position: fixed;"><div class="ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix ui-draggable-handle"><span id="ui-id-6" class="ui-dialog-title">&nbsp;</span><button type="button" class="ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close" title="Close"><span class="ui-button-icon ui-icon ui-icon-closethick"></span><span class="ui-button-icon-space"> </span>Close</button></div><div id="quick_02" class="quick_dialog ui-dialog-content ui-widget-content">
+			    <!-- pop_header -->
+			    <div class="pop_header">
+			        <h5 class="favorites"><span></span>즐겨찾기</h5>
+			        <div class="more">
+			        	
+			        </div>
+			    </div>
+			    <!-- //pop_header -->
+			
+			    <!-- pop_content -->
+			    <div class="pop_content">
+			        <div class="pop_list">
+			        	
+			        		로그인 후 즐겨찾기 기능을 이용하실 수 있습니다.
+			        	
+			        	
+			        </div>
+			        <div class="btn_box">
+			        	
+			        		<button type="button" class="quick_login_btn">로그인 페이지 이동</button>
+			        	
+			        	
+			        </div>
+			    </div>
+			    <!-- //pop_content -->
+			
+			</div><div class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><div class="ui-dialog-buttonset"><button type="button" class="ui-button ui-corner-all ui-widget">닫기</button></div></div><div class="ui-resizable-handle ui-resizable-n" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-e" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-s" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-w" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-se ui-icon ui-icon-gripsmall-diagonal-se" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-sw" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-ne" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-nw" style="z-index: 90;"></div></div></body></html>

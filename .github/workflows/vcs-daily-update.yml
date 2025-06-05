@@ -1,0 +1,259 @@
+name: 🚀 VCS Daily Data Update
+
+on:
+  # Daily schedule at 6:00 AM KST (9:00 PM UTC previous day)
+  schedule:
+    - cron: '0 21 * * *'
+  
+  # Allow manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run in dry-run mode (no database changes)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      data_source:
+        description: 'Data source to update'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - 'all'
+          - 'vcs-only'
+          - 'diva-only'
+
+jobs:
+  vcs-update:
+    name: 📊 Update VCS Data
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    strategy:
+      # Don't cancel other jobs if one fails
+      fail-fast: false
+      
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      NODE_ENV: production
+      TZ: Asia/Seoul
+      
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: 🚀 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: 📦 Install dependencies
+        run: |
+          npm ci
+          npm ls
+          
+      - name: 🔍 Environment check
+        run: |
+          echo "🕐 Current time (KST): $(TZ=Asia/Seoul date)"
+          echo "🌐 Node.js version: $(node --version)"
+          echo "📦 NPM version: $(npm --version)"
+          echo "🏗️ Runner OS: ${{ runner.os }}"
+          echo "💻 Runner architecture: ${{ runner.arch }}"
+          
+      - name: 📁 Create required directories
+        run: |
+          mkdir -p automation/logs
+          mkdir -p vcs_daily_updates
+          mkdir -p temp_updates
+          mkdir -p vcs_api_data
+          
+      - name: 🔐 Verify Supabase connection
+        run: |
+          node -e "
+            const { createClient } = require('@supabase/supabase-js');
+            const client = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+            client.from('vc_table').select('count', { count: 'exact', head: true })
+              .then(({data, error}) => {
+                if (error) throw error;
+                console.log('✅ Supabase connection successful');
+                console.log('📊 Current VC records:', data?.count || 0);
+              })
+              .catch(err => {
+                console.error('❌ Supabase connection failed:', err.message);
+                process.exit(1);
+              });
+          "
+          
+      - name: 🎯 Run VCS data update
+        id: vcs-update
+        run: |
+          echo "🚀 Starting VCS data update..."
+          
+          # Set dry run mode if specified
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            echo "🧪 DRY RUN MODE ENABLED"
+            export DRY_RUN=true
+          fi
+          
+          # Run the enhanced VCS updater
+          npm run vcs:update || {
+            echo "❌ VCS update failed with exit code $?"
+            exit 1
+          }
+          
+          echo "✅ VCS update completed successfully"
+          
+      - name: 📊 Generate update summary
+        if: always()
+        run: |
+          echo "📈 === VCS UPDATE SUMMARY ===" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🕐 **Execution Time**: $(TZ=Asia/Seoul date)" >> $GITHUB_STEP_SUMMARY
+          echo "🔧 **Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "💻 **Runner**: ${{ runner.os }} ${{ runner.arch }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check if log files exist and summarize
+          if [ -d "automation/logs" ] && [ "$(ls -A automation/logs)" ]; then
+            echo "📝 **Latest Log File**:" >> $GITHUB_STEP_SUMMARY
+            LATEST_LOG=$(ls -t automation/logs/*.log | head -1)
+            if [ -f "$LATEST_LOG" ]; then
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              tail -20 "$LATEST_LOG" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
+          # Check update data
+          if [ -d "vcs_daily_updates" ] && [ "$(ls -A vcs_daily_updates)" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "📁 **Update Data Created**: $(ls -la vcs_daily_updates | wc -l) files" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+      - name: 💾 Upload logs as artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vcs-update-logs-${{ github.run_number }}
+          path: |
+            automation/logs/
+            vcs_daily_updates/
+          retention-days: 7
+          
+      - name: 📤 Upload VCS data artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vcs-api-data-${{ github.run_number }}
+          path: vcs_api_data/
+          retention-days: 3
+          
+      - name: 🚨 Notify on failure
+        if: failure()
+        run: |
+          echo "❌ VCS UPDATE FAILED"
+          echo "🕐 Time: $(TZ=Asia/Seoul date)"
+          echo "📊 Job status: ${{ job.status }}"
+          echo "🔗 Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          
+          # Log error details
+          if [ -d "automation/logs" ]; then
+            echo "📝 Latest error logs:"
+            find automation/logs -name "*.log" -newer . -exec tail -10 {} \;
+          fi
+          
+  health-check:
+    name: 🏥 System Health Check
+    runs-on: ubuntu-latest
+    needs: vcs-update
+    if: always()
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: 🚀 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: 📦 Install dependencies
+        run: npm ci
+        
+      - name: 🔍 Database health check
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          node -e "
+            const { createClient } = require('@supabase/supabase-js');
+            
+            async function healthCheck() {
+              const client = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+              
+              try {
+                // Check VC table
+                const { data: vcData, error: vcError } = await client
+                  .from('vc_table')
+                  .select('count', { count: 'exact', head: true });
+                
+                if (vcError) throw vcError;
+                
+                // Check fund table
+                const { data: fundData, error: fundError } = await client
+                  .from('fund_table')
+                  .select('count', { count: 'exact', head: true });
+                
+                if (fundError) throw fundError;
+                
+                // Check latest updates
+                const { data: latestVc } = await client
+                  .from('vc_table')
+                  .select('updated_at')
+                  .order('updated_at', { ascending: false })
+                  .limit(1);
+                
+                const { data: latestFund } = await client
+                  .from('fund_table')
+                  .select('import_date')
+                  .order('import_date', { ascending: false })
+                  .limit(1);
+                
+                console.log('🏥 === DATABASE HEALTH CHECK ===');
+                console.log('✅ Database connection: OK');
+                console.log('📊 VC records:', vcData?.count || 0);
+                console.log('💰 Fund records:', fundData?.count || 0);
+                console.log('🕐 Latest VC update:', latestVc?.[0]?.updated_at || 'N/A');
+                console.log('🕐 Latest fund import:', latestFund?.[0]?.import_date || 'N/A');
+                console.log('✅ Health check completed successfully');
+                
+              } catch (error) {
+                console.error('❌ Health check failed:', error.message);
+                process.exit(1);
+              }
+            }
+            
+            healthCheck();
+          "
+          
+      - name: 📈 Generate health report
+        run: |
+          echo "🏥 === DATABASE HEALTH REPORT ===" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 System status after VCS update" >> $GITHUB_STEP_SUMMARY
+          echo "🕐 Health check time: $(TZ=Asia/Seoul date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.vcs-update.result }}" = "success" ]; then
+            echo "✅ **VCS Update**: SUCCESSFUL" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **VCS Update**: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Full logs**: Available in workflow artifacts" >> $GITHUB_STEP_SUMMARY 

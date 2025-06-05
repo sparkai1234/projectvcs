@@ -13,11 +13,11 @@ async function testSupabaseConnection() {
     
     // Check environment variables
     const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_KEY = process.env.SUPABASE_KEY;
+    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
     if (!SUPABASE_URL || !SUPABASE_KEY) {
         console.error('❌ Missing Supabase credentials in .env file');
-        console.error('Please check SUPABASE_URL and SUPABASE_KEY');
+        console.error('Please check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
         return;
     }
     
@@ -67,7 +67,7 @@ async function testSupabaseConnection() {
         const testData = {
             company_id: 'test_' + Date.now(),
             company_name: 'Test Company',
-            apify_source: 'Connection Test'
+            data_source: 'Connection Test'
         };
         
         const { data: insertTest, error: insertError } = await supabase
