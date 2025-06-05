@@ -1,4 +1,5 @@
-const Apify = require('apify');
+const { Actor } = require('apify');
+const { PuppeteerCrawler } = require('crawlee');
 const { createClient } = require('@supabase/supabase-js');
 
 /**
@@ -16,10 +17,10 @@ const { createClient } = require('@supabase/supabase-js');
  * - 통계정보 (Statistics PDFs)
  */
 
-Apify.main(async () => {
+Actor.main(async () => {
     console.log('🚀 Starting Comprehensive DIVA Intelligence Scraper...');
     
-    const input = await Apify.getInput();
+    const input = await Actor.getInput();
     
     // Configuration
     const config = {
@@ -64,7 +65,7 @@ Apify.main(async () => {
     }
     
     // Setup crawler
-    const crawler = new Apify.PuppeteerCrawler({
+    const crawler = new PuppeteerCrawler({
         launchOptions: {
             headless: input.headless !== false,
             args: [
@@ -212,7 +213,7 @@ async function handleInvestmentPerformance(page, config, supabase) {
             };
             
             // Save to Apify dataset
-            await Apify.pushData({
+            await Actor.pushData({
                 ...processedRecord,
                 dataType: 'investment_performance'
             });
@@ -286,7 +287,7 @@ async function handleFinancialStatements(page, config, supabase) {
                 source_url: page.url()
             };
             
-            await Apify.pushData({
+            await Actor.pushData({
                 ...processedRecord,
                 dataType: 'financial_statements'
             });
@@ -350,7 +351,7 @@ async function handlePersonnelStatus(page, config, supabase) {
                 source_url: page.url()
             };
             
-            await Apify.pushData({
+            await Actor.pushData({
                 ...processedRecord,
                 dataType: 'personnel_status'
             });
@@ -412,7 +413,7 @@ async function handleProfessionalPersonnel(page, config, supabase) {
                 source_url: page.url()
             };
             
-            await Apify.pushData({
+            await Actor.pushData({
                 ...processedRecord,
                 dataType: 'professional_personnel'
             });
@@ -480,7 +481,7 @@ async function handleAssociationStatus(page, config, supabase) {
                 source_url: page.url()
             };
             
-            await Apify.pushData({
+            await Actor.pushData({
                 ...processedRecord,
                 dataType: 'association_status'
             });
@@ -546,7 +547,7 @@ async function handleViolations(page, config, supabase) {
                 source_url: page.url()
             };
             
-            await Apify.pushData({
+            await Actor.pushData({
                 ...processedRecord,
                 dataType: 'violations'
             });
@@ -608,7 +609,7 @@ async function handleVCMap(page, config, supabase) {
                 source_url: page.url()
             };
             
-            await Apify.pushData({
+            await Actor.pushData({
                 ...processedRecord,
                 dataType: 'vc_map'
             });
@@ -660,7 +661,7 @@ async function handleStatisticsPDFs(page, config, supabase) {
         
         // Save PDF metadata
         for (const pdf of pdfLinks) {
-            await Apify.pushData({
+            await Actor.pushData({
                 ...pdf,
                 dataType: 'statistics_pdf'
             });
@@ -672,7 +673,7 @@ async function handleStatisticsPDFs(page, config, supabase) {
                     const buffer = await response.buffer();
                     const filename = `statistics_${Date.now()}_${pdf.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
                     
-                    await Apify.setValue(filename, buffer, { contentType: 'application/pdf' });
+                    await Actor.setValue(filename, buffer, { contentType: 'application/pdf' });
                     console.log(`📁 Saved PDF: ${filename}`);
                 } catch (pdfError) {
                     console.error(`❌ Error downloading PDF ${pdf.title}:`, pdfError.message);
@@ -819,7 +820,7 @@ async function extractDataForPage(page, dataType, supabase) {
                     source_url: page.url()
                 };
                 
-                await Apify.pushData({
+                await Actor.pushData({
                     ...processedRecord,
                     dataType: 'investment_performance'
                 });
