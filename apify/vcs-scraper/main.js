@@ -797,13 +797,32 @@ async function upsertFundToSupabase(supabaseClient, fundData) {
     try {
         const supabaseData = transformFundForSupabase(fundData);
         
-        const { data, error } = await supabaseClient
-            .from('fund_table')
-            .upsert(supabaseData, {
-                onConflict: 'fund_name', // Using fund_name as unique identifier
-                ignoreDuplicates: false
-            })
-            .select();
+        // Try upsert with onConflict, fallback to insert if constraint doesn't exist
+        let data, error;
+        try {
+            const result = await supabaseClient
+                .from('fund_table')
+                .upsert(supabaseData, {
+                    onConflict: 'fund_name',
+                    ignoreDuplicates: false
+                })
+                .select();
+            data = result.data;
+            error = result.error;
+        } catch (upsertError) {
+            // If onConflict fails due to missing constraint, try simple insert
+            if (upsertError.message?.includes('no unique or exclusion constraint')) {
+                console.log(`⚠️ No unique constraint for fund_name, using insert for: ${supabaseData.fund_name}`);
+                const result = await supabaseClient
+                    .from('fund_table')
+                    .insert(supabaseData)
+                    .select();
+                data = result.data;
+                error = result.error;
+            } else {
+                throw upsertError;
+            }
+        }
             
         if (error) {
             console.error(`❌ Supabase upsert error for ${supabaseData.fund_name}:`, error.message);
