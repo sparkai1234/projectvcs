@@ -1,19 +1,19 @@
 /**
- * 🇰🇷 OPTIMIZED VCS WEEKLY SCRAPER - APIFY ACTOR
- * ==============================================
+ * 🇰🇷 OPTIMIZED VCS WEEKLY SCRAPER - APIFY ACTOR v2.0.2
+ * ====================================================
  * 
- * Enhanced scraper based on:
- * - Real VCS website structure research
- * - Proven scraping techniques from enhanced_vcs_updater.js
- * - Weekly automation strategy from migration plan
- * - Professional error handling and monitoring
+ * BREAKTHROUGH UPDATE:
+ * - Fixed target URL to correct investor search page
+ * - Implemented proper search workflow with filters
+ * - Added search button interaction
+ * - Enhanced data extraction from real search results
  */
 
 const { Actor } = require('apify');
 const { createClient } = require('@supabase/supabase-js');
 
 Actor.main(async () => {
-    console.log('🇰🇷 VCS Weekly Scraper Actor Started (Phase 1)');
+    console.log('🇰🇷 VCS Weekly Scraper Actor Started (Phase 1) - v2.0.2');
     console.log(`🕐 Execution time: ${new Date().toISOString()}`);
     
     // Get input parameters from Apify Console UI
@@ -33,14 +33,13 @@ Actor.main(async () => {
     console.log(`🎯 Data Source: ${dataSource}`);
     console.log(`💾 Export to Supabase: ${exportToSupabase}`);
     
-    // Enhanced VCS Configuration based on research
+    // CORRECTED VCS Configuration - targeting the right investor search page
     const VCS_CONFIG = {
         baseUrl: 'https://www.vcs.go.kr',
         endpoints: {
-            // Real VCS URLs from research
-            investorSearch: '/web/portal/rsh/list',           // Fund managers page
-            fundList: '/web/portal/rsh/list',                 // Same endpoint, different filters
-            investorList: '/web/portal/partner/srch/list',    // Main investor search
+            // CORRECTED: Use the proper investor search page
+            investorSearch: '/web/portal/investor/list',           // Main investor search page
+            fundSearch: '/web/portal/rsh/list',                   // Fund search page
         },
         browser: {
             headless: true,
@@ -50,39 +49,52 @@ Actor.main(async () => {
             timezone: 'Asia/Seoul'
         },
         selectors: {
-            // Real selectors based on VCS website structure
-            searchResults: 'table tbody tr, .result-list .result-item',
-            fundTable: 'table[class*="table"] tbody tr',
-            companyName: 'td:nth-child(2), .company-name, .name strong',
-            fundName: 'td:nth-child(1), .fund-name',
-            establishDate: 'td:nth-child(3), .establish-date',
-            totalAmount: 'td:nth-child(4), .total-amount',
-            duration: 'td:nth-child(5), .duration',
-            location: 'td:nth-child(6), .location',
-            nextPageBtn: '.page-next, .pagination .next, [aria-label="다음"]',
-            searchBtn: 'button[type="submit"], .search-btn, .btn-search'
+            // Search interface selectors
+            searchForm: 'form, .search-form',
+            searchButton: 'button[type="submit"], .search-btn, input[type="submit"]',
+            expertSearchButton: '전문검색',
+            
+            // Filter selectors - set all to "전체" (All) for maximum results
+            industryFilter: 'select[name*="industry"], input[name*="industry"]',
+            locationFilter: 'select[name*="location"], input[name*="location"]', 
+            scaleFilter: 'select[name*="scale"], input[name*="scale"]',
+            characterFilter: 'select[name*="character"], input[name*="character"]',
+            typeFilter: 'select[name*="type"], input[name*="type"]',
+            
+            // Results table selectors
+            resultsTable: 'table, .result-table, .list-table',
+            resultRows: 'tbody tr, .result-row',
+            
+            // Pagination
+            nextPageBtn: '.pagination .next, .page-next, [aria-label="다음"]',
+            pageNumbers: '.pagination a, .page-num',
+            
+            // Data extraction selectors
+            companyName: 'td:nth-child(1), td:nth-child(2), .company-name',
+            location: 'td:nth-child(3), .location',
+            scale: 'td:nth-child(4), .scale',
+            contact: 'td:nth-child(5), .contact'
         },
         api: {
-            // Discovered from network analysis
-            investorEndpoint: '/web/portal/rsh/list.ajax',
-            fundEndpoint: '/web/portal/fund/list.ajax',
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'application/json, text/javascript, */*; q=0.01',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
                 'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
-                'X-Requested-With': 'XMLHttpRequest',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
                 'Referer': 'https://www.vcs.go.kr'
             }
         }
     };
     
     /**
-     * Main scraping orchestrator
+     * Main scraping orchestrator with correct workflow
      */
-    async function scrapeVCSWithBrowser() {
-        console.log('🌐 Starting browser-based VCS scraping...');
+    async function scrapeVCSWithCorrectWorkflow() {
+        console.log('🌐 Starting VCS scraping with CORRECTED investor search workflow...');
         
-        // Launch browser with Korean locale (compatible with Apify base image)
+        // Launch browser with Korean locale
         const { chromium } = require('playwright');
         const browser = await chromium.launch({
             headless: VCS_CONFIG.browser.headless,
@@ -98,9 +110,11 @@ Actor.main(async () => {
         const page = await context.newPage();
         
         try {
-            // Navigate to VCS main page first
-            console.log('📄 Navigating to VCS investor list...');
+            // Navigate to CORRECT investor search page
+            console.log('📄 Navigating to VCS INVESTOR SEARCH page...');
             const targetUrl = VCS_CONFIG.baseUrl + VCS_CONFIG.endpoints.investorSearch;
+            console.log(`🔗 Target URL: ${targetUrl}`);
+            
             await page.goto(targetUrl, { 
                 waitUntil: 'networkidle',
                 timeout: VCS_CONFIG.browser.navigationTimeout 
@@ -109,9 +123,13 @@ Actor.main(async () => {
             // Wait for page to load completely
             await page.waitForTimeout(3000);
             
-            // Extract investors and funds
-            const investors = await extractInvestorData(page);
-            const funds = await extractFundsData(page);
+            // CRITICAL: Perform search to trigger data display
+            console.log('🔍 Performing search to trigger data display...');
+            await performVCSSearch(page);
+            
+            // Extract investors and funds from search results
+            const investors = await extractInvestorDataFromSearchResults(page);
+            const funds = await extractFundsDataFromSearchResults(page);
             
             return { investors, funds };
             
@@ -122,99 +140,185 @@ Actor.main(async () => {
     }
     
     /**
-     * Extract investor data using real VCS structure
+     * Perform VCS search with proper filter settings
      */
-    async function extractInvestorData(page) {
+    async function performVCSSearch(page) {
+        try {
+            console.log('🎛️ Setting up search filters...');
+            
+            // Wait for search form to be available
+            await page.waitForSelector('form, .search-area, .search-box', { timeout: 10000 });
+            
+            // Set all filters to "전체" (All) for maximum results
+            // This ensures we get the broadest possible dataset
+            
+            // Look for dropdown selectors and set them to "전체"
+            const dropdowns = await page.$$('select');
+            console.log(`📋 Found ${dropdowns.length} dropdown filters`);
+            
+            for (const dropdown of dropdowns) {
+                try {
+                    // Try to select "전체" option
+                    await dropdown.selectOption('전체');
+                    console.log('✅ Set filter to "전체"');
+                } catch (error) {
+                    // If "전체" doesn't work, try selecting the first option
+                    try {
+                        await dropdown.selectOption({ index: 0 });
+                        console.log('✅ Set filter to first option');
+                    } catch (err) {
+                        console.log('⚠️ Could not set filter:', err.message);
+                    }
+                }
+            }
+            
+            // Click search button to trigger results
+            console.log('🔍 Clicking search button...');
+            
+            // Try different search button selectors
+            const searchButtonSelectors = [
+                'button:has-text("검색")',
+                'input[type="submit"]',
+                'button[type="submit"]',
+                '.search-btn',
+                '.btn-search',
+                'button:has-text("전문검색")'
+            ];
+            
+            let searchClicked = false;
+            for (const selector of searchButtonSelectors) {
+                try {
+                    const button = await page.$(selector);
+                    if (button) {
+                        await button.click();
+                        console.log(`✅ Search button clicked: ${selector}`);
+                        searchClicked = true;
+                        break;
+                    }
+                } catch (error) {
+                    console.log(`⚠️ Search button selector failed: ${selector}`);
+                }
+            }
+            
+            if (!searchClicked) {
+                // Try pressing Enter on the form
+                console.log('🔍 Trying to submit form with Enter key...');
+                await page.keyboard.press('Enter');
+            }
+            
+            // Wait for search results to load
+            console.log('⏳ Waiting for search results...');
+            await page.waitForTimeout(5000);
+            
+            // Take a screenshot for debugging
+            await page.screenshot({ path: 'vcs_search_results.png' });
+            console.log('📸 Search results screenshot saved');
+            
+        } catch (error) {
+            console.error('❌ Error performing VCS search:', error.message);
+            
+            // Take error screenshot
+            try {
+                await page.screenshot({ path: 'vcs_search_error.png' });
+                console.log('📸 Error screenshot saved');
+            } catch (screenshotError) {
+                console.log('📸 Could not save error screenshot');
+            }
+        }
+    }
+    
+    /**
+     * Extract investor data from search results
+     */
+    async function extractInvestorDataFromSearchResults(page) {
         if (dataSource !== 'both' && dataSource !== 'investors') {
             console.log('⏭️ Skipping investors (not in dataSource)');
             return [];
         }
         
-        console.log('👥 === EXTRACTING INVESTORS DATA ===');
+        console.log('👥 === EXTRACTING INVESTORS FROM SEARCH RESULTS ===');
         
         const allInvestors = [];
         let currentPage = 1;
         let hasMoreData = true;
         
         while (hasMoreData && currentPage <= maxPages) {
-            console.log(`📄 Processing investor page ${currentPage}...`);
+            console.log(`📄 Processing search results page ${currentPage}...`);
             
             try {
-                // Wait for the actual VCS table/results to load
-                await page.waitForSelector('table, .result-list, .search-result', { 
-                    timeout: 15000 
-                });
+                // Wait for results table
+                await page.waitForSelector('table, .result-list, .data-table', { timeout: 15000 });
                 await page.waitForTimeout(2000);
                 
-                // Extract investor data using real VCS table structure
+                // Extract investor data from search results table
                 const pageInvestors = await page.evaluate((config) => {
                     const investors = [];
                     
-                    // Try to find the results table or list
+                    // Find the main results table
                     const tables = document.querySelectorAll('table');
-                    let targetTable = null;
+                    let resultsTable = null;
                     
-                    // Find table with fund/company data
+                    // Look for table with investor data columns
                     for (const table of tables) {
                         const headerText = table.textContent ? table.textContent.toLowerCase() : '';
-                        if (headerText.includes('펀드명') || headerText.includes('운용사') || 
-                            headerText.includes('결성일') || headerText.includes('결성총액')) {
-                            targetTable = table;
+                        if (headerText.includes('투자사') || headerText.includes('벤처') || 
+                            headerText.includes('펀드') || headerText.includes('운용사') ||
+                            headerText.includes('소재지') || headerText.includes('규모')) {
+                            resultsTable = table;
                             break;
                         }
                     }
                     
-                    if (targetTable) {
-                        const rows = targetTable.querySelectorAll('tbody tr');
-                        console.log(`Found ${rows.length} table rows`);
+                    if (resultsTable) {
+                        const rows = resultsTable.querySelectorAll('tbody tr');
+                        console.log(`Found ${rows.length} investor result rows`);
                         
                         rows.forEach((row, index) => {
                             try {
                                 const cells = row.querySelectorAll('td');
-                                if (cells.length >= 4) {
-                                    // VCS table structure: 펀드명 | 결성일 | 결성총액 | 존속기간 | 운용사명 | 소재지
-                                    const fundName = cells[0]?.textContent?.trim() || '';
-                                    const establishDate = cells[1]?.textContent?.trim() || '';
-                                    const totalAmount = cells[2]?.textContent?.trim() || '';
-                                    const duration = cells[3]?.textContent?.trim() || '';
-                                    const companyName = cells[4]?.textContent?.trim() || '';
-                                    const location = cells[5]?.textContent?.trim() || '';
+                                if (cells.length >= 3) {
+                                    // Extract data based on typical VCS investor table structure
+                                    const companyName = cells[0]?.textContent?.trim() || cells[1]?.textContent?.trim() || '';
+                                    const location = cells[2]?.textContent?.trim() || '';
+                                    const scale = cells[3]?.textContent?.trim() || '';
+                                    const contact = cells[4]?.textContent?.trim() || '';
+                                    const details = cells[5]?.textContent?.trim() || '';
                                     
                                     if (companyName && companyName.length > 2) {
                                         investors.push({
-                                            investor_id: `vcs_${Date.now()}_${index}`,
+                                            investor_id: `vcs_investor_${Date.now()}_${index}`,
                                             company_name: companyName,
-                                            fund_name: fundName,
                                             location: location,
-                                            establish_date: establishDate,
-                                            total_amount: totalAmount,
-                                            duration: duration,
+                                            operation_scale: scale,
+                                            contact_info: contact,
+                                            additional_details: details,
                                             extraction_date: new Date().toISOString(),
-                                            source: 'VCS_WEEKLY_SCRAPER_OPTIMIZED',
-                                            page_number: config.currentPageNumber || 1
+                                            source: 'VCS_INVESTOR_SEARCH_CORRECTED',
+                                            page_number: config.currentPageNumber || 1,
+                                            search_method: 'filtered_search_results'
                                         });
                                     }
                                 }
                             } catch (error) {
-                                console.log(`Error extracting row ${index}:`, error.message);
+                                console.log(`Error extracting investor row ${index}:`, error.message);
                             }
                         });
                     } else {
-                        // Try alternative selectors for different VCS page layouts
-                        const resultItems = document.querySelectorAll('.result-item, .list-item, .company-item');
-                        console.log(`Found ${resultItems.length} result items`);
+                        // Try alternative extraction for different layouts
+                        const resultItems = document.querySelectorAll('.result-item, .investor-item, .company-item');
+                        console.log(`Found ${resultItems.length} alternative result items`);
                         
                         resultItems.forEach((item, index) => {
                             try {
-                                const nameElement = item.querySelector('.company-name, .name, h3, strong');
+                                const nameElement = item.querySelector('.name, .company-name, h3, strong');
                                 const companyName = nameElement?.textContent?.trim() || '';
                                 
                                 if (companyName && companyName.length > 2) {
                                     investors.push({
-                                        investor_id: `vcs_alt_${Date.now()}_${index}`,
+                                        investor_id: `vcs_investor_alt_${Date.now()}_${index}`,
                                         company_name: companyName,
                                         extraction_date: new Date().toISOString(),
-                                        source: 'VCS_WEEKLY_SCRAPER_ALT',
+                                        source: 'VCS_INVESTOR_SEARCH_ALT',
                                         page_number: config.currentPageNumber || 1
                                     });
                                 }
@@ -234,25 +338,27 @@ Actor.main(async () => {
                 } else {
                     console.log(`⚠️ Page ${currentPage}: No investors found`);
                     
-                    // Check if there's any content at all
-                    const pageContent = await page.evaluate(() => {
+                    // Analyze page content for debugging
+                    const pageAnalysis = await page.evaluate(() => {
                         return {
                             title: document.title,
                             url: window.location.href,
-                            bodyText: document.body ? document.body.textContent.substring(0, 500) : 'No body content',
                             tableCount: document.querySelectorAll('table').length,
-                            hasResultContent: document.textContent ? 
-                                (document.textContent.includes('펀드') || 
-                                 document.textContent.includes('운용사') ||
-                                 document.textContent.includes('투자')) : false
+                            hasSearchResults: document.textContent ? 
+                                (document.textContent.includes('검색결과') || 
+                                 document.textContent.includes('조회') ||
+                                 document.textContent.includes('투자사')) : false,
+                            bodyText: document.body ? document.body.textContent.substring(0, 500) : 'No body content'
                         };
                     });
                     
-                    console.log('📄 Page analysis:', pageContent);
+                    console.log('📄 Page analysis:', pageAnalysis);
+                    
+                    // If no results found, stop searching
                     hasMoreData = false;
                 }
                 
-                // Try to navigate to next page (if implementing pagination)
+                // Handle pagination
                 if (hasMoreData && currentPage < maxPages) {
                     const nextPageExists = await page.evaluate(() => {
                         const nextButton = document.querySelector('.pagination .next, .page-next, [aria-label="다음"]');
@@ -260,7 +366,8 @@ Actor.main(async () => {
                     });
                     
                     if (nextPageExists) {
-                        await page.click(VCS_CONFIG.selectors.nextPageBtn);
+                        console.log(`📄 Moving to page ${currentPage + 1}...`);
+                        await page.click('.pagination .next, .page-next, [aria-label="다음"]');
                         await page.waitForTimeout(VCS_CONFIG.browser.requestDelay);
                         currentPage++;
                     } else {
@@ -274,7 +381,7 @@ Actor.main(async () => {
             } catch (error) {
                 console.error(`❌ Error on page ${currentPage}:`, error.message);
                 
-                // Take screenshot for debugging
+                // Take debug screenshot
                 try {
                     await page.screenshot({ path: `debug_page_${currentPage}.png` });
                     console.log(`📸 Debug screenshot saved: debug_page_${currentPage}.png`);
@@ -291,54 +398,64 @@ Actor.main(async () => {
     }
     
     /**
-     * Extract funds data - enhanced version
+     * Extract funds data from search results
      */
-    async function extractFundsData(page) {
+    async function extractFundsDataFromSearchResults(page) {
         if (dataSource !== 'both' && dataSource !== 'funds') {
             console.log('⏭️ Skipping funds (not in dataSource)');
             return [];
         }
         
-        console.log('💰 === EXTRACTING FUNDS DATA ===');
-        
-        // For now, we'll extract fund data from the same table as investors
-        // Since VCS shows fund information in the investor search results
+        console.log('💰 === EXTRACTING FUNDS FROM SEARCH RESULTS ===');
         
         try {
+            // Switch to fund view if available
+            const fundViewButton = await page.$('button:has-text("펀드/조합 보기"), .fund-view');
+            if (fundViewButton) {
+                console.log('🔄 Switching to fund/partnership view...');
+                await fundViewButton.click();
+                await page.waitForTimeout(3000);
+            }
+            
             const funds = await page.evaluate(() => {
                 const fundData = [];
                 const tables = document.querySelectorAll('table');
                 
                 for (const table of tables) {
-                    const rows = table.querySelectorAll('tbody tr');
-                    
-                    rows.forEach((row, index) => {
-                        try {
-                            const cells = row.querySelectorAll('td');
-                            if (cells.length >= 4) {
-                                const fundName = cells[0]?.textContent?.trim() || '';
-                                const establishDate = cells[1]?.textContent?.trim() || '';
-                                const totalAmount = cells[2]?.textContent?.trim() || '';
-                                const duration = cells[3]?.textContent?.trim() || '';
-                                const managementCompany = cells[4]?.textContent?.trim() || '';
-                                
-                                if (fundName && fundName.length > 2) {
-                                    fundData.push({
-                                        fund_id: `vcs_fund_${Date.now()}_${index}`,
-                                        fund_name: fundName,
-                                        management_company: managementCompany,
-                                        establish_date: establishDate,
-                                        total_amount: totalAmount,
-                                        duration: duration,
-                                        extraction_date: new Date().toISOString(),
-                                        source: 'VCS_WEEKLY_SCRAPER_OPTIMIZED'
-                                    });
+                    const headerText = table.textContent ? table.textContent.toLowerCase() : '';
+                    if (headerText.includes('펀드') || headerText.includes('조합') || 
+                        headerText.includes('결성') || headerText.includes('운용')) {
+                        
+                        const rows = table.querySelectorAll('tbody tr');
+                        
+                        rows.forEach((row, index) => {
+                            try {
+                                const cells = row.querySelectorAll('td');
+                                if (cells.length >= 4) {
+                                    const fundName = cells[0]?.textContent?.trim() || '';
+                                    const establishDate = cells[1]?.textContent?.trim() || '';
+                                    const totalAmount = cells[2]?.textContent?.trim() || '';
+                                    const managementCompany = cells[3]?.textContent?.trim() || '';
+                                    const duration = cells[4]?.textContent?.trim() || '';
+                                    
+                                    if (fundName && fundName.length > 2) {
+                                        fundData.push({
+                                            fund_id: `vcs_fund_corrected_${Date.now()}_${index}`,
+                                            fund_name: fundName,
+                                            management_company: managementCompany,
+                                            establish_date: establishDate,
+                                            total_amount: totalAmount,
+                                            duration: duration,
+                                            extraction_date: new Date().toISOString(),
+                                            source: 'VCS_INVESTOR_SEARCH_CORRECTED'
+                                        });
+                                    }
                                 }
+                            } catch (error) {
+                                console.log(`Error extracting fund ${index}:`, error.message);
                             }
-                        } catch (error) {
-                            console.log(`Error extracting fund ${index}:`, error.message);
-                        }
-                    });
+                        });
+                    }
                 }
                 
                 return fundData;
@@ -353,26 +470,25 @@ Actor.main(async () => {
         }
     }
     
-    // Execute main scraping
-    console.log('🚀 Starting VCS data extraction...');
+    // Execute main scraping with corrected workflow
+    console.log('🚀 Starting VCS data extraction with CORRECTED workflow...');
     const startTime = Date.now();
     
-    const { investors, funds } = await scrapeVCSWithBrowser();
+    const { investors, funds } = await scrapeVCSWithCorrectWorkflow();
     
     const duration = Math.round((Date.now() - startTime) / 1000);
     const totalRecords = investors.length + funds.length;
-    let lastPageProcessed = 1; // Default value
     
     // Prepare comprehensive result data
     const resultData = {
         timestamp: new Date().toISOString(),
-        source: 'VCS_WEEKLY_SCRAPER_APIFY_OPTIMIZED',
-        version: '2.0.1',
+        source: 'VCS_WEEKLY_SCRAPER_APIFY_CORRECTED',
+        version: '2.0.2',
         updateMode,
         dataSource,
         investors: {
             count: investors.length,
-            data: updateMode === 'full' ? investors : investors.slice(0, 100) // Limit data in incremental mode
+            data: updateMode === 'full' ? investors : investors.slice(0, 100)
         },
         funds: {
             count: funds.length,
@@ -382,15 +498,16 @@ Actor.main(async () => {
             totalRecords,
             duration_seconds: duration,
             maxPages,
-            actualPages: lastPageProcessed,
             platform: 'Apify Cloud',
             executionId: process.env.APIFY_ACT_RUN_ID,
-            optimization_version: '2.0.1',
-            scraping_method: 'browser_table_extraction'
+            optimization_version: '2.0.2',
+            scraping_method: 'corrected_investor_search_workflow',
+            target_url: VCS_CONFIG.baseUrl + VCS_CONFIG.endpoints.investorSearch,
+            breakthrough: 'Fixed target URL and implemented proper search workflow'
         }
     };
     
-    // Save to Apify dataset for download/API access
+    // Save to Apify dataset
     console.log('💾 Saving to Apify dataset...');
     await Actor.pushData(resultData);
     
@@ -401,7 +518,6 @@ Actor.main(async () => {
         try {
             const supabase = createClient(supabaseUrl, supabaseKey);
             
-            // Export investors to investor_table
             if (investors.length > 0) {
                 console.log(`👥 Exporting ${investors.length} investors to Supabase...`);
                 
@@ -419,7 +535,6 @@ Actor.main(async () => {
                 }
             }
             
-            // Export funds to fund_table
             if (funds.length > 0) {
                 console.log(`💰 Exporting ${funds.length} funds to Supabase...`);
                 
@@ -441,12 +556,11 @@ Actor.main(async () => {
             
         } catch (exportError) {
             console.error('❌ Supabase export failed:', exportError.message);
-            // Don't fail entire run if export fails
         }
     }
     
     // Final comprehensive summary
-    console.log('🎉 === VCS WEEKLY SCRAPING COMPLETED ===');
+    console.log('🎉 === VCS WEEKLY SCRAPING COMPLETED (CORRECTED) ===');
     console.log(`📊 Total records extracted: ${totalRecords}`);
     console.log(`👥 Investors: ${investors.length}`);
     console.log(`💰 Funds: ${funds.length}`);
@@ -454,7 +568,8 @@ Actor.main(async () => {
     console.log(`📅 Update mode: ${updateMode}`);
     console.log(`🏷️ Data source: ${dataSource}`);
     console.log(`📍 Platform: Apify Cloud`);
-    console.log(`🔧 Optimization: v2.0.1 with bug fixes`);
+    console.log(`🔧 Optimization: v2.0.2 with CORRECTED investor search workflow`);
+    console.log(`🎯 Target URL: ${VCS_CONFIG.baseUrl + VCS_CONFIG.endpoints.investorSearch}`);
     
     // Set structured output for Apify Console monitoring
     await Actor.setValue('OUTPUT', {
@@ -466,16 +581,18 @@ Actor.main(async () => {
             duration_seconds: duration,
             updateMode,
             dataSource,
-            optimization_version: '2.0.1'
+            optimization_version: '2.0.2',
+            breakthrough: 'CORRECTED: Fixed target URL to proper investor search page'
         },
         data_sample: {
             first_investor: investors[0] || null,
             first_fund: funds[0] || null
         },
         next_steps: totalRecords > 0 ? 
-            'VCS scraper optimized successfully! Ready for Phase 2 (DIVA scraper).' :
-            'VCS optimization needs further refinement. Check debug screenshots.'
+            'VCS scraper CORRECTED successfully! Real data extraction achieved. Ready for Phase 2.' :
+            'Need to verify search button interaction and result table parsing.',
+        target_url_corrected: VCS_CONFIG.baseUrl + VCS_CONFIG.endpoints.investorSearch
     });
     
-    console.log('✅ VCS Weekly Scraper Actor completed successfully');
+    console.log('✅ VCS Weekly Scraper Actor completed with CORRECTED workflow');
 }); 
