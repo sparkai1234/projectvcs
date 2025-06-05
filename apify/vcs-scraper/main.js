@@ -1,8 +1,10 @@
 /**
- * 🇰🇷 VCS WEEKLY SCRAPER - APIFY ACTOR v2.0.3 - SIMPLIFIED & ROBUST
- * =================================================================
+ * 🇰🇷 VCS WEEKLY SCRAPER - APIFY ACTOR v2.0.4 - NULL CHECKS FIXED
+ * ================================================================
  * 
- * STREAMLINED UPDATE:
+ * PATCH UPDATE:
+ * - Fixed null pointer errors in page analysis
+ * - Added proper null checks for document.textContent
  * - Simplified search workflow (skip complex filters)
  * - Enhanced result detection with multiple strategies
  * - Better debugging and page content analysis
@@ -13,7 +15,7 @@ const { Actor } = require('apify');
 const { createClient } = require('@supabase/supabase-js');
 
 Actor.main(async () => {
-    console.log('🇰🇷 VCS Weekly Scraper Actor Started (Phase 1) - v2.0.3');
+    console.log('🇰🇷 VCS Weekly Scraper Actor Started (Phase 1) - v2.0.4');
     console.log(`🕐 Execution time: ${new Date().toISOString()}`);
     
     // Get input parameters from Apify Console UI
@@ -164,9 +166,9 @@ Actor.main(async () => {
                 selects: document.querySelectorAll('select').length,
                 
                 // Look for specific VCS content
-                hasInvestorContent: document.textContent.includes('투자자') || document.textContent.includes('벤처'),
-                hasSearchContent: document.textContent.includes('검색') || document.textContent.includes('조회'),
-                hasResultContent: document.textContent.includes('결과') || document.textContent.includes('목록'),
+                hasInvestorContent: document.textContent ? (document.textContent.includes('투자자') || document.textContent.includes('벤처')) : false,
+                hasSearchContent: document.textContent ? (document.textContent.includes('검색') || document.textContent.includes('조회')) : false,
+                hasResultContent: document.textContent ? (document.textContent.includes('결과') || document.textContent.includes('목록')) : false,
                 
                 // Get visible tables info
                 visibleTables: Array.from(document.querySelectorAll('table')).map((table, index) => ({
@@ -506,7 +508,7 @@ Actor.main(async () => {
     const resultData = {
         timestamp: new Date().toISOString(),
         source: 'VCS_WEEKLY_SCRAPER_APIFY_SIMPLIFIED',
-        version: '2.0.3',
+        version: '2.0.4',
         updateMode,
         dataSource,
         investors: {
@@ -523,7 +525,7 @@ Actor.main(async () => {
             maxPages,
             platform: 'Apify Cloud',
             executionId: process.env.APIFY_ACT_RUN_ID,
-            optimization_version: '2.0.3',
+            optimization_version: '2.0.4',
             scraping_method: 'simplified_multi_strategy_extraction',
             target_url: VCS_CONFIG.baseUrl + VCS_CONFIG.endpoints.investorSearch,
             breakthrough: 'Simplified workflow with multiple extraction strategies'
@@ -591,7 +593,7 @@ Actor.main(async () => {
     console.log(`📅 Update mode: ${updateMode}`);
     console.log(`🏷️ Data source: ${dataSource}`);
     console.log(`📍 Platform: Apify Cloud`);
-    console.log(`🔧 Optimization: v2.0.3 with SIMPLIFIED multi-strategy extraction`);
+    console.log(`🔧 Optimization: v2.0.4 with NULL CHECKS FIXED`);
     console.log(`🎯 Target URL: ${VCS_CONFIG.baseUrl + VCS_CONFIG.endpoints.investorSearch}`);
     
     // Set structured output for Apify Console monitoring
@@ -604,8 +606,8 @@ Actor.main(async () => {
             duration_seconds: duration,
             updateMode,
             dataSource,
-            optimization_version: '2.0.3',
-            breakthrough: 'SIMPLIFIED: Multi-strategy extraction with robust fallbacks'
+            optimization_version: '2.0.4',
+            breakthrough: 'FIXED: Null checks added, multi-strategy extraction ready'
         },
         data_sample: {
             first_investor: investors[0] || null,
