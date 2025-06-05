@@ -1,10 +1,10 @@
 # Use Apify base image with Playwright browsers pre-installed
-FROM apify/actor-node-playwright:16
+FROM apify/actor-node:18
 
 # Copy package files
 COPY package*.json ./
 
-# Install NPM packages including Playwright
+# Install dependencies
 RUN npm --quiet set progress=false \
     && npm install --only=prod --no-optional \
     && echo "Installed NPM packages:" \

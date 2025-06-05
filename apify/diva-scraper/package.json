@@ -20,15 +20,15 @@
         "apify"
     ],
     "dependencies": {
-        "apify": "^3.0.0",
-        "@supabase/supabase-js": "^2.0.0",
-        "puppeteer": "^21.0.0"
+        "apify": "^3.1.0",
+        "@supabase/supabase-js": "^2.38.0",
+        "puppeteer": "^22.0.0"
     },
     "repository": {
         "type": "git",
         "url": "https://github.com/sparkai1234/projectvcs.git"
     },
     "engines": {
-        "node": ">=16.0.0"
+        "node": ">=18.0.0"
     }
 } 
