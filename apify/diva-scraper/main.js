@@ -319,7 +319,7 @@ async function handleFinancialStatements(page, config, supabase) {
  * Handle Personnel Status (인력현황)
  */
 async function handlePersonnelStatus(page, config, supabase) {
-    console.log('👥 Processing Personnel Status data...');
+    console.log('👥 Processing Professional Personnel data...');
     
     try {
         await setupAllFilters(page);
@@ -376,14 +376,19 @@ async function handlePersonnelStatus(page, config, supabase) {
                 const cells = row.querySelectorAll('td');
                 console.log(`Row ${index}: ${cells.length} cells`);
                 
-                if (cells.length >= 6) {
+                // Skip header rows (usually have th elements or different structure)
+                if (cells.length === 0 || row.querySelector('th')) {
+                    console.log(`Row ${index} skipped - header or empty row`);
+                    return;
+                }
+                
+                if (cells.length >= 5) {
                     const rowData = {
                         companyName: cells[0]?.textContent?.trim(),
-                        totalPersonnel: cells[1]?.textContent?.trim(),
-                        professionalStaff: cells[2]?.textContent?.trim(),
-                        investmentReviewStaff: cells[3]?.textContent?.trim(),
-                        managementStaff: cells[4]?.textContent?.trim(),
-                        referenceMonth: cells[5]?.textContent?.trim(),
+                        personalName: cells[1]?.textContent?.trim(),
+                        workExperience: cells[2]?.textContent?.trim(),
+                        professionalExperience: cells[3]?.textContent?.trim(),
+                        education: cells[4]?.textContent?.trim(),
                         rowIndex: index
                     };
                     console.log(`Adding row data:`, rowData);
@@ -397,36 +402,35 @@ async function handlePersonnelStatus(page, config, supabase) {
             return data;
         });
         
-        console.log(`👥 Extracted ${personnelData.length} personnel records`);
+        console.log(`👥 Extracted ${personnelData.length} professional personnel records`);
         
-        for (const record of personnelData) {
+                for (const record of personnelData) {
             const processedRecord = {
                 company_name: record.companyName,
-                total_personnel: parseInt(record.totalPersonnel) || 0,
-                professional_staff: parseInt(record.professionalStaff) || 0,
-                investment_review_staff: parseInt(record.investmentReviewStaff) || 0,
-                management_staff: parseInt(record.managementStaff) || 0,
-                reference_year_month: record.referenceMonth,
+                personal_name: record.personalName,
+                work_experience: record.workExperience,
+                professional_experience: record.professionalExperience,
+                education: record.education,
                 extracted_at: new Date().toISOString(),
                 source_url: page.url()
             };
-            
+
             await Actor.pushData({
                 ...processedRecord,
-                dataType: 'personnel_status'
+                dataType: 'professional_personnel'
             });
-            
+
             if (supabase) {
-                await saveToSupabase(supabase, 'diva_personnel_raw', processedRecord);
+                await saveToSupabase(supabase, 'diva_professional_raw', processedRecord);
             }
         }
         
         if (page.url().includes('page=1') || !page.url().includes('page=')) {
-            await handlePaginationWrapper(page, config, 'personnel_status', supabase);
+            await handlePaginationWrapper(page, config, 'professional_personnel', supabase);
         }
         
     } catch (error) {
-        console.error('❌ Error in personnel status handling:', error);
+        console.error('❌ Error in professional personnel handling:', error);
     }
 }
 
