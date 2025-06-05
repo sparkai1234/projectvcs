@@ -4,7 +4,8 @@
     "description": "Korean VCS (벤처정보서비스) Weekly Data Scraper - Professional Apify Actor",
     "main": "main.js",
     "scripts": {
-        "start": "node main.js"
+        "start": "node main.js",
+        "test": "node main.js"
     },
     "author": "Korean VC Intelligence System",
     "license": "MIT",
@@ -15,14 +16,20 @@
         "data-scraping",
         "apify-actor",
         "weekly-automation",
-        "supabase-integration"
+        "supabase-integration",
+        "playwright",
+        "browser-automation"
     ],
     "dependencies": {
         "apify": "^3.1.0",
-        "@supabase/supabase-js": "^2.38.0"
+        "@supabase/supabase-js": "^2.38.0",
+        "playwright": "^1.40.0"
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/yourusername/korean-vc-intelligence"
+        "url": "https://github.com/sparkai1234/projectvcs.git"
+    },
+    "engines": {
+        "node": ">=16.0.0"
     }
 } 

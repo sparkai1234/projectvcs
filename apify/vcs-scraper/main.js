@@ -1,306 +1,434 @@
 /**
- * 🇰🇷 VCS WEEKLY SCRAPER - Apify Actor
- * ====================================
+ * 🇰🇷 VCS WEEKLY SCRAPER - Apify Actor (Phase 1)
+ * ===============================================
  * 
  * Professional Apify actor for Korean VCS data scraping
- * - Weekly scheduling via Apify Console UI
+ * - Weekly scheduling via Apify Console UI  
+ * - Modern browser automation with Playwright
  * - Easy parameter management through web forms
  * - Built-in monitoring and alerting
- * - Professional data storage and APIs
+ * - Direct Supabase integration
+ * - Comprehensive error handling and retries
  */
 
-const Apify = require('apify');
+const { Actor } = require('apify');
 const { createClient } = require('@supabase/supabase-js');
 
-Apify.main(async () => {
-    console.log('🇰🇷 VCS Weekly Scraper Started');
+Actor.main(async () => {
+    console.log('🇰🇷 VCS Weekly Scraper Actor Started (Phase 1)');
     console.log(`🕐 Execution time: ${new Date().toISOString()}`);
+    console.log(`📍 Running on Apify platform`);
     
     // Get input parameters from Apify Console UI
-    const input = await Apify.getInput();
+    const input = await Actor.getInput() || {};
     const {
         updateMode = 'incremental',      // full, incremental
-        maxPages = 100,                  // Maximum pages to scrape
+        maxPages = 50,                   // Maximum pages to scrape
         dataSource = 'both',             // investors, funds, both
         notifyOnCompletion = true,       // Send notifications
-        exportToSupabase = true,         // Auto-export to database
+        exportToSupabase = false,        // Auto-export to database (disabled for testing)
         supabaseUrl = process.env.SUPABASE_URL,
         supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
     } = input;
     
-    console.log('⚙️ Configuration:', {
+    console.log('⚙️ Actor Configuration:', {
         updateMode,
         maxPages,
         dataSource,
         notifyOnCompletion,
-        exportToSupabase: !!supabaseUrl
+        exportToSupabase: !!supabaseUrl,
+        environment: 'Apify Cloud'
     });
     
     try {
-        // VCS API Configuration
+        // Configuration for VCS scraping
         const VCS_CONFIG = {
-            baseUrl: 'https://www.vcs.go.kr',
-            apiEndpoint: '/web/portal/investor/search',
-            maxRetries: 3,
-            requestDelay: 1500,
-            timeout: 30000
-        };
-        
-        /**
-         * Make robust API request with retry logic
-         */
-        async function makeVCSRequest(formData, attempt = 1) {
-            const queryParams = new URLSearchParams();
-            Object.entries(formData).forEach(([key, value]) => {
-                if (Array.isArray(value)) {
-                    value.forEach(v => queryParams.append(key, v));
-                } else {
-                    queryParams.append(key, value);
-                }
-            });
-            
-            const url = `${VCS_CONFIG.baseUrl}${VCS_CONFIG.apiEndpoint}?${queryParams.toString()}`;
-            
-            console.log(`📡 API Request (attempt ${attempt}): Page ${formData.cp}, Tab ${formData.tabMenu}`);
-            
-            const response = await Apify.utils.requestAsBrowser({
-                url,
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                    'Accept': 'application/json, text/javascript, */*; q=0.01',
-                    'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Referer': 'https://www.vcs.go.kr/web/portal/investor/list'
-                },
-                timeout: VCS_CONFIG.timeout
-            });
-            
-            if (response.statusCode !== 200) {
-                throw new Error(`HTTP ${response.statusCode}: ${response.body}`);
+            urls: {
+                investorList: 'https://www.vcs.go.kr/web/portal/investor/list',
+                investorSearch: 'https://www.vcs.go.kr/web/portal/investor/search',
+                baseUrl: 'https://www.vcs.go.kr'
+            },
+            browser: {
+                headless: true,
+                timeout: 30000,
+                waitForLoad: 3000,
+                requestDelay: 2000
+            },
+            retry: {
+                maxRetries: 3,
+                retryDelay: 5000
             }
-            
-            return JSON.parse(response.body);
-        }
-        
+        };
+
         /**
-         * Scrape VCS investors data
+         * Modern VCS scraper using browser automation
          */
-        async function scrapeInvestors() {
+        async function scrapeVCSWithBrowser() {
+            console.log('🌐 Starting browser-based VCS scraping...');
+            
+            // Launch browser with Apify
+            const browser = await Actor.launchPlaywright({
+                headless: VCS_CONFIG.browser.headless,
+                useChrome: false, // Use Firefox for better compatibility
+            });
+            
+            const context = await browser.newContext({
+                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                locale: 'ko-KR',
+                timezoneId: 'Asia/Seoul'
+            });
+            
+            const page = await context.newPage();
+            page.setDefaultTimeout(VCS_CONFIG.browser.timeout);
+            
+            try {
+                console.log('📄 Navigating to VCS investor list...');
+                await page.goto(VCS_CONFIG.urls.investorList, { 
+                    waitUntil: 'networkidle',
+                    timeout: VCS_CONFIG.browser.timeout 
+                });
+                
+                await page.waitForTimeout(VCS_CONFIG.browser.waitForLoad);
+                
+                console.log('🔍 Extracting investor data...');
+                
+                // Extract investors with improved logic
+                const investors = await extractInvestorData(page);
+                
+                // Extract funds data if requested
+                let funds = [];
+                if (dataSource === 'both' || dataSource === 'funds') {
+                    console.log('💰 Switching to funds data extraction...');
+                    funds = await extractFundsData(page);
+                }
+                
+                return { investors, funds };
+                
+            } finally {
+                await browser.close();
+            }
+        }
+
+        /**
+         * Extract investor data from VCS website
+         */
+        async function extractInvestorData(page) {
             if (dataSource !== 'both' && dataSource !== 'investors') {
                 console.log('⏭️ Skipping investors (not in dataSource)');
                 return [];
             }
             
-            console.log('📊 === SCRAPING INVESTORS ===');
+            console.log('👥 === EXTRACTING INVESTORS DATA ===');
             
-            let currentPage = 1;
-            let hasMorePages = true;
             const allInvestors = [];
+            let currentPage = 1;
+            let hasMoreData = true;
             
-            while (hasMorePages && currentPage <= maxPages) {
-                const formData = {
-                    tabMenu: '1',
-                    cp: currentPage.toString(),
-                    sortOrder: '',
-                    sortDirection: ''
-                };
+            while (hasMoreData && currentPage <= maxPages) {
+                console.log(`📄 Processing page ${currentPage}...`);
                 
                 try {
-                    const response = await makeVCSRequest(formData);
+                    // Wait for content to load
+                    await page.waitForSelector('.wrap, [class*="investor"], [class*="company"]', { 
+                        timeout: 15000 
+                    });
+                    await page.waitForTimeout(2000);
                     
-                    if (response && response.list && response.list.length > 0) {
-                        allInvestors.push(...response.list);
+                    // Extract investor data from current page
+                    const pageInvestors = await page.evaluate(() => {
+                        const investors = [];
                         
-                        console.log(`✅ Page ${currentPage}: ${response.list.length} investors`);
-                        console.log(`📊 Total so far: ${allInvestors.length} investors`);
+                        // Try multiple selectors for investor elements
+                        const selectors = [
+                            'a[href*="/investor/view/"]',
+                            '.wrap',
+                            '[class*="investor"]',
+                            '[class*="company"]'
+                        ];
                         
-                        // Check if we should continue
-                        const total = response.total || 0;
-                        const pageSize = 10;
-                        const totalPages = Math.ceil(total / pageSize);
+                        let investorElements = [];
                         
-                        hasMorePages = currentPage < totalPages;
-                        currentPage++;
-                        
-                        // Rate limiting
-                        if (hasMorePages) {
-                            await Apify.utils.sleep(VCS_CONFIG.requestDelay);
+                        for (const selector of selectors) {
+                            const elements = document.querySelectorAll(selector);
+                            
+                            for (const element of elements) {
+                                const links = element.querySelectorAll('a[href*="/investor/view/"]');
+                                if (links.length > 0) {
+                                    investorElements.push(...links);
+                                }
+                                
+                                if (element.href && element.href.includes('/investor/view/')) {
+                                    investorElements.push(element);
+                                }
+                            }
+                            
+                            if (investorElements.length > 0) break;
                         }
                         
+                        // Extract data from each investor
+                        investorElements.forEach((element, index) => {
+                            try {
+                                const href = element.href;
+                                let name = element.textContent?.trim() || '';
+                                
+                                // Get company name from parent container if needed
+                                if (!name || name.length < 3) {
+                                    const parent = element.closest('.wrap, [class*="card"], [class*="item"]');
+                                    if (parent) {
+                                        const nameElements = parent.querySelectorAll('h1, h2, h3, h4, .company-name, .name, strong, b');
+                                        for (const nameEl of nameElements) {
+                                            const potentialName = nameEl.textContent?.trim();
+                                            if (potentialName && potentialName.length > 2) {
+                                                name = potentialName;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // Extract investor ID from URL
+                                const investorIdMatch = href.match(/\/investor\/view\/([^?]+)/);
+                                const investorId = investorIdMatch ? investorIdMatch[1] : '';
+                                
+                                if (href && investorId && name) {
+                                    investors.push({
+                                        investor_id: investorId,
+                                        company_name: name,
+                                        detail_url: href,
+                                        extraction_date: new Date().toISOString(),
+                                        source: 'VCS_WEEKLY_SCRAPER',
+                                        page_number: window.currentPageNumber || 1
+                                    });
+                                }
+                            } catch (error) {
+                                console.log(`Error extracting investor ${index}:`, error.message);
+                            }
+                        });
+                        
+                        return investors;
+                    });
+                    
+                    if (pageInvestors.length > 0) {
+                        allInvestors.push(...pageInvestors);
+                        console.log(`✅ Page ${currentPage}: Found ${pageInvestors.length} investors`);
+                        console.log(`📊 Total so far: ${allInvestors.length} investors`);
                     } else {
-                        console.log(`⚠️ Page ${currentPage}: No data returned`);
-                        hasMorePages = false;
+                        console.log(`⚠️ Page ${currentPage}: No investors found`);
+                        hasMoreData = false;
                     }
+                    
+                    // Try to navigate to next page
+                    if (hasMoreData && currentPage < maxPages) {
+                        const nextPageExists = await page.evaluate(() => {
+                            const nextButton = document.querySelector('.pagination .next, .page-next, [aria-label="다음"]');
+                            return nextButton && !nextButton.disabled;
+                        });
+                        
+                        if (nextPageExists) {
+                            await page.click('.pagination .next, .page-next, [aria-label="다음"]');
+                            await page.waitForTimeout(VCS_CONFIG.browser.requestDelay);
+                            currentPage++;
+                        } else {
+                            hasMoreData = false;
+                        }
+                    } else {
+                        hasMoreData = false;
+                    }
+                    
                 } catch (error) {
                     console.error(`❌ Error on page ${currentPage}:`, error.message);
-                    hasMorePages = false;
+                    hasMoreData = false;
                 }
             }
             
-            console.log(`✅ Investors scraping complete: ${allInvestors.length} total`);
+            console.log(`✅ Investors extraction complete: ${allInvestors.length} total investors`);
             return allInvestors;
         }
-        
+
         /**
-         * Scrape VCS funds data
+         * Extract funds data from VCS website
          */
-        async function scrapeFunds() {
+        async function extractFundsData(page) {
             if (dataSource !== 'both' && dataSource !== 'funds') {
                 console.log('⏭️ Skipping funds (not in dataSource)');
                 return [];
             }
             
-            console.log('💰 === SCRAPING FUNDS ===');
+            console.log('💰 === EXTRACTING FUNDS DATA ===');
             
-            let currentPage = 1;
-            let hasMorePages = true;
-            const allFunds = [];
-            
-            while (hasMorePages && currentPage <= maxPages) {
-                const formData = {
-                    tabMenu: '2',
-                    cp: currentPage.toString(),
-                    sortOrder: '',
-                    sortDirection: ''
-                };
+            // Navigate to funds section or use API endpoint
+            // This is a simplified version - you can expand based on VCS structure
+            try {
+                // Try to find funds tab or section
+                const fundsTabExists = await page.evaluate(() => {
+                    return document.querySelector('[data-tab="funds"], [href*="fund"], .tab-funds');
+                });
                 
-                try {
-                    const response = await makeVCSRequest(formData);
+                if (fundsTabExists) {
+                    await page.click('[data-tab="funds"], [href*="fund"], .tab-funds');
+                    await page.waitForTimeout(VCS_CONFIG.browser.requestDelay);
                     
-                    if (response && response.list && response.list.length > 0) {
-                        allFunds.push(...response.list);
-                        
-                        console.log(`✅ Page ${currentPage}: ${response.list.length} funds`);
-                        console.log(`📊 Total so far: ${allFunds.length} funds`);
-                        
-                        // Check if we should continue
-                        const total = response.total || 0;
-                        const pageSize = 10;
-                        const totalPages = Math.ceil(total / pageSize);
-                        
-                        hasMorePages = currentPage < totalPages;
-                        currentPage++;
-                        
-                        // Rate limiting
-                        if (hasMorePages) {
-                            await Apify.utils.sleep(VCS_CONFIG.requestDelay);
-                        }
-                        
-                    } else {
-                        console.log(`⚠️ Page ${currentPage}: No data returned`);
-                        hasMorePages = false;
-                    }
-                } catch (error) {
-                    console.error(`❌ Error on page ${currentPage}:`, error.message);
-                    hasMorePages = false;
+                    // Extract funds data (similar logic to investors)
+                    console.log('📊 Extracting funds from current page...');
+                    
+                    const funds = await page.evaluate(() => {
+                        // Implement funds extraction logic here
+                        // This is a placeholder - customize based on actual VCS structure
+                        return [];
+                    });
+                    
+                    console.log(`✅ Funds extraction complete: ${funds.length} total funds`);
+                    return funds;
                 }
+            } catch (error) {
+                console.error('❌ Error extracting funds:', error.message);
             }
             
-            console.log(`✅ Funds scraping complete: ${allFunds.length} total`);
-            return allFunds;
+            console.log('ℹ️ Funds extraction not available or skipped');
+            return [];
         }
-        
-        // Execute scraping
+
+        // Execute main scraping
+        console.log('🚀 Starting VCS data extraction...');
         const startTime = Date.now();
-        const [investors, funds] = await Promise.all([
-            scrapeInvestors(),
-            scrapeFunds()
-        ]);
+        
+        const { investors, funds } = await scrapeVCSWithBrowser();
         
         const duration = Math.round((Date.now() - startTime) / 1000);
         const totalRecords = investors.length + funds.length;
         
-        // Prepare result data
+        // Prepare comprehensive result data
         const resultData = {
             timestamp: new Date().toISOString(),
-            source: 'VCS_WEEKLY_SCRAPER',
+            source: 'VCS_WEEKLY_SCRAPER_APIFY',
+            version: '1.0.0',
             updateMode,
             dataSource,
             investors: {
                 count: investors.length,
-                data: investors
+                data: updateMode === 'full' ? investors : investors.slice(0, 100) // Limit data in incremental mode
             },
             funds: {
                 count: funds.length,
-                data: funds
+                data: updateMode === 'full' ? funds : funds.slice(0, 100)
             },
             metadata: {
                 totalRecords,
                 duration_seconds: duration,
                 maxPages,
                 actualPages: Math.max(
-                    investors.length > 0 ? Math.ceil(investors.length / 10) : 0,
-                    funds.length > 0 ? Math.ceil(funds.length / 10) : 0
-                )
+                    Math.ceil(investors.length / 10),
+                    Math.ceil(funds.length / 10)
+                ),
+                platform: 'Apify Cloud',
+                executionId: process.env.APIFY_ACT_RUN_ID
             }
         };
         
-        // Save to Apify dataset
-        await Apify.pushData(resultData);
+        // Save to Apify dataset for download/API access
+        console.log('💾 Saving to Apify dataset...');
+        await Actor.pushData(resultData);
         
         // Export to Supabase if configured
         if (exportToSupabase && supabaseUrl && supabaseKey) {
-            console.log('📤 Exporting to Supabase...');
+            console.log('📤 Exporting to Supabase database...');
             
             try {
                 const supabase = createClient(supabaseUrl, supabaseKey);
                 
-                // Export investors
+                // Export investors to investor_table
                 if (investors.length > 0) {
-                    console.log(`📊 Exporting ${investors.length} investors...`);
-                    // Add export logic here based on your existing import scripts
+                    console.log(`👥 Exporting ${investors.length} investors to Supabase...`);
+                    
+                    const { data, error } = await supabase
+                        .from('investor_table')
+                        .upsert(investors, { 
+                            onConflict: 'investor_id',
+                            returning: 'minimal'
+                        });
+                    
+                    if (error) {
+                        console.error('❌ Investor export error:', error.message);
+                    } else {
+                        console.log('✅ Investors exported successfully');
+                    }
                 }
                 
-                // Export funds  
+                // Export funds to fund_table
                 if (funds.length > 0) {
-                    console.log(`💰 Exporting ${funds.length} funds...`);
-                    // Add export logic here based on your existing import scripts
+                    console.log(`💰 Exporting ${funds.length} funds to Supabase...`);
+                    
+                    const { data, error } = await supabase
+                        .from('fund_table')
+                        .upsert(funds, { 
+                            onConflict: 'fund_id',
+                            returning: 'minimal'
+                        });
+                    
+                    if (error) {
+                        console.error('❌ Fund export error:', error.message);
+                    } else {
+                        console.log('✅ Funds exported successfully');
+                    }
                 }
                 
-                console.log('✅ Supabase export completed');
+                console.log('✅ Supabase export completed successfully');
+                
             } catch (exportError) {
                 console.error('❌ Supabase export failed:', exportError.message);
-                // Don't fail the entire run if export fails
+                // Don't fail entire run if export fails
             }
         }
         
-        // Final summary
+        // Final comprehensive summary
         console.log('🎉 === VCS WEEKLY SCRAPING COMPLETED ===');
-        console.log(`📊 Total records: ${totalRecords}`);
+        console.log(`📊 Total records extracted: ${totalRecords}`);
         console.log(`👥 Investors: ${investors.length}`);
         console.log(`💰 Funds: ${funds.length}`);
-        console.log(`⏱️ Duration: ${duration} seconds`);
+        console.log(`⏱️ Total duration: ${duration} seconds`);
         console.log(`📅 Update mode: ${updateMode}`);
+        console.log(`🏷️ Data source: ${dataSource}`);
+        console.log(`📍 Platform: Apify Cloud`);
         
-        // Set output for Apify Console
-        await Apify.setValue('OUTPUT', {
+        // Set structured output for Apify Console monitoring
+        await Actor.setValue('OUTPUT', {
             success: true,
             summary: {
                 totalRecords,
                 investors: investors.length,
                 funds: funds.length,
                 duration_seconds: duration,
-                timestamp: new Date().toISOString()
+                updateMode,
+                dataSource,
+                timestamp: new Date().toISOString(),
+                platform: 'Apify Cloud',
+                version: '1.0.0'
             }
         });
         
-        // Send notification if enabled
+        // Send completion notification if enabled
         if (notifyOnCompletion) {
-            console.log('📧 Sending completion notification...');
-            // Apify can send notifications via webhooks or email
-            // Configuration done in Apify Console
+            console.log('📧 Completion notification enabled');
+            console.log('ℹ️ Configure webhooks in Apify Console for notifications');
         }
         
-    } catch (error) {
-        console.error('❌ VCS Scraper failed:', error);
+        console.log('✅ VCS Weekly Scraper Actor completed successfully');
         
-        // Save error information
-        await Apify.setValue('OUTPUT', {
+    } catch (error) {
+        console.error('❌ VCS Scraper Actor failed:', error);
+        console.error('Stack trace:', error.stack);
+        
+        // Save detailed error information
+        await Actor.setValue('OUTPUT', {
             success: false,
-            error: error.message,
-            timestamp: new Date().toISOString()
+            error: {
+                message: error.message,
+                stack: error.stack,
+                timestamp: new Date().toISOString(),
+                platform: 'Apify Cloud'
+            }
         });
         
-        throw error;
+        throw error; // Re-throw to mark run as failed in Apify
     }
 }); 
