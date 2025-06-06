@@ -58,10 +58,30 @@ Actor.main(async () => {
     // Initialize Supabase client
     let supabase = null;
     if (config.exportToSupabase && config.supabaseUrl && config.supabaseKey) {
-        supabase = createClient(config.supabaseUrl, config.supabaseKey);
-        console.log('✅ Supabase client initialized');
+        try {
+            supabase = createClient(config.supabaseUrl, config.supabaseKey);
+            console.log('✅ Supabase client initialized');
+            console.log(`📋 Supabase URL: ${config.supabaseUrl}`);
+            console.log(`🔑 Supabase Key: ${config.supabaseKey ? `...${config.supabaseKey.slice(-8)}` : 'NOT PROVIDED'}`);
+            
+            // Test connection
+            const { data, error } = await supabase.from('diva_investment_performance_raw').select('count').limit(1);
+            if (error) {
+                console.log('⚠️ Supabase connection test failed:', error.message);
+            } else {
+                console.log('✅ Supabase connection test passed');
+            }
+        } catch (error) {
+            console.error('❌ Failed to initialize Supabase client:', error.message);
+            supabase = null;
+        }
     } else {
         console.log('⚠️ Supabase export disabled - missing credentials');
+        console.log(`   exportToSupabase: ${config.exportToSupabase}`);
+        console.log(`   supabaseUrl: ${config.supabaseUrl ? 'PROVIDED' : 'MISSING'}`);
+        console.log(`   supabaseKey: ${config.supabaseKey ? 'PROVIDED' : 'MISSING'}`);
+        console.log(`   env SUPABASE_URL: ${process.env.SUPABASE_URL ? 'PROVIDED' : 'MISSING'}`);
+        console.log(`   env SUPABASE_KEY: ${process.env.SUPABASE_KEY ? 'PROVIDED' : 'MISSING'}`);
     }
     
     // Setup crawler
@@ -972,7 +992,7 @@ async function extractDataForPage(page, dataType, supabase) {
 }
 
 /**
- * Save data to Supabase
+ * Save data to Supabase with improved error handling
  */
 async function saveToSupabase(supabase, tableName, data) {
     try {
@@ -981,10 +1001,18 @@ async function saveToSupabase(supabase, tableName, data) {
             .insert(data);
             
         if (error) {
-            console.error(`❌ Supabase insert error for ${tableName}:`, error);
+            console.error(`❌ Supabase insert error for ${tableName}:`);
+            console.error(`   Code: ${error.code}`);
+            console.error(`   Message: ${error.message}`);
+            console.error(`   Details: ${error.details}`);
+            console.error(`   Hint: ${error.hint}`);
+            console.error(`   Data attempted:`, JSON.stringify(data, null, 2));
+        } else {
+            console.log(`✅ Successfully inserted record into ${tableName}`);
         }
     } catch (error) {
-        console.error(`❌ Supabase save error:`, error);
+        console.error(`❌ Supabase save error for ${tableName}:`, error.message);
+        console.error(`   Data attempted:`, JSON.stringify(data, null, 2));
     }
 }
 
