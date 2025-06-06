@@ -1,36 +1,24 @@
 {
-    "name": "korean-vc-vcs-scraper",
-    "version": "1.0.0",
-    "description": "Korean VCS (벤처정보서비스) Weekly Data Scraper - Professional Apify Actor",
-    "main": "main.js",
-    "scripts": {
-        "start": "node main.js",
-        "test": "node main.js"
-    },
-    "author": "Korean VC Intelligence System",
-    "license": "MIT",
-    "keywords": [
-        "korean-vc",
-        "vcs",
-        "venture-capital",
-        "data-scraping",
-        "apify-actor",
-        "weekly-automation",
-        "supabase-integration",
-        "playwright",
-        "browser-automation"
-    ],
-    "dependencies": {
-        "apify": "^3.1.0",
-        "crawlee": "^3.8.0",
-        "@supabase/supabase-js": "^2.38.0",
-        "playwright": "1.42.1"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/sparkai1234/projectvcs.git"
-    },
-    "engines": {
-        "node": ">=16.0.0"
-    }
+  "name": "korean-vc-vcs-scraper",
+  "version": "2.2.0",
+  "description": "Korean VCS Weekly Scraper with corrected Korean field mapping - eliminates NULL data issues",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js"
+  },
+  "author": "VCS Intelligence System - Corrected Korean Mapping",
+  "license": "MIT",
+  "dependencies": {
+    "apify": "^3.1.0",
+    "@supabase/supabase-js": "^2.38.0"
+  },
+  "keywords": [
+    "apify",
+    "korean-vc",
+    "vcs-scraper", 
+    "supabase",
+    "korean-field-mapping",
+    "data-intelligence",
+    "venture-capital"
+  ]
 } 
