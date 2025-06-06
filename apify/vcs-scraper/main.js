@@ -48,7 +48,7 @@ function parseKoreanDurationToDate(durationStr) {
 }
 
 Actor.main(async () => {
-    console.log('🇰🇷 VCS Weekly Scraper Actor Started - v2.2.4 - FIXED SCHEMA ISSUES');
+    console.log('🇰🇷 VCS Weekly Scraper Actor Started - v2.2.6 - FIXED BIGINT & DUPLICATE KEYS');
     console.log(`🕐 Execution time: ${new Date().toISOString()}`);
     
     // Get input configuration
@@ -113,7 +113,7 @@ Actor.main(async () => {
     
     console.log(`🔗 Supabase Client Ready: ${!!supabaseClient}`);
     console.log(`📍 Platform: ${Actor.isAtHome() ? 'Apify Cloud' : 'Local Development'}`);
-    console.log('🔧 Optimization: v2.2.4 with SCHEMA FIXES');
+    console.log('🔧 Optimization: v2.2.5 with NUMERIC OVERFLOW & CONSTRAINT FIXES');
     console.log('🎯 Target: https://www.vcs.go.kr/web/portal/investor/search');
     
     // Start scraping with API-powered workflow
@@ -155,7 +155,7 @@ async function scrapeVCSData(config, supabaseClient) {
     console.log(`📅 Update mode: ${config.updateMode}`);
     console.log(`🏷️ Data source: ${config.dataSource}`);
     console.log(`📍 Platform: ${Actor.isAtHome() ? 'Apify Cloud' : 'Local Development'}`);
-    console.log('🔧 Optimization: v2.2.4 with SCHEMA FIXES');
+    console.log('🔧 Optimization: v2.2.5 with NUMERIC OVERFLOW & CONSTRAINT FIXES');
     console.log('🎯 API Endpoint: https://www.vcs.go.kr/web/portal/investor/search');
 }
 
@@ -211,7 +211,7 @@ async function scrapeInvestors(config, supabaseClient) {
                 ...investor,
                 dataType: 'investor',
                 scrapedAt: new Date().toISOString(),
-                source: 'VCS_API_v2.2.4_FIXED_SCHEMA_ISSUES'
+                source: 'VCS_API_v2.2.5_FIXED_NUMERIC_OVERFLOW'
             })));
             
             // Rate limiting
@@ -281,7 +281,7 @@ async function scrapeFunds(config, supabaseClient) {
                 ...fund,
                 dataType: 'fund',
                 scrapedAt: new Date().toISOString(),
-                source: 'VCS_API_v2.2.4_FIXED_SCHEMA_ISSUES'
+                source: 'VCS_API_v2.2.5_FIXED_NUMERIC_OVERFLOW'
             })));
             
             // Rate limiting
@@ -305,7 +305,6 @@ async function scrapeFunds(config, supabaseClient) {
 function transformInvestorForSupabase(investorData) {
     // 💰 CRITICAL: Parse operating amount from Korean API (operBoundAmt is in billions of won)
     const operatingAmountBillions = investorData.operBoundAmt ? parseFloat(investorData.operBoundAmt) : null;
-    const operatingAmountWon = operatingAmountBillions ? operatingAmountBillions * 1000000000 : null; // Convert to actual won
     
     return {
         // 🎯 CRITICAL: Company ID is the universal linking field
@@ -320,8 +319,8 @@ function transformInvestorForSupabase(investorData) {
         company_type: investorData.operInstTpNm || null, // 기타운용사
         website_url: null, // Not provided in API
         
-        // 💰 CRITICAL: Operating amount at main table level for easy access
-        operating_amount: operatingAmountWon, // Operating amount in won (converted from billions)
+        // 💰 CRITICAL FIX: Operating amount as integer (rounded billions) for bigint compatibility
+        operating_amount: operatingAmountBillions ? Math.round(operatingAmountBillions) : null, // Convert 252.5 → 253
         
         // Contact information
         contact_info: {
@@ -338,7 +337,6 @@ function transformInvestorForSupabase(investorData) {
             business_category: investorData.comBzcarrCd || null, // 4
             operating_scale_code: investorData.operScaleCd || null, // 1
             operating_amount_billions: operatingAmountBillions, // Store original billions value
-            operating_amount_won: operatingAmountWon, // Store calculated won value
             operating_amount_text: investorData.operBoundAmt || null, // Original text: "252.5"
             operating_amount_display: operatingAmountBillions ? `${operatingAmountBillions}억원` : null, // "252.5억원"
             strategy_planner: investorData.strtplanerYn === 'Y' ? true : false, // Y/N
@@ -348,7 +346,7 @@ function transformInvestorForSupabase(investorData) {
         },
         
         // Metadata
-        apify_source: 'VCS_SCRAPER_V2.2.4_FIXED_SCHEMA_ISSUES',
+        apify_source: 'VCS_SCRAPER_V2.2.6_FIXED_BIGINT_DUPLICATES',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
     };
@@ -360,20 +358,19 @@ function transformInvestorForSupabase(investorData) {
 function transformFundForSupabase(fundData) {
     // Parse fund amount from Korean API (formTotamt is in billions of won)
     const fundAmountBillions = fundData.formTotamt ? parseFloat(fundData.formTotamt) : null;
-    const fundAmountWon = fundAmountBillions ? fundAmountBillions * 1000000000 : null; // Convert to actual won
     
     return {
         // 🎯 CRITICAL: Company ID links to VC table (same operInstId)
         company_id: fundData.operInstId || `fund_mgmt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         
-        // Fund identification using CORRECT Korean API field names
-        fund_name: fundData.fundNm || 'Unknown Fund', // 힐스프링투자조합 제1호
+        // Fund identification using CORRECT Korean API field names with unique suffix
+        fund_name: fundData.fundNm ? `${fundData.fundNm}_${fundData.operInstId}` : `Unknown Fund_${Date.now()}`, // Make unique
         fund_name_en: null,
         fund_type: fundData.invstFldTpNm || null, // 일반
         
-        // 💰 CRITICAL FIX: Fund amounts using Korean API field formTotamt
-        commitment_amount: fundAmountWon, // Fund amount in won (converted from billions)
-        fund_size: fundAmountBillions, // Fund size in billions of won (original Korean format)
+        // 💰 CRITICAL FIX: Fund amounts as integers (rounded billions) for bigint compatibility
+        commitment_amount: fundAmountBillions ? Math.round(fundAmountBillions) : null, // Convert 27.5 → 28
+        fund_size: fundAmountBillions ? Math.round(fundAmountBillions) : null, // Rounded for bigint
         
         // Dates using CORRECT Korean API field names
         establishment_date: fundData.regDd || null, // 2023-04-26
@@ -391,7 +388,6 @@ function transformFundForSupabase(fundData) {
             management_company_id: fundData.operInstId || null, // OP20220223 (LINKS TO VC TABLE!)
             fund_scale_text: fundData.formTotamt ? `${fundData.formTotamt}억원` : null,
             fund_amount_billions: fundAmountBillions, // Store original billions value
-            fund_amount_won: fundAmountWon, // Store calculated won value
             registration_date: fundData.regDd || null, // 2023-04-26
             expiry_date: fundData.expDd || null, // 2031-04-25
             investment_stage: fundData.invstFldTpNm || null, // 일반
@@ -401,7 +397,7 @@ function transformFundForSupabase(fundData) {
         },
         
         // Metadata
-        apify_source: 'VCS_SCRAPER_V2.2.4_FIXED_SCHEMA_ISSUES',
+        apify_source: 'VCS_SCRAPER_V2.2.6_FIXED_BIGINT_DUPLICATES',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
     };
@@ -455,10 +451,7 @@ async function upsertFundsToSupabase(supabaseClient, funds) {
             
             const { data, error } = await supabaseClient
                 .from('fund_table')
-                .upsert(transformedData, {
-                    onConflict: 'company_id',
-                    ignoreDuplicates: false
-                })
+                .insert(transformedData)
                 .select();
                 
             if (error) {
