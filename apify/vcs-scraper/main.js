@@ -113,7 +113,7 @@ Actor.main(async () => {
     
     console.log(`🔗 Supabase Client Ready: ${!!supabaseClient}`);
     console.log(`📍 Platform: ${Actor.isAtHome() ? 'Apify Cloud' : 'Local Development'}`);
-    console.log('🔧 Optimization: v2.2.5 with NUMERIC OVERFLOW & CONSTRAINT FIXES');
+    console.log('🔧 Optimization: v2.2.7 with SMART CONFLICT RESOLUTION for Fund Duplicates');
     console.log('🎯 Target: https://www.vcs.go.kr/web/portal/investor/search');
     
     // Start scraping with API-powered workflow
@@ -155,7 +155,7 @@ async function scrapeVCSData(config, supabaseClient) {
     console.log(`📅 Update mode: ${config.updateMode}`);
     console.log(`🏷️ Data source: ${config.dataSource}`);
     console.log(`📍 Platform: ${Actor.isAtHome() ? 'Apify Cloud' : 'Local Development'}`);
-    console.log('🔧 Optimization: v2.2.5 with NUMERIC OVERFLOW & CONSTRAINT FIXES');
+    console.log('🔧 Optimization: v2.2.7 with SMART CONFLICT RESOLUTION for Fund Duplicates');
     console.log('🎯 API Endpoint: https://www.vcs.go.kr/web/portal/investor/search');
 }
 
@@ -211,7 +211,7 @@ async function scrapeInvestors(config, supabaseClient) {
                 ...investor,
                 dataType: 'investor',
                 scrapedAt: new Date().toISOString(),
-                source: 'VCS_API_v2.2.5_FIXED_NUMERIC_OVERFLOW'
+                source: 'VCS_API_v2.2.7_SMART_CONFLICT_RESOLUTION'
             })));
             
             // Rate limiting
@@ -281,7 +281,7 @@ async function scrapeFunds(config, supabaseClient) {
                 ...fund,
                 dataType: 'fund',
                 scrapedAt: new Date().toISOString(),
-                source: 'VCS_API_v2.2.5_FIXED_NUMERIC_OVERFLOW'
+                source: 'VCS_API_v2.2.7_SMART_CONFLICT_RESOLUTION'
             })));
             
             // Rate limiting
@@ -346,7 +346,7 @@ function transformInvestorForSupabase(investorData) {
         },
         
         // Metadata
-        apify_source: 'VCS_SCRAPER_V2.2.6_FIXED_BIGINT_DUPLICATES',
+        apify_source: 'VCS_SCRAPER_V2.2.7_SMART_CONFLICT_RESOLUTION',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
     };
@@ -363,8 +363,8 @@ function transformFundForSupabase(fundData) {
         // 🎯 CRITICAL: Company ID links to VC table (same operInstId)
         company_id: fundData.operInstId || `fund_mgmt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         
-        // Fund identification using CORRECT Korean API field names with unique suffix
-        fund_name: fundData.fundNm ? `${fundData.fundNm}_${fundData.operInstId}` : `Unknown Fund_${Date.now()}`, // Make unique
+        // Fund identification using ENHANCED unique naming strategy
+        fund_name: fundData.fundNm ? `${fundData.fundNm}_${fundData.operInstId}` : `Unknown Fund_${fundData.operInstId || Date.now()}`, // Enhanced unique strategy
         fund_name_en: null,
         fund_type: fundData.invstFldTpNm || null, // 일반
         
@@ -397,7 +397,7 @@ function transformFundForSupabase(fundData) {
         },
         
         // Metadata
-        apify_source: 'VCS_SCRAPER_V2.2.6_FIXED_BIGINT_DUPLICATES',
+        apify_source: 'VCS_SCRAPER_V2.2.7_SMART_CONFLICT_RESOLUTION',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
     };
@@ -439,7 +439,7 @@ async function upsertInvestorsToSupabase(supabaseClient, investors) {
 }
 
 /**
- * Upsert funds to Supabase with corrected transformations
+ * Upsert funds to Supabase with SMART CONFLICT RESOLUTION
  */
 async function upsertFundsToSupabase(supabaseClient, funds) {
     let successCount = 0;
@@ -449,14 +449,39 @@ async function upsertFundsToSupabase(supabaseClient, funds) {
         try {
             const transformedData = transformFundForSupabase(fund);
             
+            // 🔧 SMART CONFLICT RESOLUTION: Try upsert first, fallback if needed
             const { data, error } = await supabaseClient
                 .from('fund_table')
-                .insert(transformedData)
+                .upsert(transformedData, {
+                    onConflict: 'fund_name',
+                    ignoreDuplicates: false
+                })
                 .select();
                 
             if (error) {
-                console.log(`❌ Supabase error for ${transformedData.fund_name}:`, error.message);
-                errorCount++;
+                // If upsert fails due to existing constraint, try with timestamp suffix
+                if (error.message.includes('duplicate key') || error.message.includes('unique constraint')) {
+                    console.log(`🔄 Duplicate detected for ${transformedData.fund_name}, trying with unique suffix...`);
+                    
+                    const uniqueFundName = `${transformedData.fund_name}_${Date.now()}`;
+                    const retryData = { ...transformedData, fund_name: uniqueFundName };
+                    
+                    const { data: retryResult, error: retryError } = await supabaseClient
+                        .from('fund_table')
+                        .insert(retryData)
+                        .select();
+                        
+                    if (retryError) {
+                        console.log(`❌ Retry failed for ${uniqueFundName}:`, retryError.message);
+                        errorCount++;
+                    } else {
+                        console.log(`✅ Upserted fund with unique name: ${uniqueFundName}`);
+                        successCount++;
+                    }
+                } else {
+                    console.log(`❌ Supabase error for ${transformedData.fund_name}:`, error.message);
+                    errorCount++;
+                }
             } else {
                 console.log(`✅ Upserted fund: ${transformedData.fund_name}`);
                 successCount++;
