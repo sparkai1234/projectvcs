@@ -1,9 +1,10 @@
 /**
- * 🇰🇷 VCS Weekly Scraper Actor - v2.2.0 - CORRECTED KOREAN FIELD MAPPING
- * ======================================================================
+ * 🇰🇷 VCS Weekly Scraper Actor - v2.2.1 - FIXED KOREAN DATE CONVERSION
+ * =====================================================================
  * 
  * Fixed transformation functions to properly map Korean API responses
- * to Supabase database schema. Eliminates NULL value issues.
+ * to Supabase database schema. Added Korean duration-to-date conversion
+ * to handle "6년 1개월" format. Eliminates NULL value and date format issues.
  */
 
 const { Actor } = require('apify');
@@ -11,8 +12,42 @@ const { createClient } = require('@supabase/supabase-js');
 const https = require('https');
 const { URL } = require('url');
 
+/**
+ * Parse Korean duration format and convert to establishment date
+ * Examples: "6년 1개월" -> calculates date 6 years 1 month ago
+ */
+function parseKoreanDurationToDate(durationStr) {
+    if (!durationStr || durationStr === '-') return null;
+    
+    try {
+        // Extract years and months from Korean duration string
+        const yearMatch = durationStr.match(/(\d+)년/);
+        const monthMatch = durationStr.match(/(\d+)개월/);
+        
+        const years = yearMatch ? parseInt(yearMatch[1]) : 0;
+        const months = monthMatch ? parseInt(monthMatch[1]) : 0;
+        
+        if (years === 0 && months === 0) return null;
+        
+        // Calculate establishment date (current date - duration)
+        const currentDate = new Date();
+        const totalMonths = years * 12 + months;
+        
+        // Calculate establishment date
+        const establishmentDate = new Date(currentDate);
+        establishmentDate.setMonth(establishmentDate.getMonth() - totalMonths);
+        
+        // Return in ISO date format (YYYY-MM-DD)
+        return establishmentDate.toISOString().split('T')[0];
+        
+    } catch (error) {
+        console.log(`⚠️ Failed to parse Korean duration "${durationStr}":`, error.message);
+        return null;
+    }
+}
+
 Actor.main(async () => {
-    console.log('🇰🇷 VCS Weekly Scraper Actor Started - v2.2.0 - CORRECTED KOREAN MAPPING');
+    console.log('🇰🇷 VCS Weekly Scraper Actor Started - v2.2.1 - FIXED KOREAN DATE CONVERSION');
     console.log(`🕐 Execution time: ${new Date().toISOString()}`);
     
     // Get input configuration
@@ -77,14 +112,14 @@ Actor.main(async () => {
     
     console.log(`🔗 Supabase Client Ready: ${!!supabaseClient}`);
     console.log(`📍 Platform: ${Actor.isAtHome() ? 'Apify Cloud' : 'Local Development'}`);
-    console.log('🔧 Optimization: v2.2.0 with CORRECTED KOREAN FIELD MAPPING');
+    console.log('🔧 Optimization: v2.2.1 with KOREAN DATE CONVERSION');
     console.log('🎯 Target: https://www.vcs.go.kr/web/portal/investor/search');
     
     // Start scraping with API-powered workflow
     console.log('🚀 Starting VCS data extraction with CORRECTED Korean mapping...');
     await scrapeVCSData(config, supabaseClient);
     
-    console.log('🎉 === VCS WEEKLY SCRAPING COMPLETED (CORRECTED MAPPING) ===');
+    console.log('🎉 === VCS WEEKLY SCRAPING COMPLETED (FIXED KOREAN DATE CONVERSION) ===');
 });
 
 /**
@@ -119,7 +154,7 @@ async function scrapeVCSData(config, supabaseClient) {
     console.log(`📅 Update mode: ${config.updateMode}`);
     console.log(`🏷️ Data source: ${config.dataSource}`);
     console.log(`📍 Platform: ${Actor.isAtHome() ? 'Apify Cloud' : 'Local Development'}`);
-    console.log('🔧 Optimization: v2.2.0 with CORRECTED KOREAN FIELD MAPPING');
+    console.log('🔧 Optimization: v2.2.1 with KOREAN DATE CONVERSION');
     console.log('🎯 API Endpoint: https://www.vcs.go.kr/web/portal/investor/search');
 }
 
@@ -175,7 +210,7 @@ async function scrapeInvestors(config, supabaseClient) {
                 ...investor,
                 dataType: 'investor',
                 scrapedAt: new Date().toISOString(),
-                source: 'VCS_API_v2.2.0_CORRECTED_KOREAN_MAPPING'
+                source: 'VCS_API_v2.2.1_FIXED_KOREAN_DATE_CONVERSION'
             })));
             
             // Rate limiting
@@ -245,7 +280,7 @@ async function scrapeFunds(config, supabaseClient) {
                 ...fund,
                 dataType: 'fund',
                 scrapedAt: new Date().toISOString(),
-                source: 'VCS_API_v2.2.0_CORRECTED_KOREAN_MAPPING'
+                source: 'VCS_API_v2.2.1_FIXED_KOREAN_DATE_CONVERSION'
             })));
             
             // Rate limiting
@@ -276,7 +311,7 @@ function transformInvestorForSupabase(investorData) {
         company_name_en: null,
         location: investorData.sigunguNm || null,  // 서울 강남구
         representative: null, // Not provided in API
-        established_date: investorData.foundYy || null, // 6년 1개월
+        established_date: parseKoreanDurationToDate(investorData.foundYy), // Convert "6년 1개월" to date
         company_type: investorData.operInstTpNm || null, // 기타운용사
         website_url: null, // Not provided in API
         
@@ -303,7 +338,7 @@ function transformInvestorForSupabase(investorData) {
         },
         
         // Metadata
-        apify_source: 'VCS_SCRAPER_V2.2.0_CORRECTED_KOREAN_MAPPING',
+        apify_source: 'VCS_SCRAPER_V2.2.1_FIXED_KOREAN_DATE_CONVERSION',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
     };
@@ -350,7 +385,7 @@ function transformFundForSupabase(fundData) {
         },
         
         // Metadata
-        apify_source: 'VCS_SCRAPER_V2.2.0_CORRECTED_KOREAN_MAPPING',
+        apify_source: 'VCS_SCRAPER_V2.2.1_FIXED_KOREAN_DATE_CONVERSION',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
     };

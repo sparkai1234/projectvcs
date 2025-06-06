@@ -24,8 +24,8 @@ Actor.main(async () => {
     
     // Configuration
     const config = {
-        maxPages: input.maxPages || 50,
-        delay: input.delay || 2000,
+        maxPages: input.maxPages || 20, // Conservative limit for stability
+        delay: input.delay || 6000, // 6 second delay for ultimate stability
         baseUrl: 'http://diva.kvca.or.kr',
         dataSource: input.dataSource || 'all',
         includeStatisticsPDFs: input.includeStatisticsPDFs !== false,
@@ -89,24 +89,57 @@ Actor.main(async () => {
         launchContext: {
             launchOptions: {
                 headless: input.headless !== false,
+                // Ultra-generous timeout settings to eliminate all protocol errors
+                protocolTimeout: 600000, // 10 minutes protocol timeout
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
                     '--disable-dev-shm-usage',
+                    '--disable-web-security',
+                    '--disable-features=VizDisplayCompositor',
+                    '--disable-background-timer-throttling',
+                    '--disable-backgrounding-occluded-windows',
+                    '--disable-renderer-backgrounding',
                     '--lang=ko-KR,ko,en-US,en',
                     '--accept-lang=ko-KR,ko,en-US,en'
                 ]
             }
         },
         
-        requestHandlerTimeoutSecs: 300,
+        // Ultra-generous timeouts to eliminate all timeout errors
+        requestHandlerTimeoutSecs: 1800, // 30 minutes per request (maximum stability)
+        navigationTimeoutSecs: 600, // 10 minutes for navigation
+        
+        // Reduce concurrency to prevent timeouts
+        maxConcurrency: 1, // Process one page at a time
+        
+        // Add browser pool settings for better performance
+        browserPoolOptions: {
+            useFingerprints: false,
+            maxOpenPagesPerBrowser: 1, // Only one page per browser
+            retireBrowserAfterPageCount: 5, // Retire browser after 5 pages
+            preLaunchHooks: [
+                async (pageId, launchContext) => {
+                    launchContext.launchOptions = {
+                        ...launchContext.launchOptions,
+                        // Additional browser stability settings
+                        defaultViewport: { width: 1920, height: 1080 },
+                        timeout: 600000 // 10 minutes browser launch timeout
+                    };
+                }
+            ]
+        },
         
         requestHandler: async ({ page, request }) => {
             console.log(`🔍 Processing: ${request.url}`);
             
             try {
-                await page.waitForSelector('body', { timeout: 30000 });
-                await sleep(config.delay);
+                // Set ultra-generous timeouts for maximum stability
+                page.setDefaultTimeout(600000); // 10 minutes default timeout
+                page.setDefaultNavigationTimeout(600000); // 10 minutes navigation timeout
+                
+                await page.waitForSelector('body', { timeout: 60000 }); // 1 minute body wait
+                await sleep(Math.max(config.delay, 3000)); // At least 3 seconds delay
                 
                 const url = request.url;
                 const userData = request.userData;
@@ -348,7 +381,18 @@ async function handleFinancialStatements(page, config, supabase) {
         }
         
         if (page.url().includes('page=1') || !page.url().includes('page=')) {
-            await handlePaginationWrapper(page, config, 'financial_statements', supabase);
+            try {
+                // Use very conservative settings for financial statements to prevent timeouts
+                const financialConfig = { 
+                    ...config, 
+                    maxPages: Math.min(config.maxPages, 8), // Ultra-conservative for financial statements
+                    delay: Math.max(config.delay, 10000) // 10 second delay for financial statements
+                };
+                await handlePaginationWrapper(page, financialConfig, 'financial_statements', supabase);
+            } catch (paginationError) {
+                console.log('⚠️ Financial statements pagination failed, but first page data was collected successfully');
+                console.log('💡 Consider running a separate job just for financial statements with higher timeouts');
+            }
         }
         
     } catch (error) {
@@ -812,8 +856,8 @@ async function setupAllFilters(page) {
     console.log('⚙️ Setting up 전체보기 filters...');
     
     try {
-        // Wait for form elements
-        await page.waitForSelector('form, .search-form', { timeout: 10000 });
+        // Wait for form elements with longer timeout
+        await page.waitForSelector('form, .search-form', { timeout: 30000 });
         
         // Select "전체" options in dropdowns
         const selectElements = await page.$$('select');
@@ -879,53 +923,149 @@ async function handlePaginationWrapper(page, config, dataType, supabase) {
     try {
         let currentPage = 1;
         const maxPages = config.maxPages;
+        let consecutiveTimeouts = 0;
+        const maxTimeouts = 3; // Stop after 3 consecutive timeouts
         
-        while (currentPage < maxPages) {
-            // Look for next page button using proper CSS selectors
-            let nextButton = await page.$('.next:not(.disabled)');
-            if (!nextButton) {
-                nextButton = await page.$('.page-link[href*="page"]:not(.disabled)');
-            }
-            if (!nextButton) {
-                nextButton = await page.$('a[href*="page"]:not(.disabled)');
-            }
-            if (!nextButton) {
-                // Try to find any pagination-related links
-                const paginationLinks = await page.$$('a');
-                for (const link of paginationLinks) {
-                    const text = await page.evaluate(el => el.textContent.trim(), link);
-                    const href = await page.evaluate(el => el.href, link);
-                    const isDisabled = await page.evaluate(el => el.classList.contains('disabled'), link);
-                    
-                    if ((text.includes('다음') || text.includes('Next') || href.includes('page')) && !isDisabled) {
-                        nextButton = link;
-                        break;
+        while (currentPage < maxPages && consecutiveTimeouts < maxTimeouts) {
+            try {
+                // Add timeout protection for pagination operations
+                const paginationTimeout = 60000; // 1 minute timeout
+                
+                // Look for next page button with timeout protection
+                let nextButton = null;
+                
+                try {
+                                            nextButton = await Promise.race([
+                            page.$('.next:not(.disabled)'),
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('Pagination selector timeout')), 300000)) // 5 minutes for selectors
+                        ]);
+                } catch (timeoutError) {
+                    console.log('⏱️ Pagination selector timed out, trying alternatives...');
+                }
+                
+                if (!nextButton) {
+                                            try {
+                            nextButton = await Promise.race([
+                                page.$('.page-link[href*="page"]:not(.disabled)'),
+                                new Promise((_, reject) => setTimeout(() => reject(new Error('Pagination selector timeout')), 300000)) // 5 minutes
+                            ]);
+                        } catch (e) {}
+                }
+                
+                if (!nextButton) {
+                                            try {
+                            nextButton = await Promise.race([
+                                page.$('a[href*="page"]:not(.disabled)'),
+                                new Promise((_, reject) => setTimeout(() => reject(new Error('Pagination selector timeout')), 300000)) // 5 minutes
+                            ]);
+                        } catch (e) {}
+                }
+                
+                if (!nextButton) {
+                    console.log('🔍 Looking for pagination links manually...');
+                    // Try to find any pagination-related links with timeout protection
+                    try {
+                        const paginationLinks = await Promise.race([
+                            page.$$('a'),
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('Link selector timeout')), 10000))
+                        ]);
+                        
+                        for (const link of paginationLinks) {
+                            try {
+                                const text = await Promise.race([
+                                    page.evaluate(el => el.textContent.trim(), link),
+                                    new Promise((_, reject) => setTimeout(() => reject(new Error('Text eval timeout')), 5000))
+                                ]);
+                                const href = await Promise.race([
+                                    page.evaluate(el => el.href, link),
+                                    new Promise((_, reject) => setTimeout(() => reject(new Error('Href eval timeout')), 5000))
+                                ]);
+                                const isDisabled = await Promise.race([
+                                    page.evaluate(el => el.classList.contains('disabled'), link),
+                                    new Promise((_, reject) => setTimeout(() => reject(new Error('Disabled eval timeout')), 5000))
+                                ]);
+                                
+                                if ((text.includes('다음') || text.includes('Next') || href.includes('page')) && !isDisabled) {
+                                    nextButton = link;
+                                    console.log(`📄 Found pagination link: "${text}"`);
+                                    break;
+                                }
+                            } catch (evalError) {
+                                console.log('⚠️ Error evaluating pagination link, skipping...');
+                                continue;
+                            }
+                        }
+                    } catch (linkError) {
+                        console.log('⚠️ Error finding pagination links');
                     }
                 }
+                
+                if (!nextButton) {
+                    console.log(`📄 No more pages found for ${dataType}`);
+                    break;
+                }
+                
+                // Check if button is enabled with timeout protection
+                let isEnabled = false;
+                                            try {
+                                isEnabled = await Promise.race([
+                                    page.evaluate(btn => !btn.disabled && !btn.classList.contains('disabled'), nextButton),
+                                    new Promise((_, reject) => setTimeout(() => reject(new Error('Enable check timeout')), 60000)) // 1 minute
+                                ]);
+                            } catch (enableError) {
+                    console.log('⚠️ Error checking button state, assuming enabled');
+                    isEnabled = true;
+                }
+                
+                if (!isEnabled) {
+                    console.log(`📄 Next button disabled for ${dataType}`);
+                    break;
+                }
+                
+                // Click next button with timeout protection
+                                                try {
+                                    await Promise.race([
+                                        nextButton.click(),
+                                        new Promise((_, reject) => setTimeout(() => reject(new Error('Click timeout')), 60000)) // 1 minute
+                                    ]);
+                                    console.log(`✅ Successfully clicked page ${currentPage + 1} for ${dataType}`);
+                                } catch (clickError) {
+                    console.error(`❌ Failed to click next page for ${dataType}:`, clickError.message);
+                    break;
+                }
+                
+                // Wait for page to load with increased delay
+                await sleep(Math.max(config.delay, 5000)); // At least 5 seconds
+                currentPage++;
+                
+                console.log(`📄 Processing page ${currentPage} for ${dataType}...`);
+                
+                // Extract data for the specific page type without triggering pagination again
+                await extractDataForPage(page, dataType, supabase);
+                
+                // Reset timeout counter on successful operation
+                consecutiveTimeouts = 0;
+                
+            } catch (pageError) {
+                consecutiveTimeouts++;
+                console.error(`❌ Pagination error for ${dataType} (attempt ${consecutiveTimeouts}/${maxTimeouts}):`, pageError.message);
+                
+                if (pageError.message.includes('timeout') || pageError.message.includes('Protocol error')) {
+                    console.log(`⏱️ Timeout detected, waiting longer before retry...`);
+                    await sleep(10000); // Wait 10 seconds on timeout
+                }
+                
+                if (consecutiveTimeouts >= maxTimeouts) {
+                    console.log(`🛑 Too many consecutive errors for ${dataType}, stopping pagination`);
+                    break;
+                }
             }
-            
-            if (!nextButton) break;
-            
-            const isEnabled = await page.evaluate(btn => {
-                return !btn.disabled && !btn.classList.contains('disabled');
-            }, nextButton);
-            
-            if (!isEnabled) break;
-            
-            await nextButton.click();
-            await sleep(config.delay);
-            currentPage++;
-            
-            console.log(`📄 Processing page ${currentPage} for ${dataType}...`);
-            
-            // Extract data for the specific page type without triggering pagination again
-            await extractDataForPage(page, dataType, supabase);
         }
         
-        console.log(`📄 Completed pagination for ${dataType} - processed ${currentPage} pages`);
+        console.log(`📄 Completed pagination for ${dataType} - processed ${currentPage} pages (${consecutiveTimeouts} timeouts)`);
         
     } catch (error) {
-        console.error(`❌ Pagination error for ${dataType}:`, error);
+        console.error(`❌ Fatal pagination error for ${dataType}:`, error.message);
     }
 }
 

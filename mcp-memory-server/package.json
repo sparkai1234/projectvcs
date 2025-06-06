@@ -1,0 +1,35 @@
+{
+  "name": "projectvcs-mcp-memory-server",
+  "version": "1.0.0",
+  "description": "🧠 MCP Memory Server for ProjectVCS Workspace - Comprehensive Context Management",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "node src/test.js",
+    "init": "node src/init-memory.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "sqlite3": "^5.1.6",
+    "uuid": "^9.0.1",
+    "zod": "^3.22.4",
+    "chokidar": "^3.5.3",
+    "fast-glob": "^3.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": [
+    "mcp",
+    "memory-server",
+    "projectvcs",
+    "workspace-management",
+    "context-persistence",
+    "korean-vc",
+    "diva-intelligence"
+  ],
+  "author": "ProjectVCS Team",
+  "license": "MIT"
+} 
