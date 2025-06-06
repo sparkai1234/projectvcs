@@ -597,20 +597,28 @@ async function handleViolations(page, config, supabase) {
         const violationData = await page.evaluate(() => {
             const data = [];
             const rows = document.querySelectorAll('table tbody tr');
+            console.log(`Found ${rows.length} violation rows to process`);
             
             rows.forEach((row, index) => {
                 const cells = row.querySelectorAll('td');
+                console.log(`Violation row ${index}: ${cells.length} cells`);
+                
+                // Based on screenshot: 번호, 회사명, 조치일, 조치종결일, 사정분류명, 정정구분, 위반형태, 조치구분
                 if (cells.length >= 7) {
-                    data.push({
-                        companyName: cells[0]?.textContent?.trim(),
-                        violationDate: cells[1]?.textContent?.trim(),
-                        violationType: cells[2]?.textContent?.trim(),
-                        violationDetails: cells[3]?.textContent?.trim(),
-                        penaltyType: cells[4]?.textContent?.trim(),
-                        penaltyAmount: cells[5]?.textContent?.trim(),
-                        resolutionStatus: cells[6]?.textContent?.trim(),
+                    const record = {
+                        number: cells[0]?.textContent?.trim(),
+                        companyName: cells[1]?.textContent?.trim(),
+                        actionDate: cells[2]?.textContent?.trim(),
+                        actionEndDate: cells[3]?.textContent?.trim(),
+                        classificationName: cells[4]?.textContent?.trim(),
+                        correctionType: cells[5]?.textContent?.trim(),
+                        violationType: cells[6]?.textContent?.trim(),
+                        actionType: cells.length > 7 ? cells[7]?.textContent?.trim() : '',
                         rowIndex: index
-                    });
+                    };
+                    
+                    console.log(`Extracted violation record:`, record);
+                    data.push(record);
                 }
             });
             
@@ -621,13 +629,14 @@ async function handleViolations(page, config, supabase) {
         
         for (const record of violationData) {
             const processedRecord = {
+                number: record.number,
                 company_name: record.companyName,
-                violation_date: parseKoreanDate(record.violationDate),
+                action_date: parseKoreanDate(record.actionDate),
+                action_end_date: parseKoreanDate(record.actionEndDate),
+                classification_name: record.classificationName,
+                correction_type: record.correctionType,
                 violation_type: record.violationType,
-                violation_details: record.violationDetails,
-                penalty_type: record.penaltyType,
-                penalty_amount: parseKoreanAmount(record.penaltyAmount),
-                resolution_status: record.resolutionStatus,
+                action_type: record.actionType,
                 extracted_at: new Date().toISOString(),
                 source_url: page.url()
             };
@@ -663,18 +672,24 @@ async function handleVCMap(page, config, supabase) {
         const vcMapData = await page.evaluate(() => {
             const data = [];
             const rows = document.querySelectorAll('table tbody tr');
+            console.log(`Found ${rows.length} VC MAP rows to process`);
             
             rows.forEach((row, index) => {
                 const cells = row.querySelectorAll('td');
-                if (cells.length >= 5) {
-                    data.push({
-                        companyName: cells[0]?.textContent?.trim(),
-                        mapType: cells[1]?.textContent?.trim(),
-                        dataValue: cells[2]?.textContent?.trim(),
-                        referenceDate: cells[3]?.textContent?.trim(),
-                        notes: cells[4]?.textContent?.trim(),
+                console.log(`VC MAP row ${index}: ${cells.length} cells`);
+                
+                // Based on screenshot: 순위, 회사명, 인력현황수, 전문인력수
+                if (cells.length >= 4) {
+                    const record = {
+                        rank: cells[0]?.textContent?.trim(),
+                        companyName: cells[1]?.textContent?.trim(),
+                        personnelCount: cells[2]?.textContent?.trim(),
+                        professionalCount: cells[3]?.textContent?.trim(),
                         rowIndex: index
-                    });
+                    };
+                    
+                    console.log(`Extracted VC MAP record:`, record);
+                    data.push(record);
                 }
             });
             
@@ -685,11 +700,10 @@ async function handleVCMap(page, config, supabase) {
         
         for (const record of vcMapData) {
             const processedRecord = {
+                rank: parseInt(record.rank) || null,
                 company_name: record.companyName,
-                map_type: record.mapType,
-                data_value: record.dataValue,
-                reference_date: parseKoreanDate(record.referenceDate),
-                notes: record.notes,
+                personnel_count: parseInt(record.personnelCount) || null,
+                professional_count: parseInt(record.professionalCount) || null,
                 extracted_at: new Date().toISOString(),
                 source_url: page.url()
             };
