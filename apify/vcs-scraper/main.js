@@ -1,10 +1,11 @@
 /**
- * 🇰🇷 VCS Weekly Scraper Actor - v2.2.1 - FIXED KOREAN DATE CONVERSION
- * =====================================================================
+ * 🇰🇷 VCS Weekly Scraper Actor - v2.2.2 - FIXED FUND AMOUNTS
+ * ===========================================================
  * 
  * Fixed transformation functions to properly map Korean API responses
  * to Supabase database schema. Added Korean duration-to-date conversion
- * to handle "6년 1개월" format. Eliminates NULL value and date format issues.
+ * and CRITICAL FIX for fund amounts mapping. Ensures commitment_amount
+ * gets properly populated from formTotamt Korean API field.
  */
 
 const { Actor } = require('apify');
@@ -47,7 +48,7 @@ function parseKoreanDurationToDate(durationStr) {
 }
 
 Actor.main(async () => {
-    console.log('🇰🇷 VCS Weekly Scraper Actor Started - v2.2.1 - FIXED KOREAN DATE CONVERSION');
+    console.log('🇰🇷 VCS Weekly Scraper Actor Started - v2.2.2 - FIXED FUND AMOUNTS');
     console.log(`🕐 Execution time: ${new Date().toISOString()}`);
     
     // Get input configuration
@@ -112,14 +113,14 @@ Actor.main(async () => {
     
     console.log(`🔗 Supabase Client Ready: ${!!supabaseClient}`);
     console.log(`📍 Platform: ${Actor.isAtHome() ? 'Apify Cloud' : 'Local Development'}`);
-    console.log('🔧 Optimization: v2.2.1 with KOREAN DATE CONVERSION');
+    console.log('🔧 Optimization: v2.2.2 with CRITICAL FUND AMOUNT FIX');
     console.log('🎯 Target: https://www.vcs.go.kr/web/portal/investor/search');
     
     // Start scraping with API-powered workflow
     console.log('🚀 Starting VCS data extraction with CORRECTED Korean mapping...');
     await scrapeVCSData(config, supabaseClient);
     
-    console.log('🎉 === VCS WEEKLY SCRAPING COMPLETED (FIXED KOREAN DATE CONVERSION) ===');
+    console.log('🎉 === VCS WEEKLY SCRAPING COMPLETED (FIXED FUND AMOUNTS) ===');
 });
 
 /**
@@ -154,7 +155,7 @@ async function scrapeVCSData(config, supabaseClient) {
     console.log(`📅 Update mode: ${config.updateMode}`);
     console.log(`🏷️ Data source: ${config.dataSource}`);
     console.log(`📍 Platform: ${Actor.isAtHome() ? 'Apify Cloud' : 'Local Development'}`);
-    console.log('🔧 Optimization: v2.2.1 with KOREAN DATE CONVERSION');
+    console.log('🔧 Optimization: v2.2.2 with CRITICAL FUND AMOUNT FIX');
     console.log('🎯 API Endpoint: https://www.vcs.go.kr/web/portal/investor/search');
 }
 
@@ -210,7 +211,7 @@ async function scrapeInvestors(config, supabaseClient) {
                 ...investor,
                 dataType: 'investor',
                 scrapedAt: new Date().toISOString(),
-                source: 'VCS_API_v2.2.1_FIXED_KOREAN_DATE_CONVERSION'
+                source: 'VCS_API_v2.2.2_FIXED_FUND_AMOUNTS'
             })));
             
             // Rate limiting
@@ -280,7 +281,7 @@ async function scrapeFunds(config, supabaseClient) {
                 ...fund,
                 dataType: 'fund',
                 scrapedAt: new Date().toISOString(),
-                source: 'VCS_API_v2.2.1_FIXED_KOREAN_DATE_CONVERSION'
+                source: 'VCS_API_v2.2.2_FIXED_FUND_AMOUNTS'
             })));
             
             // Rate limiting
@@ -338,7 +339,7 @@ function transformInvestorForSupabase(investorData) {
         },
         
         // Metadata
-        apify_source: 'VCS_SCRAPER_V2.2.1_FIXED_KOREAN_DATE_CONVERSION',
+        apify_source: 'VCS_SCRAPER_V2.2.2_FIXED_FUND_AMOUNTS',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
     };
@@ -348,6 +349,10 @@ function transformInvestorForSupabase(investorData) {
  * 🔧 CORRECTED: Transform Fund data using actual Korean API field names
  */
 function transformFundForSupabase(fundData) {
+    // Parse fund amount from Korean API (formTotamt is in billions of won)
+    const fundAmountBillions = fundData.formTotamt ? parseFloat(fundData.formTotamt) : null;
+    const fundAmountWon = fundAmountBillions ? fundAmountBillions * 1000000000 : null; // Convert to actual won
+    
     return {
         // 🎯 CRITICAL: Company ID links to VC table (same operInstId)
         company_id: fundData.operInstId || `fund_mgmt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -357,9 +362,9 @@ function transformFundForSupabase(fundData) {
         fund_name_en: null,
         fund_type: fundData.invstFldTpNm || null, // 일반
         
-        // Financial information
-        commitment_amount: null,
-        fund_size: fundData.formTotamt ? parseFloat(fundData.formTotamt) : null, // 200.0
+        // 💰 CRITICAL FIX: Fund amounts using Korean API field formTotamt
+        commitment_amount: fundAmountWon, // Fund amount in won (converted from billions)
+        fund_size: fundAmountBillions, // Fund size in billions of won (original Korean format)
         
         // Dates using CORRECT Korean API field names
         establishment_date: fundData.regDd || null, // 2023-04-26
@@ -376,6 +381,8 @@ function transformFundForSupabase(fundData) {
             management_company: fundData.operInstNm || null, // 힐스프링인베스트먼트
             management_company_id: fundData.operInstId || null, // OP20220223 (LINKS TO VC TABLE!)
             fund_scale_text: fundData.formTotamt ? `${fundData.formTotamt}억원` : null,
+            fund_amount_billions: fundAmountBillions, // Store original billions value
+            fund_amount_won: fundAmountWon, // Store calculated won value
             registration_date: fundData.regDd || null, // 2023-04-26
             expiry_date: fundData.expDd || null, // 2031-04-25
             investment_stage: fundData.invstFldTpNm || null, // 일반
@@ -385,7 +392,7 @@ function transformFundForSupabase(fundData) {
         },
         
         // Metadata
-        apify_source: 'VCS_SCRAPER_V2.2.1_FIXED_KOREAN_DATE_CONVERSION',
+        apify_source: 'VCS_SCRAPER_V2.2.2_FIXED_FUND_AMOUNTS',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
     };
