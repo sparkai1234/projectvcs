@@ -1,11 +1,11 @@
 /**
- * 🇰🇷 VCS Weekly Scraper Actor - v2.2.2 - FIXED FUND AMOUNTS
- * ===========================================================
+ * 🇰🇷 VCS Weekly Scraper Actor - v2.2.3 - ENHANCED OPERATING AMOUNTS
+ * ===================================================================
  * 
  * Fixed transformation functions to properly map Korean API responses
- * to Supabase database schema. Added Korean duration-to-date conversion
- * and CRITICAL FIX for fund amounts mapping. Ensures commitment_amount
- * gets properly populated from formTotamt Korean API field.
+ * to Supabase database schema. Added Korean duration-to-date conversion,
+ * fund amounts mapping, and ENHANCED operating amount handling with
+ * proper billions-to-won conversion for CRITICAL financial data integrity.
  */
 
 const { Actor } = require('apify');
@@ -48,7 +48,7 @@ function parseKoreanDurationToDate(durationStr) {
 }
 
 Actor.main(async () => {
-    console.log('🇰🇷 VCS Weekly Scraper Actor Started - v2.2.2 - FIXED FUND AMOUNTS');
+    console.log('🇰🇷 VCS Weekly Scraper Actor Started - v2.2.3 - ENHANCED OPERATING AMOUNTS');
     console.log(`🕐 Execution time: ${new Date().toISOString()}`);
     
     // Get input configuration
@@ -113,7 +113,7 @@ Actor.main(async () => {
     
     console.log(`🔗 Supabase Client Ready: ${!!supabaseClient}`);
     console.log(`📍 Platform: ${Actor.isAtHome() ? 'Apify Cloud' : 'Local Development'}`);
-    console.log('🔧 Optimization: v2.2.2 with CRITICAL FUND AMOUNT FIX');
+    console.log('🔧 Optimization: v2.2.3 with ENHANCED OPERATING AMOUNTS');
     console.log('🎯 Target: https://www.vcs.go.kr/web/portal/investor/search');
     
     // Start scraping with API-powered workflow
@@ -155,7 +155,7 @@ async function scrapeVCSData(config, supabaseClient) {
     console.log(`📅 Update mode: ${config.updateMode}`);
     console.log(`🏷️ Data source: ${config.dataSource}`);
     console.log(`📍 Platform: ${Actor.isAtHome() ? 'Apify Cloud' : 'Local Development'}`);
-    console.log('🔧 Optimization: v2.2.2 with CRITICAL FUND AMOUNT FIX');
+    console.log('🔧 Optimization: v2.2.3 with ENHANCED OPERATING AMOUNTS');
     console.log('🎯 API Endpoint: https://www.vcs.go.kr/web/portal/investor/search');
 }
 
@@ -211,7 +211,7 @@ async function scrapeInvestors(config, supabaseClient) {
                 ...investor,
                 dataType: 'investor',
                 scrapedAt: new Date().toISOString(),
-                source: 'VCS_API_v2.2.2_FIXED_FUND_AMOUNTS'
+                source: 'VCS_API_v2.2.3_ENHANCED_OPERATING_AMOUNTS'
             })));
             
             // Rate limiting
@@ -281,7 +281,7 @@ async function scrapeFunds(config, supabaseClient) {
                 ...fund,
                 dataType: 'fund',
                 scrapedAt: new Date().toISOString(),
-                source: 'VCS_API_v2.2.2_FIXED_FUND_AMOUNTS'
+                source: 'VCS_API_v2.2.3_ENHANCED_OPERATING_AMOUNTS'
             })));
             
             // Rate limiting
@@ -303,6 +303,10 @@ async function scrapeFunds(config, supabaseClient) {
  * 🔧 CORRECTED: Transform VC Investor data using actual Korean API field names
  */
 function transformInvestorForSupabase(investorData) {
+    // 💰 CRITICAL: Parse operating amount from Korean API (operBoundAmt is in billions of won)
+    const operatingAmountBillions = investorData.operBoundAmt ? parseFloat(investorData.operBoundAmt) : null;
+    const operatingAmountWon = operatingAmountBillions ? operatingAmountBillions * 1000000000 : null; // Convert to actual won
+    
     return {
         // 🎯 CRITICAL: Company ID is the universal linking field
         company_id: investorData.operInstId || `vc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -315,6 +319,10 @@ function transformInvestorForSupabase(investorData) {
         established_date: parseKoreanDurationToDate(investorData.foundYy), // Convert "6년 1개월" to date
         company_type: investorData.operInstTpNm || null, // 기타운용사
         website_url: null, // Not provided in API
+        
+        // 💰 CRITICAL: Operating amount at main table level for easy access
+        operating_amount: operatingAmountWon, // Operating amount in won (converted from billions)
+        operating_scale: operatingAmountBillions, // Original billions format for Korean context
         
         // Contact information
         contact_info: {
@@ -329,9 +337,11 @@ function transformInvestorForSupabase(investorData) {
         disclosure_data: {
             industry: investorData.comIndNm || null, // 유통/서비스
             business_category: investorData.comBzcarrCd || null, // 4
-            operating_scale: investorData.operScaleCd || null, // 1
-            operating_amount: investorData.operBoundAmt ? parseFloat(investorData.operBoundAmt) : null, // 1.0
-            operating_amount_text: investorData.operBoundAmt || null,
+            operating_scale_code: investorData.operScaleCd || null, // 1
+            operating_amount_billions: operatingAmountBillions, // Store original billions value
+            operating_amount_won: operatingAmountWon, // Store calculated won value
+            operating_amount_text: investorData.operBoundAmt || null, // Original text: "252.5"
+            operating_amount_display: operatingAmountBillions ? `${operatingAmountBillions}억원` : null, // "252.5억원"
             strategy_planner: investorData.strtplanerYn === 'Y' ? true : false, // Y/N
             pf_angel: investorData.pfAnglYn === 'Y' ? true : false, // Y/N
             investment_character: null,
@@ -339,7 +349,7 @@ function transformInvestorForSupabase(investorData) {
         },
         
         // Metadata
-        apify_source: 'VCS_SCRAPER_V2.2.2_FIXED_FUND_AMOUNTS',
+        apify_source: 'VCS_SCRAPER_V2.2.3_ENHANCED_OPERATING_AMOUNTS',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
     };
@@ -392,7 +402,7 @@ function transformFundForSupabase(fundData) {
         },
         
         // Metadata
-        apify_source: 'VCS_SCRAPER_V2.2.2_FIXED_FUND_AMOUNTS',
+        apify_source: 'VCS_SCRAPER_V2.2.3_ENHANCED_OPERATING_AMOUNTS',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
     };
