@@ -1,11 +1,11 @@
 /**
- * 🇰🇷 VCS Weekly Scraper Actor - v2.2.3 - ENHANCED OPERATING AMOUNTS
- * ===================================================================
+ * 🇰🇷 VCS Weekly Scraper Actor - v2.2.4 - FIXED SCHEMA ISSUES
+ * =============================================================
  * 
  * Fixed transformation functions to properly map Korean API responses
- * to Supabase database schema. Added Korean duration-to-date conversion,
- * fund amounts mapping, and ENHANCED operating amount handling with
- * proper billions-to-won conversion for CRITICAL financial data integrity.
+ * to Supabase database schema. Fixed schema mismatches: removed 
+ * non-existent operating_scale column, fixed Fund table upsert conflicts.
+ * Maintains enhanced operating amounts with proper data integrity.
  */
 
 const { Actor } = require('apify');
@@ -48,7 +48,7 @@ function parseKoreanDurationToDate(durationStr) {
 }
 
 Actor.main(async () => {
-    console.log('🇰🇷 VCS Weekly Scraper Actor Started - v2.2.3 - ENHANCED OPERATING AMOUNTS');
+    console.log('🇰🇷 VCS Weekly Scraper Actor Started - v2.2.4 - FIXED SCHEMA ISSUES');
     console.log(`🕐 Execution time: ${new Date().toISOString()}`);
     
     // Get input configuration
@@ -113,7 +113,7 @@ Actor.main(async () => {
     
     console.log(`🔗 Supabase Client Ready: ${!!supabaseClient}`);
     console.log(`📍 Platform: ${Actor.isAtHome() ? 'Apify Cloud' : 'Local Development'}`);
-    console.log('🔧 Optimization: v2.2.3 with ENHANCED OPERATING AMOUNTS');
+    console.log('🔧 Optimization: v2.2.4 with SCHEMA FIXES');
     console.log('🎯 Target: https://www.vcs.go.kr/web/portal/investor/search');
     
     // Start scraping with API-powered workflow
@@ -155,7 +155,7 @@ async function scrapeVCSData(config, supabaseClient) {
     console.log(`📅 Update mode: ${config.updateMode}`);
     console.log(`🏷️ Data source: ${config.dataSource}`);
     console.log(`📍 Platform: ${Actor.isAtHome() ? 'Apify Cloud' : 'Local Development'}`);
-    console.log('🔧 Optimization: v2.2.3 with ENHANCED OPERATING AMOUNTS');
+    console.log('🔧 Optimization: v2.2.4 with SCHEMA FIXES');
     console.log('🎯 API Endpoint: https://www.vcs.go.kr/web/portal/investor/search');
 }
 
@@ -211,7 +211,7 @@ async function scrapeInvestors(config, supabaseClient) {
                 ...investor,
                 dataType: 'investor',
                 scrapedAt: new Date().toISOString(),
-                source: 'VCS_API_v2.2.3_ENHANCED_OPERATING_AMOUNTS'
+                source: 'VCS_API_v2.2.4_FIXED_SCHEMA_ISSUES'
             })));
             
             // Rate limiting
@@ -281,7 +281,7 @@ async function scrapeFunds(config, supabaseClient) {
                 ...fund,
                 dataType: 'fund',
                 scrapedAt: new Date().toISOString(),
-                source: 'VCS_API_v2.2.3_ENHANCED_OPERATING_AMOUNTS'
+                source: 'VCS_API_v2.2.4_FIXED_SCHEMA_ISSUES'
             })));
             
             // Rate limiting
@@ -322,7 +322,6 @@ function transformInvestorForSupabase(investorData) {
         
         // 💰 CRITICAL: Operating amount at main table level for easy access
         operating_amount: operatingAmountWon, // Operating amount in won (converted from billions)
-        operating_scale: operatingAmountBillions, // Original billions format for Korean context
         
         // Contact information
         contact_info: {
@@ -349,7 +348,7 @@ function transformInvestorForSupabase(investorData) {
         },
         
         // Metadata
-        apify_source: 'VCS_SCRAPER_V2.2.3_ENHANCED_OPERATING_AMOUNTS',
+        apify_source: 'VCS_SCRAPER_V2.2.4_FIXED_SCHEMA_ISSUES',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
     };
@@ -402,7 +401,7 @@ function transformFundForSupabase(fundData) {
         },
         
         // Metadata
-        apify_source: 'VCS_SCRAPER_V2.2.3_ENHANCED_OPERATING_AMOUNTS',
+        apify_source: 'VCS_SCRAPER_V2.2.4_FIXED_SCHEMA_ISSUES',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
     };
@@ -457,7 +456,7 @@ async function upsertFundsToSupabase(supabaseClient, funds) {
             const { data, error } = await supabaseClient
                 .from('fund_table')
                 .upsert(transformedData, {
-                    onConflict: 'company_id,fund_name',
+                    onConflict: 'company_id',
                     ignoreDuplicates: false
                 })
                 .select();
