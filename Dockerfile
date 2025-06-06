@@ -1,17 +1,13 @@
 # Use Apify base image with Puppeteer Chrome pre-installed
 FROM apify/actor-node-puppeteer-chrome:18
 
-# Set working directory
-WORKDIR /usr/src/app
-
 # Copy package files from the diva-scraper directory
 COPY apify/diva-scraper/package*.json ./
 
-# Install dependencies
-RUN npm --quiet set progress=false \
-    && npm install --only=prod --no-optional \
+# Install dependencies with proper npm flags
+RUN npm ci --only=production --no-optional \
     && echo "Installed NPM packages:" \
-    && (npm list --only=prod --no-optional --all || true) \
+    && (npm list --only=production --no-optional --all || true) \
     && echo "Node.js version:" \
     && node --version \
     && echo "NPM version:" \
