@@ -1,0 +1,12 @@
+{
+    "updateMode": "incremental",
+    "maxPages": 5,
+    "dataSource": "investment_performance",
+    "exportToSupabase": true,
+    "testMode": true,
+    "unlimitedExtraction": false,
+    "delay": 3000,
+    "headless": true,
+    "supabaseUrl": "https://bvjbcgfprkhluhsxrxmr.supabase.co",
+    "supabaseKey": "PLACEHOLDER_WILL_USE_ENV_VAR"
+} 

@@ -1,0 +1,123 @@
+{
+    "title": "🇰🇷 Enhanced DIVA Intelligence Scraper v2.0 Configuration",
+    "description": "Enhanced Korean DIVA financial intelligence scraper with smart conflict resolution, unlimited extraction, and production-grade Korean data processing",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "updateMode": {
+            "title": "Update Mode",
+            "type": "string",
+            "description": "Data update strategy for enhanced processing",
+            "default": "incremental",
+            "enum": [
+                "incremental",
+                "full_refresh",
+                "smart_update"
+            ],
+            "enumTitles": [
+                "Incremental Updates (Recommended)",
+                "Full Database Refresh",
+                "Smart Conflict Resolution Update"
+            ],
+            "editor": "select"
+        },
+        "dataSource": {
+            "title": "Data Sources to Scrape",
+            "type": "string",
+            "description": "Select which DIVA financial intelligence sources to extract",
+            "default": "all",
+            "enum": [
+                "all",
+                "investment_performance", 
+                "financial_statements",
+                "association_status",
+                "personnel_status",
+                "professional_personnel",
+                "violations",
+                "vc_map",
+                "statistics"
+            ],
+            "enumTitles": [
+                "All Data Sources (Complete Financial Intelligence)",
+                "Investment Performance (투자실적) - VC Investments",
+                "Financial Statements (재무제표) - Company Financials",
+                "Association Status (조합현황) - KVCA Membership", 
+                "Personnel Status (인력현황) - Team Composition",
+                "Professional Personnel (전문인력현황) - Expert Staff",
+                "Regulatory Violations (법규위반현황) - Compliance Issues",
+                "VC MAP - Geographic & Network Intelligence",
+                "Statistics PDFs (통계정보) - Market Data"
+            ],
+            "editor": "select"
+        },
+        "maxPages": {
+            "title": "Maximum Pages per Data Source",
+            "type": "integer",
+            "description": "Maximum pages to scrape (999 = unlimited extraction)",
+            "default": 999,
+            "minimum": 1,
+            "maximum": 999,
+            "editor": "number"
+        },
+        "unlimitedExtraction": {
+            "title": "Unlimited Extraction Mode",
+            "type": "boolean",
+            "description": "Enable unlimited extraction for complete Korean financial intelligence (recommended for production)",
+            "default": true,
+            "editor": "checkbox"
+        },
+        "testMode": {
+            "title": "Test Mode",
+            "type": "boolean",
+            "description": "Enable test mode for limited extraction (5 pages max)",
+            "default": false,
+            "editor": "checkbox"
+        },
+        "delay": {
+            "title": "Request Delay (ms)",
+            "type": "integer",
+            "description": "Delay between requests for Korean portal stability",
+            "default": 3000,
+            "minimum": 1000,
+            "maximum": 10000,
+            "editor": "number"
+        },
+        "exportToSupabase": {
+            "title": "Export to Supabase",
+            "type": "boolean",
+            "description": "Export to Supabase with smart conflict resolution",
+            "default": true,
+            "editor": "checkbox"
+        },
+        "supabaseUrl": {
+            "title": "Supabase URL",
+            "type": "string",
+            "description": "Supabase project URL (or use SUPABASE_URL environment variable)",
+            "default": "https://bvjbcgfprkhluhsxrxmr.supabase.co",
+            "editor": "textfield"
+        },
+        "supabaseKey": {
+            "title": "Supabase Service Role Key", 
+            "type": "string",
+            "description": "Supabase service role key (or use SUPABASE_SERVICE_ROLE_KEY environment variable)",
+            "default": "",
+            "editor": "textfield",
+            "isSecret": true
+        },
+        "includeStatisticsPDFs": {
+            "title": "Download Statistics PDFs",
+            "type": "boolean",
+            "description": "Download Korean market statistics PDF documents",
+            "default": true,
+            "editor": "checkbox"
+        },
+        "headless": {
+            "title": "Headless Browser",
+            "type": "boolean", 
+            "description": "Run browser in headless mode (recommended for production)",
+            "default": true,
+            "editor": "checkbox"
+        }
+    },
+    "required": ["dataSource", "updateMode"]
+} 
