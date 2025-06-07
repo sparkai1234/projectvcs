@@ -57,7 +57,7 @@ Actor.main(async () => {
     // Configuration with defaults
     const config = {
         updateMode: input?.updateMode || 'incremental',
-        maxPages: input?.maxPages || 999,
+        maxPages: (input?.unlimitedExtraction !== false) ? 999 : (input?.maxPages || 999), // Force unlimited if unlimitedExtraction is true
         dataSource: input?.dataSource || 'both',
         exportToSupabase: input?.exportToSupabase !== false,
         testMode: input?.testMode || false,
