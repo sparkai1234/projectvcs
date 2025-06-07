@@ -68,8 +68,9 @@ try {
 
     await Actor.setStatusMessage('🎯 Navigating to DIVA portal...');
 
-    // Navigate to DIVA website
-    const baseUrl = 'https://diva.kvca.or.kr';
+    // Navigate to DIVA website - corrected URL
+    const baseUrl = 'http://ediva.kvca.or.kr';
+    console.log(`🌐 Navigating to correct DIVA URL: ${baseUrl}`);
     await page.goto(baseUrl, { 
         waitUntil: config.waitStrategy,
         timeout: 30000 
