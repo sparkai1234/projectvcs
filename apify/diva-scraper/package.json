@@ -32,38 +32,6 @@
         "url": "https://github.com/sparkai1234/projectvcs.git"
     },
     "engines": {
-{
-    "name": "comprehensive-diva-scraper",
-    "version": "1.0.0",
-    "description": "Comprehensive DIVA Intelligence Scraper for Korean VC data extraction",
-    "main": "main.js",
-    "scripts": {
-        "start": "node main.js",
-        "test": "node main.js"
-    },
-    "author": "SparkAI VC Intelligence",
-    "license": "MIT",
-    "keywords": [
-        "korean",
-        "vc",
-        "venture-capital",
-        "diva",
-        "scraper",
-        "intelligence",
-        "supabase",
-        "apify"
-    ],
-    "dependencies": {
-        "@supabase/supabase-js": "^2.38.0",
-        "apify": "^3.1.0",
-        "crawlee": "^3.8.0",
-        "puppeteer": "^22.15.0"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/sparkai1234/projectvcs.git"
-    },
-    "engines": {
         "node": ">=18.0.0"
     }
 }
