@@ -11,12 +11,12 @@ COPY package*.json ./
 # Install dependencies - try npm ci first, fallback to npm install
 RUN npm ci --only=production --no-audit || npm install --only=production --no-audit
 
-# Install Korean fonts for better rendering
-RUN apt-get update && apt-get install -y \
-    fonts-nanum \
-    fonts-nanum-coding \
-    fonts-nanum-extra \
-    && rm -rf /var/lib/apt/lists/*
+# Install Korean fonts for better rendering (with proper permissions)
+USER root
+RUN apt-get update || true && \
+    apt-get install -y fonts-nanum fonts-nanum-coding fonts-nanum-extra || true && \
+    rm -rf /var/lib/apt/lists/* || true
+USER myuser
 
 # Copy source code
 COPY . ./
