@@ -76,6 +76,71 @@ try {
         timeout: 30000 
     });
 
+    // Enhanced navigation to violations section
+    console.log(`📍 Current page: ${await page.title()} at ${await page.url()}`);
+    
+    // Try to navigate to violations/disciplinary actions section
+    const violationsNavigationAttempts = [
+        // Korean terms for violations/sanctions
+        () => page.click('a[href*="위반"]'),
+        () => page.click('a[href*="제재"]'), 
+        () => page.click('a[href*="처분"]'),
+        () => page.click('a[href*="조치"]'),
+        () => page.click('a[href*="징계"]'),
+        
+        // English terms
+        () => page.click('a[href*="violation"]'),
+        () => page.click('a[href*="sanction"]'),
+        () => page.click('a[href*="disciplinary"]'),
+        () => page.click('a[href*="penalty"]'),
+        
+        // Try specific DIVA sections
+        () => page.click('a[href*="disclosure"]'),
+        () => page.click('a[href*="공시"]'),
+        () => page.click('a[href*="정보공시"]'),
+        
+        // Menu navigation attempts
+        () => page.click('text=위반'),
+        () => page.click('text=제재'),
+        () => page.click('text=처분'),
+        () => page.click('text=조치'),
+        () => page.click('text=징계'),
+        () => page.click('text=정보공시'),
+        
+        // Try any "더보기" or "전체보기" buttons
+        () => page.click('text=더보기'),
+        () => page.click('text=전체보기'),
+        () => page.click('text=자세히보기')
+    ];
+
+    let navigationSuccess = false;
+    for (let i = 0; i < violationsNavigationAttempts.length; i++) {
+        try {
+            console.log(`🔍 Attempting navigation strategy ${i + 1}...`);
+            await violationsNavigationAttempts[i]();
+            await page.waitForTimeout(2000); // Wait for navigation
+            
+            const newUrl = await page.url();
+            const newTitle = await page.title();
+            console.log(`📍 After navigation attempt ${i + 1}: ${newTitle} at ${newUrl}`);
+            
+            // Check if we successfully navigated to violations section
+            if (newUrl.includes('위반') || newUrl.includes('제재') || newUrl.includes('처분') || 
+                newUrl.includes('violation') || newUrl.includes('sanction') || 
+                newTitle.includes('위반') || newTitle.includes('제재') || newTitle.includes('처분')) {
+                console.log(`✅ Successfully navigated to violations section!`);
+                navigationSuccess = true;
+                break;
+            }
+        } catch (error) {
+            console.log(`❌ Navigation attempt ${i + 1} failed: ${error.message}`);
+        }
+    }
+
+    if (!navigationSuccess) {
+        console.log(`⚠️ Could not find violations section, proceeding with current page`);
+    }
+
     await Actor.setStatusMessage('🔍 Searching for violations data...');
 
     // Enhanced navigation and button detection - 10 strategies
@@ -294,13 +359,37 @@ try {
         await Actor.setValue('SELECTOR_STATS', selectorStats);
         console.log('📊 Selector Statistics:', JSON.stringify(selectorStats, null, 2));
 
-        // Process and filter violations
+        // Enhanced violations detection with comprehensive filtering
         const violations = extractedData.filter(record => {
             const content = record.content.toLowerCase();
-            return content.includes('위반') || 
-                   content.includes('violation') || 
-                   content.includes('제재') ||
-                   content.includes('처분');
+            
+            // Korean violation terms
+            const koreanViolationTerms = [
+                '위반', '제재', '처분', '조치', '징계', '제재조치', 
+                '행정처분', '규제위반', '법규위반', '의무위반',
+                '과태료', '과징금', '영업정지', '주의', '경고',
+                '벌금', '처벌', '법정제재', '규제조치'
+            ];
+            
+            // English violation terms
+            const englishViolationTerms = [
+                'violation', 'sanction', 'penalty', 'disciplinary',
+                'fine', 'warning', 'suspension', 'enforcement',
+                'breach', 'infringement', 'non-compliance'
+            ];
+            
+            // Check for violation terms
+            const hasKoreanViolation = koreanViolationTerms.some(term => content.includes(term));
+            const hasEnglishViolation = englishViolationTerms.some(term => content.includes(term));
+            
+            // Additional content-based filtering
+            const hasRelevantContent = content.length > 20 && (
+                content.includes('회사') || content.includes('기업') || 
+                content.includes('company') || content.includes('firm') ||
+                content.includes('fund') || content.includes('펀드')
+            );
+            
+            return (hasKoreanViolation || hasEnglishViolation) && hasRelevantContent;
         });
 
         violationsFound = violations.length;
