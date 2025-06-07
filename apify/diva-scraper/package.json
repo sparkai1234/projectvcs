@@ -1,7 +1,7 @@
 {
     "name": "enhanced-diva-intelligence-scraper",
-    "version": "2.1.4-optimized-success",
-    "description": "Enhanced Korean DIVA Financial Intelligence Scraper with verified 전체보기 button detection",
+    "version": "3.2.0-fixed-no-pagination",
+    "description": "FIXED Korean DIVA Scraper - Direct extraction without pagination (no 전체보기 button needed)",
     "main": "main.js",
     "scripts": {
         "start": "node main.js"
