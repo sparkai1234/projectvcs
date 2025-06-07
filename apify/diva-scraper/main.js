@@ -2,9 +2,9 @@ const { Actor } = require('apify');
 const { PuppeteerCrawler } = require('crawlee');
 const { createClient } = require('@supabase/supabase-js');
 
-console.log('🔧 === ENHANCED DIVA INTELLIGENCE SCRAPER v2.1.0 ===');
+console.log('🔧 === ENHANCED DIVA INTELLIGENCE SCRAPER v2.1.2 ===');
 console.log('🕐 Enhanced Time:', new Date().toISOString());
-console.log('🔧 TARGETED 전체보기 FIX: 2025-06-07-04:35 - BUTTON DETECTION FIXED');
+console.log('🔧 DOCKER FIX + 전체보기 DETECTION: 2025-06-07-04:55 - PUPPETEER DEPENDENCY FIXED');
 
 /**
  * 🇰🇷 Enhanced DIVA Intelligence Scraper v2.0
