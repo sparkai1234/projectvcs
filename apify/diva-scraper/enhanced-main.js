@@ -150,8 +150,9 @@ Actor.main(async () => {
         }
     });
     
-    // Get data sources to scrape
-    const dataSources = getEnhancedDataSources(config.dataSource, config.urls);
+    // Get data sources to scrape - DEFAULT TO ALL SOURCES
+    const targetDataSource = config.dataSource === 'investment_performance' ? 'all' : config.dataSource;
+    const dataSources = getEnhancedDataSources(targetDataSource, config.urls);
     console.log(`📊 Scraping ${dataSources.length} enhanced data sources:`, dataSources.map(ds => ds.name));
     
     // Queue requests
@@ -420,33 +421,289 @@ function calculateDataQualityScore(rawData) {
     return score;
 }
 
-// Placeholder implementations for other enhanced handlers
+// ENHANCED IMPLEMENTATIONS for ALL 7 missing data sources
 async function handleEnhancedFinancialStatements(page, config, supabaseClient) {
-    console.log('💰 Processing Enhanced Financial Statements...');
-    return { records: 0, errors: 0 };
+    console.log('💰 Processing Enhanced Financial Statements (재무제표)...');
+    
+    try {
+        await setupEnhancedFilters(page, 'financial_statements');
+        const records = await extractGenericTableData(page, 'financial_statements');
+        
+        let successCount = 0;
+        if (supabaseClient && records.length > 0) {
+            for (const record of records) {
+                const transformedRecord = transformGenericForSupabase(record, 'financial_statements');
+                await saveToSupabaseTable(supabaseClient, 'diva_financial_statements_raw', transformedRecord);
+                successCount++;
+            }
+        }
+        
+        console.log(`💰 Financial Statements: ${records.length} records extracted`);
+        return { records: records.length, errors: 0 };
+        
+    } catch (error) {
+        console.error('❌ Financial Statements handler error:', error.message);
+        return { records: 0, errors: 1 };
+    }
 }
 
 async function handleEnhancedAssociationStatus(page, config, supabaseClient) {
-    console.log('🏢 Processing Enhanced Association Status...');
-    return { records: 0, errors: 0 };
+    console.log('🏢 Processing Enhanced Association Status (조합현황)...');
+    
+    try {
+        await setupEnhancedFilters(page, 'association_status');
+        const records = await extractGenericTableData(page, 'association_status');
+        
+        let successCount = 0;
+        if (supabaseClient && records.length > 0) {
+            for (const record of records) {
+                const transformedRecord = transformGenericForSupabase(record, 'association_status');
+                await saveToSupabaseTable(supabaseClient, 'diva_association_status_raw', transformedRecord);
+                successCount++;
+            }
+        }
+        
+        console.log(`🏢 Association Status: ${records.length} records extracted`);
+        return { records: records.length, errors: 0 };
+        
+    } catch (error) {
+        console.error('❌ Association Status handler error:', error.message);
+        return { records: 0, errors: 1 };
+    }
 }
 
 async function handleEnhancedPersonnelStatus(page, config, supabaseClient) {
-    console.log('👥 Processing Enhanced Personnel Status...');
-    return { records: 0, errors: 0 };
+    console.log('👥 Processing Enhanced Personnel Status (인력현황)...');
+    
+    try {
+        await setupEnhancedFilters(page, 'personnel_status');
+        const records = await extractGenericTableData(page, 'personnel_status');
+        
+        let successCount = 0;
+        if (supabaseClient && records.length > 0) {
+            for (const record of records) {
+                const transformedRecord = transformGenericForSupabase(record, 'personnel_status');
+                await saveToSupabaseTable(supabaseClient, 'diva_personnel_status_raw', transformedRecord);
+                successCount++;
+            }
+        }
+        
+        console.log(`👥 Personnel Status: ${records.length} records extracted`);
+        return { records: records.length, errors: 0 };
+        
+    } catch (error) {
+        console.error('❌ Personnel Status handler error:', error.message);
+        return { records: 0, errors: 1 };
+    }
 }
 
 async function handleEnhancedProfessionalPersonnel(page, config, supabaseClient) {
-    console.log('🎯 Processing Enhanced Professional Personnel...');
-    return { records: 0, errors: 0 };
+    console.log('🎯 Processing Enhanced Professional Personnel (전문인력현황)...');
+    
+    try {
+        await setupEnhancedFilters(page, 'professional_personnel');
+        const records = await extractGenericTableData(page, 'professional_personnel');
+        
+        let successCount = 0;
+        if (supabaseClient && records.length > 0) {
+            for (const record of records) {
+                const transformedRecord = transformGenericForSupabase(record, 'professional_personnel');
+                await saveToSupabaseTable(supabaseClient, 'diva_professional_personnel_raw', transformedRecord);
+                successCount++;
+            }
+        }
+        
+        console.log(`🎯 Professional Personnel: ${records.length} records extracted`);
+        return { records: records.length, errors: 0 };
+        
+    } catch (error) {
+        console.error('❌ Professional Personnel handler error:', error.message);
+        return { records: 0, errors: 1 };
+    }
 }
 
 async function handleEnhancedViolations(page, config, supabaseClient) {
-    console.log('⚠️ Processing Enhanced Violations...');
-    return { records: 0, errors: 0 };
+    console.log('⚠️ Processing Enhanced Violations (법규위반현황)...');
+    
+    try {
+        await setupEnhancedFilters(page, 'violations');
+        const records = await extractGenericTableData(page, 'violations');
+        
+        let successCount = 0;
+        if (supabaseClient && records.length > 0) {
+            for (const record of records) {
+                const transformedRecord = transformGenericForSupabase(record, 'violations');
+                await saveToSupabaseTable(supabaseClient, 'diva_violations_raw', transformedRecord);
+                successCount++;
+            }
+        }
+        
+        console.log(`⚠️ Violations: ${records.length} records extracted`);
+        return { records: records.length, errors: 0 };
+        
+    } catch (error) {
+        console.error('❌ Violations handler error:', error.message);
+        return { records: 0, errors: 1 };
+    }
 }
 
 async function handleEnhancedVCMap(page, config, supabaseClient) {
+    console.log('🗺️ Processing Enhanced VC Map...');
+    
+    try {
+        await setupEnhancedFilters(page, 'vc_map');
+        const records = await extractGenericTableData(page, 'vc_map');
+        
+        let successCount = 0;
+        if (supabaseClient && records.length > 0) {
+            for (const record of records) {
+                const transformedRecord = transformGenericForSupabase(record, 'vc_map');
+                await saveToSupabaseTable(supabaseClient, 'diva_vc_map_raw', transformedRecord);
+                successCount++;
+            }
+        }
+        
+        console.log(`🗺️ VC Map: ${records.length} records extracted`);
+        return { records: records.length, errors: 0 };
+        
+    } catch (error) {
+        console.error('❌ VC Map handler error:', error.message);
+        return { records: 0, errors: 1 };
+    }
+}
+
+async function handleEnhancedStatistics(page, config, supabaseClient) {
+    console.log('📊 Processing Enhanced Statistics (VC통계정보)...');
+    
+    try {
+        await setupEnhancedFilters(page, 'statistics');
+        const records = await extractGenericTableData(page, 'statistics');
+        
+        let successCount = 0;
+        if (supabaseClient && records.length > 0) {
+            for (const record of records) {
+                const transformedRecord = transformGenericForSupabase(record, 'statistics');
+                await saveToSupabaseTable(supabaseClient, 'diva_statistics_raw', transformedRecord);
+                successCount++;
+            }
+        }
+        
+        console.log(`📊 Statistics: ${records.length} records extracted`);
+        return { records: records.length, errors: 0 };
+        
+    } catch (error) {
+        console.error('❌ Statistics handler error:', error.message);
+        return { records: 0, errors: 1 };
+    }
+}
+
+// Generic table data extraction for all DIVA data sources
+async function extractGenericTableData(page, dataType) {
+    console.log(`🔍 Extracting generic table data for ${dataType}...`);
+    
+    return await page.evaluate((dataType) => {
+        const data = [];
+        
+        // Try multiple table selectors for Korean portal
+        const tableSelectors = [
+            'table.table tbody tr',
+            'table tbody tr',
+            'table tr',
+            '.data-table tbody tr',
+            '.list-table tbody tr'
+        ];
+        
+        let rows = [];
+        for (const selector of tableSelectors) {
+            rows = document.querySelectorAll(selector);
+            if (rows.length > 0) {
+                console.log(`Found ${rows.length} rows with selector: ${selector}`);
+                break;
+            }
+        }
+        
+        rows.forEach((row, index) => {
+            const cells = row.querySelectorAll('td');
+            
+            // Skip header rows or rows with insufficient data
+            if (cells.length < 2 || row.querySelector('th')) {
+                return;
+            }
+            
+            // Generic record structure that works for all data types
+            const record = {
+                company_name: cells[0]?.textContent?.trim() || '',
+                data_type: dataType,
+                
+                // Extract all cell contents
+                cell_data: Array.from(cells).map(cell => cell.textContent?.trim() || ''),
+                
+                // Common fields that appear in most DIVA tables
+                primary_value: cells[1]?.textContent?.trim() || '',
+                secondary_value: cells[2]?.textContent?.trim() || '',
+                tertiary_value: cells[3]?.textContent?.trim() || '',
+                
+                // Metadata
+                extracted_at: new Date().toISOString(),
+                source_url: window.location.href,
+                row_index: index
+            };
+            
+            // Only include records with valid company names
+            if (record.company_name && record.company_name.length > 0) {
+                data.push(record);
+            }
+        });
+        
+        return data;
+    }, dataType);
+}
+
+// Generic transformation for Supabase
+function transformGenericForSupabase(rawData, dataType) {
+    return {
+        company_name: rawData.company_name?.trim() || 'Unknown Company',
+        data_type: dataType,
+        
+        // Store raw cell data as JSON
+        cell_data: rawData.cell_data || [],
+        
+        // Common fields
+        primary_value: rawData.primary_value?.trim(),
+        secondary_value: rawData.secondary_value?.trim(),
+        tertiary_value: rawData.tertiary_value?.trim(),
+        
+        // Enhanced metadata
+        raw_data: rawData,
+        apify_source: 'DIVA_SCRAPER_V2.0_ALL_SOURCES',
+        extracted_at: rawData.extracted_at,
+        source_url: rawData.source_url,
+        
+        // Quality scoring
+        data_quality_score: calculateDataQualityScore(rawData),
+        created_at: new Date().toISOString()
+    };
+}
+
+// Helper function to save to specific Supabase tables
+async function saveToSupabaseTable(supabaseClient, tableName, record) {
+    try {
+        const { error } = await supabaseClient
+            .from(tableName)
+            .insert(record);
+            
+        if (error) {
+            console.log(`⚠️ Supabase insert warning for ${tableName}:`, error.message);
+        } else {
+            console.log(`✅ Successfully inserted record into ${tableName}`);
+        }
+    } catch (error) {
+        console.log(`❌ Supabase error for ${tableName}:`, error.message);
+        throw error;
+    }
+}
+
+async function handleEnhancedVCMap_OLD(page, config, supabaseClient) {
     console.log('🗺️ Processing Enhanced VC Map...');
     return { records: 0, errors: 0 };
 }
