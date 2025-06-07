@@ -1,7 +1,7 @@
 {
     "name": "enhanced-diva-intelligence-scraper",
-    "version": "2.1.2-docker-fix",
-    "description": "Enhanced Korean DIVA Financial Intelligence Scraper with targeted 전체보기 button detection",
+    "version": "2.1.3-verification-fix",
+    "description": "Enhanced Korean DIVA Financial Intelligence Scraper with verified 전체보기 button detection",
     "main": "main.js",
     "scripts": {
         "start": "node main.js"
@@ -13,7 +13,7 @@
         "diva",
         "venture-capital",
         "financial-intelligence",
-        "전체보기-targeted-fix"
+        "전체보기-verification-fix"
     ],
     "dependencies": {
         "apify": "^3.1.0",
