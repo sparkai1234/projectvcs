@@ -1,0 +1,9 @@
+{
+    "maintenanceType": "standard",
+    "performCleanup": true,
+    "dryRun": false,
+    "sendEmailReport": true,
+    "emailRecipients": ["sparkai@sparklabs.co.kr"],
+    "smtpHost": "smtp.gmail.com",
+    "smtpPort": 587
+} 

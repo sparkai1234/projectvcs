@@ -1,4 +1,38 @@
 {
+    "name": "enhanced-diva-intelligence-scraper",
+    "version": "2.0.0",
+    "description": "Enhanced DIVA Intelligence Scraper v2.0 - Korean Financial Data Extraction with Smart Conflict Resolution",
+    "main": "main.js",
+    "scripts": {
+        "start": "node main.js",
+        "test": "node main.js",
+        "enhanced": "node enhanced-main.js"
+    },
+    "author": "SparkAI DIVA Intelligence",
+    "license": "MIT",
+    "keywords": [
+        "korean",
+        "diva",
+        "financial-intelligence",
+        "venture-capital",
+        "scraper",
+        "supabase",
+        "apify",
+        "smart-conflict-resolution",
+        "enhanced-korean-processing"
+    ],
+    "dependencies": {
+        "@supabase/supabase-js": "^2.38.0",
+        "apify": "^3.1.0",
+        "crawlee": "^3.8.0",
+        "puppeteer": "^22.15.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/sparkai1234/projectvcs.git"
+    },
+    "engines": {
+{
     "name": "comprehensive-diva-scraper",
     "version": "1.0.0",
     "description": "Comprehensive DIVA Intelligence Scraper for Korean VC data extraction",

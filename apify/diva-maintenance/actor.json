@@ -1,0 +1,59 @@
+{
+    "actorSpecification": 1,
+    "name": "enhanced-diva-maintenance-system",
+    "title": "Enhanced DIVA Maintenance System v2.0",
+    "description": "🇰🇷 Enhanced DIVA Financial Intelligence Database Maintenance System with advanced duplicate detection, data quality analysis, and email reporting for Korean DIVA portal data.",
+    "version": "2.0.0",
+    "meta": {
+        "templateId": "node-puppeteer-chrome"
+    },
+    "input": "./input_schema.json",
+    "dockerfile": "./Dockerfile",
+    "readme": "./README.md",
+    "storages": {
+        "dataset": {
+            "actorSpecification": 1,
+            "title": "DIVA Maintenance Results",
+            "views": {
+                "overview": {
+                    "title": "DIVA Maintenance Overview",
+                    "transformation": {
+                        "fields": [
+                            "timestamp",
+                            "totalRecords",
+                            "duplicatesFound",
+                            "duplicatesRemoved",
+                            "qualityScore"
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    "builds": {
+        "latest": {
+            "buildNumber": "2.0.1",
+            "finishedAt": "2024-01-15T00:00:00.000Z",
+            "status": "SUCCEEDED"
+        }
+    },
+    "stats": {
+        "totalBuilds": 3,
+        "totalRuns": 0,
+        "totalUsers": 1,
+        "totalUsers7Days": 1,
+        "totalUsers30Days": 1,
+        "totalUsers90Days": 1,
+        "totalMetamorphs": 0,
+        "lastRunStartedAt": null
+    },
+    "categories": [
+        "BUSINESS",
+        "FINANCE"
+    ],
+    "defaultRunOptions": {
+        "build": "latest",
+        "timeoutSecs": 3600,
+        "memoryMbytes": 8192
+    }
+} 

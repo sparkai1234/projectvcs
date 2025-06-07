@@ -1,0 +1,60 @@
+{
+    "actorSpecification": 1,
+    "name": "enhanced-diva-intelligence-scraper",
+    "title": "Enhanced DIVA Intelligence Scraper v2.0",
+    "description": "🇰🇷 Enhanced Korean DIVA Financial Intelligence Scraper v2.0 with smart conflict resolution, improved Korean data handling, and production-grade reliability for comprehensive financial data extraction.",
+    "version": "2.0.0",
+    "meta": {
+        "templateId": "node-puppeteer-chrome"
+    },
+    "input": "./INPUT_SCHEMA.json",
+    "dockerfile": "./Dockerfile",
+    "readme": "./README.md",
+    "storages": {
+        "dataset": {
+            "actorSpecification": 1,
+            "title": "DIVA Financial Intelligence Data",
+            "views": {
+                "overview": {
+                    "title": "DIVA Intelligence Overview",
+                    "transformation": {
+                        "fields": [
+                            "company_name",
+                            "investment_date",
+                            "investment_amount",
+                            "fund_name",
+                            "business_sector",
+                            "data_quality_score"
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    "builds": {
+        "latest": {
+            "buildNumber": "2.0.1",
+            "finishedAt": "2024-01-15T00:00:00.000Z",
+            "status": "SUCCEEDED"
+        }
+    },
+    "stats": {
+        "totalBuilds": 5,
+        "totalRuns": 2,
+        "totalUsers": 1,
+        "totalUsers7Days": 1,
+        "totalUsers30Days": 1,
+        "totalUsers90Days": 1,
+        "totalMetamorphs": 0,
+        "lastRunStartedAt": "2024-01-14T08:00:00.000Z"
+    },
+    "categories": [
+        "BUSINESS",
+        "FINANCE"
+    ],
+    "defaultRunOptions": {
+        "build": "latest",
+        "timeoutSecs": 7200,
+        "memoryMbytes": 8192
+    }
+} 

@@ -1,0 +1,91 @@
+{
+    "title": "Enhanced DIVA Maintenance System v2.0",
+    "description": "🇰🇷 Advanced maintenance system for Korean DIVA financial intelligence database with duplicate detection, data quality analysis, and email reporting.",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "maintenanceType": {
+            "title": "Maintenance Type",
+            "type": "string",
+            "description": "Type of maintenance to perform",
+            "default": "standard",
+            "enum": [
+                "standard",
+                "deep",
+                "emergency",
+                "weekly"
+            ],
+            "enumTitles": [
+                "Standard Maintenance",
+                "Deep Analysis & Cleanup",
+                "Emergency Repair",
+                "Weekly Scheduled Maintenance"
+            ]
+        },
+        "performCleanup": {
+            "title": "Perform Cleanup Operations",
+            "type": "boolean",
+            "description": "Whether to actually remove duplicates and perform cleanup",
+            "default": true
+        },
+        "dryRun": {
+            "title": "Dry Run Mode",
+            "type": "boolean",
+            "description": "Run analysis without making any changes (for testing)",
+            "default": false
+        },
+        "sendEmailReport": {
+            "title": "Send Email Report",
+            "type": "boolean",
+            "description": "Send maintenance report via email",
+            "default": true
+        },
+        "emailRecipients": {
+            "title": "Email Recipients",
+            "type": "array",
+            "description": "List of email addresses to receive maintenance reports",
+            "items": {
+                "type": "string",
+                "format": "email"
+            },
+            "default": ["sparkai@sparklabs.co.kr"]
+        },
+        "smtpHost": {
+            "title": "SMTP Host",
+            "type": "string",
+            "description": "SMTP server hostname for email sending",
+            "default": "smtp.gmail.com"
+        },
+        "smtpPort": {
+            "title": "SMTP Port",
+            "type": "integer",
+            "description": "SMTP server port number",
+            "default": 587
+        },
+        "smtpUser": {
+            "title": "SMTP Username",
+            "type": "string",
+            "description": "SMTP authentication username (or use SMTP_USER env var)",
+            "isSecret": false
+        },
+        "smtpPass": {
+            "title": "SMTP Password",
+            "type": "string",
+            "description": "SMTP authentication password (or use SMTP_PASS env var)",
+            "isSecret": true
+        },
+        "supabaseUrl": {
+            "title": "Supabase URL",
+            "type": "string",
+            "description": "Supabase project URL (or use SUPABASE_URL env var)",
+            "isSecret": false
+        },
+        "supabaseKey": {
+            "title": "Supabase Service Role Key",
+            "type": "string",
+            "description": "Supabase service role key for database access (or use SUPABASE_SERVICE_ROLE_KEY env var)",
+            "isSecret": true
+        }
+    },
+    "required": []
+} 
