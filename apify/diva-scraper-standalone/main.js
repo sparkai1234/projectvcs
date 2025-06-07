@@ -77,34 +77,76 @@ try {
 
     await Actor.setStatusMessage('🔍 Searching for violations data...');
 
-    // Enhanced 전체보기 button detection - 5 strategies
+    // Enhanced navigation and button detection - 10 strategies
     async function findViewAllButton() {
+        // First, try to navigate to specific sections that might contain violations data
+        const navigationTargets = [
+            'a[href*="violation"]',
+            'a[href*="위반"]', 
+            'a[href*="제재"]',
+            'a[href*="처분"]',
+            'a[href*="공시"]',
+            'a[href*="announcement"]',
+            'a[href*="notice"]',
+            '[class*="menu"] a',
+            'nav a',
+            '.menu a'
+        ];
+
+        for (const navSelector of navigationTargets) {
+            try {
+                const navLinks = await page.locator(navSelector).all();
+                console.log(`🔍 Found ${navLinks.length} navigation links for ${navSelector}`);
+                for (const link of navLinks) {
+                    const text = await link.textContent();
+                    console.log(`📍 Nav link: ${text?.trim()}`);
+                }
+            } catch (error) {
+                console.log(`❌ Navigation check failed for ${navSelector}:`, error.message);
+            }
+        }
+
         const strategies = [
-            // Strategy 1: Korean text content
+            // Strategy 1: Korean text content variations
             () => page.locator('button, a, input').filter({ hasText: '전체보기' }).first(),
             () => page.locator('button, a, input').filter({ hasText: '전체 보기' }).first(),
             () => page.locator('button, a, input').filter({ hasText: '모두보기' }).first(),
+            () => page.locator('button, a, input').filter({ hasText: '전체목록' }).first(),
+            () => page.locator('button, a, input').filter({ hasText: '더보기' }).first(),
+            () => page.locator('button, a, input').filter({ hasText: 'view all' }).first(),
+            () => page.locator('button, a, input').filter({ hasText: 'show all' }).first(),
             
             // Strategy 2: Value attributes
-            () => page.locator('input[value*="전체보기"], button[value*="전체보기"]').first(),
             () => page.locator('input[value*="전체"], button[value*="전체"]').first(),
+            () => page.locator('input[value*="모두"], button[value*="모두"]').first(),
+            () => page.locator('input[value*="더"], button[value*="더"]').first(),
             
             // Strategy 3: Class names and IDs
-            () => page.locator('.btn-all, .view-all, #viewAll, #btnAll').first(),
+            () => page.locator('.btn-all, .view-all, #viewAll, #btnAll, .show-all').first(),
             () => page.locator('[class*="전체"], [id*="전체"]').first(),
+            () => page.locator('[class*="more"], [id*="more"]').first(),
+            () => page.locator('[class*="list"], [id*="list"]').first(),
             
-            // Strategy 4: XPath fallback
+            // Strategy 4: Common pagination/view controls
+            () => page.locator('.pagination a[href*="all"]').first(),
+            () => page.locator('select option[value*="all"]').first(),
+            () => page.locator('.page-size select').first(),
+            
+            // Strategy 5: XPath comprehensive
             () => page.locator('//button[contains(text(), "전체")] | //a[contains(text(), "전체")] | //input[contains(@value, "전체")]').first(),
+            () => page.locator('//button[contains(text(), "더")] | //a[contains(text(), "더")] | //input[contains(@value, "더")]').first(),
             
-            // Strategy 5: CSS selector comprehensive
-            () => page.locator('button:has-text("전체"), a:has-text("전체"), input[value*="전체"]').first()
+            // Strategy 6: CSS selector comprehensive  
+            () => page.locator('button:has-text("전체"), a:has-text("전체"), input[value*="전체"]').first(),
+            () => page.locator('*[onclick*="all"], *[onclick*="전체"]').first()
         ];
 
         for (let i = 0; i < strategies.length; i++) {
             try {
                 const button = await strategies[i]();
-                if (await button.isVisible({ timeout: 2000 })) {
-                    console.log(`✅ Found 전체보기 button using strategy ${i + 1}`);
+                if (await button.isVisible({ timeout: 1500 })) {
+                    const buttonText = await button.textContent();
+                    console.log(`✅ Found button using strategy ${i + 1}: "${buttonText?.trim()}"`);
                     return button;
                 }
             } catch (error) {
@@ -154,42 +196,102 @@ try {
 
         await Actor.setStatusMessage('📊 Extracting violations data...');
 
-        // Extract data with multiple selectors
+        // Enhanced debugging - capture page content for analysis
+        const pageTitle = await page.title();
+        const pageUrl = await page.url();
+        console.log(`📄 Current page: ${pageTitle} at ${pageUrl}`);
+        
+        // Take screenshot for debugging
+        await Actor.setValue('DEBUG_SCREENSHOT', await page.screenshot({ fullPage: true }), { contentType: 'image/png' });
+        
+        // Advanced data extraction with comprehensive selectors
         const dataSelectors = [
+            // Tables and rows
             'table tr',
+            'tbody tr', 
+            'table tbody tr',
+            'tr',
+            
+            // List items and containers
             '.data-row',
-            '.violation-item',
-            '[class*="위반"], [class*="violation"]',
             '.list-item',
-            'tbody tr'
+            '.item',
+            '.row',
+            'li',
+            'ul li',
+            
+            // Korean-specific selectors
+            '[class*="위반"]',
+            '[class*="violation"]', 
+            '[class*="제재"]',
+            '[class*="처분"]',
+            '[class*="조치"]',
+            
+            // Content containers
+            '.content',
+            '.main-content',
+            '.board',
+            '.board-content',
+            '.notice',
+            '.announcement',
+            
+            // Generic containers
+            'div[class*="list"]',
+            'div[class*="data"]',
+            'div[class*="result"]',
+            'article',
+            'section',
+            
+            // Fallback - all text content
+            'div',
+            'p',
+            'span'
         ];
 
         let extractedData = [];
+        let selectorStats = {};
         
         for (const selector of dataSelectors) {
             try {
                 const elements = await page.locator(selector).all();
+                selectorStats[selector] = elements.length;
+                
                 if (elements.length > 0) {
                     console.log(`✅ Found ${elements.length} elements with selector: ${selector}`);
                     
-                    for (const element of elements) {
-                        const text = await element.textContent();
-                        if (text && text.trim().length > 10) {
-                            const record = {
-                                content: text.trim(),
-                                selector: selector,
-                                timestamp: new Date().toISOString(),
-                                source: 'diva.kvca.or.kr'
-                            };
-                            extractedData.push(record);
+                    for (let i = 0; i < Math.min(elements.length, 200); i++) { // Limit to avoid timeout
+                        const element = elements[i];
+                        try {
+                            const text = await element.textContent();
+                            if (text && text.trim().length > 5) {
+                                const record = {
+                                    content: text.trim(),
+                                    selector: selector,
+                                    timestamp: new Date().toISOString(),
+                                    source: 'diva.kvca.or.kr',
+                                    elementIndex: i
+                                };
+                                extractedData.push(record);
+                            }
+                        } catch (err) {
+                            console.log(`⚠️ Error extracting text from element ${i}:`, err.message);
                         }
                     }
-                    break; // Use first successful selector
+                    
+                    if (extractedData.length > 0) {
+                        console.log(`✅ Successfully extracted ${extractedData.length} records with ${selector}`);
+                        break; // Use first successful selector that yields data
+                    }
                 }
             } catch (error) {
                 console.log(`❌ Selector ${selector} failed:`, error.message);
+                selectorStats[selector] = 0;
             }
         }
+        
+        // Store debugging information
+        await Actor.setValue('SELECTOR_STATS', selectorStats);
+        console.log('📊 Selector Statistics:', JSON.stringify(selectorStats, null, 2));
 
         // Process and filter violations
         const violations = extractedData.filter(record => {
