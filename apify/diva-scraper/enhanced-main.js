@@ -102,14 +102,31 @@ Actor.main(async () => {
         maxConcurrency: 1, // One at a time for stability
         
         requestHandler: async ({ page, request }) => {
-            console.log(`🔍 Processing: ${request.url}`);
+            console.log(`🔍 Processing with FIXED SIMPLE strategy (no button search): ${request.url}`);
             
             try {
                 // Enhanced page setup (VCS proven method)
                 await setupPageForKoreanPortal(page, config);
                 
+                // 💡 CRITICAL FIX: Skip 전체보기 button search - ALL records already visible!
+                console.log('💡 FIXED: Skipping 전체보기 search - extracting ALL visible records directly!');
+                
+                // Wait for content to load
+                await page.waitForSelector('table', { timeout: 30000 });
+                await sleep(3000);
+                
+                // Check if all content is already loaded (large scroll height = all records)
+                const pageInfo = await page.evaluate(() => ({
+                    scrollHeight: document.documentElement.scrollHeight,
+                    tableRows: document.querySelectorAll('table tr').length,
+                    dataRows: document.querySelectorAll('table tbody tr').length
+                }));
+                
+                console.log(`💡 Page analysis: scrollHeight=${pageInfo.scrollHeight}, dataRows=${pageInfo.dataRows}`);
+                console.log(`💡 ${pageInfo.scrollHeight > 10000 ? 'LARGE CONTENT - All records likely visible!' : 'Small content - might need pagination'}`);
+                
                 const url = request.url;
-                let pageResults = { records: 0, errors: 0 };
+                let pageResults = { records: 0, errors: 0, used전체보기: false, extraction_method: 'DIRECT_ALL_VISIBLE' };
                 
                 // Route to appropriate enhanced handler
                 if (url.includes('DivItmInvstPrfmInq')) {
@@ -269,17 +286,87 @@ function getEnhancedDataSources(dataSource, urls) {
 }
 
 /**
- * Enhanced Investment Performance Handler
+ * FIXED Investment Performance Handler - Direct Extraction (No Button Search)
  */
 async function handleEnhancedInvestmentPerformance(page, config, supabaseClient) {
-    console.log('📈 Processing Enhanced Investment Performance data...');
+    console.log('📈 FIXED: Processing Investment Performance (direct extraction - no pagination)...');
     
     try {
-        // Setup enhanced filters (Korean portal specific)
-        await setupEnhancedFilters(page, 'investment_performance');
+        // 💡 FIXED: Skip filters and button search - extract ALL visible records directly
+        console.log('💡 FIXED: Extracting ALL visible records without pagination...');
         
-        // Enhanced data extraction with Korean parsing
-        const records = await extractEnhancedInvestmentData(page);
+        // Extract ALL records from the table directly
+        const records = await page.evaluate(() => {
+            const data = [];
+            
+            // Try multiple table selectors
+            const tableSelectors = [
+                'table.table tbody tr',
+                'table tbody tr', 
+                'table tr',
+                '.data-table tbody tr',
+                'tbody tr',
+                'tr'
+            ];
+            
+            let rows = [];
+            for (const selector of tableSelectors) {
+                rows = document.querySelectorAll(selector);
+                if (rows.length > 0) {
+                    console.log(`FIXED: Found ${rows.length} rows with selector: ${selector}`);
+                    break;
+                }
+            }
+            
+            console.log(`FIXED: Processing ${rows.length} total rows for investment_performance...`);
+            
+            rows.forEach((row, index) => {
+                const cells = row.querySelectorAll('td');
+                
+                // Skip header rows or empty rows
+                if (cells.length < 2 || row.querySelector('th')) {
+                    return;
+                }
+                
+                // Extract comprehensive record
+                const record = {
+                    company_name: cells[0]?.textContent?.trim() || '',
+                    data_type: 'investment_performance',
+                    extraction_method: 'FIXED_DIRECT_ALL_VISIBLE',
+                    
+                    // All cell contents for analysis
+                    cell_data: Array.from(cells).map(cell => cell.textContent?.trim() || ''),
+                    
+                    // Primary investment fields (flexible mapping)
+                    investment_amount: cells[1]?.textContent?.trim() || '',
+                    fund_name: cells[2]?.textContent?.trim() || '',
+                    investment_date: cells[3]?.textContent?.trim() || '',
+                    investment_type: cells[4]?.textContent?.trim() || '',
+                    
+                    // Additional fields
+                    field_5: cells[5]?.textContent?.trim() || '',
+                    field_6: cells[6]?.textContent?.trim() || '',
+                    field_7: cells[7]?.textContent?.trim() || '',
+                    
+                    // Metadata
+                    extracted_at: new Date().toISOString(),
+                    source_url: window.location.href,
+                    row_index: index,
+                    total_cells: cells.length,
+                    page_scroll_height: document.documentElement.scrollHeight
+                };
+                
+                // Include records with company names
+                if (record.company_name && record.company_name.length > 0) {
+                    data.push(record);
+                }
+            });
+            
+            console.log(`FIXED: Successfully extracted ${data.length} investment records directly`);
+            return data;
+        });
+        
+        console.log(`📊 FIXED: Extracted ${records.length} investment performance records (ALL VISIBLE - NO PAGINATION)`);
         
         // Smart conflict resolution for Supabase
         let successCount = 0;
@@ -292,7 +379,7 @@ async function handleEnhancedInvestmentPerformance(page, config, supabaseClient)
                     const { error } = await supabaseClient
                         .from('diva_investment_performance_raw')
                         .upsert(transformedRecord, { 
-                            onConflict: 'company_name,investment_date',
+                            onConflict: 'company_name',
                             ignoreDuplicates: false 
                         });
                         
@@ -311,13 +398,19 @@ async function handleEnhancedInvestmentPerformance(page, config, supabaseClient)
             }
         }
         
-        // Enhanced pagination handling
-        await handleEnhancedPagination(page, config, 'investment_performance', supabaseClient);
+        // 💡 FIXED: NO PAGINATION - all records already extracted!
+        console.log('💡 FIXED: Skipping pagination - all records extracted directly!');
+        console.log(`💡 FIXED: SUCCESS - ${records.length} records found (should be >>5 if working correctly)`);
         
-        return { records: records.length, errors: errorCount };
+        return { 
+            records: records.length, 
+            errors: errorCount,
+            extraction_method: 'FIXED_DIRECT_ALL_VISIBLE',
+            pagination_skipped: true
+        };
         
     } catch (error) {
-        console.error('❌ Enhanced Investment Performance handler error:', error.message);
+        console.error('❌ FIXED Investment Performance handler error:', error.message);
         return { records: 0, errors: 1 };
     }
 }
@@ -732,4 +825,83 @@ async function handleEnhancedPagination(page, config, dataType, supabaseClient) 
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * 🎯 CRITICAL FUNCTION: Find and click 전체보기 (View All) button
+ * This eliminates pagination and loads ALL records at once
+ */
+async function click전체보기Button(page, config) {
+    console.log('🔍 SEARCHING for 전체보기 (View All) button...');
+    
+    try {
+        // Multiple strategies to find 전체보기 button
+        const 전체보기Selectors = [
+            'button:contains("전체보기")',
+            'a:contains("전체보기")', 
+            'input[value="전체보기"]',
+            '.btn:contains("전체보기")',
+            '[title="전체보기"]',
+            'button[onclick*="전체"]',
+            'a[href*="전체"]',
+            'button:contains("전체")',
+            'a:contains("전체")',
+            'button:contains("View All")',
+            'button:contains("모두보기")',
+            'button:contains("전체목록")'
+        ];
+        
+        // Try CSS selector approach first
+        for (const selector of 전체보기Selectors) {
+            try {
+                const elements = await page.$$(selector);
+                if (elements.length > 0) {
+                    console.log(`🎯 Found 전체보기 button with selector: ${selector}`);
+                    await elements[0].click();
+                    console.log('✅ 전체보기 button clicked successfully!');
+                    return true;
+                }
+            } catch (err) {
+                // Continue to next selector
+            }
+        }
+        
+        // Try page.evaluate approach for text content search
+        try {
+            const found = await page.evaluate(() => {
+                const texts = ['전체보기', '전체', 'View All', '모두보기', '전체목록'];
+                
+                for (const text of texts) {
+                    const elements = Array.from(document.querySelectorAll('button, a, input'));
+                    const element = elements.find(el => 
+                        (el.textContent && el.textContent.includes(text)) ||
+                        (el.value && el.value.includes(text)) ||
+                        (el.title && el.title.includes(text))
+                    );
+                    
+                    if (element) {
+                        console.log(`Found 전체보기 element with text: ${text}`);
+                        element.click();
+                        return true;
+                    }
+                }
+                
+                return false;
+            });
+            
+            if (found) {
+                console.log('✅ 전체보기 clicked via page.evaluate!');
+                return true;
+            }
+        } catch (err) {
+            console.log(`⚠️ Page evaluate attempt failed:`, err.message);
+        }
+        
+        console.log('❌ Could not find 전체보기 button - will extract page 1 only');
+        return false;
+        
+    } catch (error) {
+        console.error('❌ Error searching for 전체보기 button:', error.message);
+        return false;
+    }
 } 

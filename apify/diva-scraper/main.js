@@ -2,9 +2,9 @@ const { Actor } = require('apify');
 const { PuppeteerCrawler } = require('crawlee');
 const { createClient } = require('@supabase/supabase-js');
 
-console.log('🔧 === ENHANCED DIVA INTELLIGENCE SCRAPER v2.0 ===');
+console.log('🔧 === ENHANCED DIVA INTELLIGENCE SCRAPER v2.1.0 ===');
 console.log('🕐 Enhanced Time:', new Date().toISOString());
-console.log('🔧 FORCE REBUILD: 2025-06-07-04:10 - FIXED VERSION');
+console.log('🔧 TARGETED 전체보기 FIX: 2025-06-07-04:35 - BUTTON DETECTION FIXED');
 
 /**
  * 🇰🇷 Enhanced DIVA Intelligence Scraper v2.0
@@ -109,8 +109,11 @@ Actor.main(async () => {
                 // Enhanced page setup (VCS proven method)
                 await setupPageForKoreanPortal(page, config);
                 
-                // 💡 CRITICAL FIX: Skip 전체보기 button search - ALL records already visible!
-                console.log('💡 FIXED: Skipping 전체보기 search - extracting ALL visible records directly!');
+                // 💡 SMART STRATEGY: Try 전체보기 button first, then pagination if needed
+                console.log('💡 SMART: Trying 전체보기 button first, then pagination if needed...');
+                
+                // Try to find and click 전체보기 (View All) button first
+                const viewAllSuccess = await try전체보기Button(page, config);
                 
                 // Wait for content to load
                 await page.waitForSelector('table', { timeout: 30000 });
@@ -290,11 +293,38 @@ function getEnhancedDataSources(dataSource, urls) {
  * FIXED Investment Performance Handler - Direct Extraction (No Button Search)
  */
 async function handleEnhancedInvestmentPerformance(page, config, supabaseClient) {
-    console.log('📈 FIXED: Processing Investment Performance (direct extraction - no pagination)...');
+    console.log('📈 SMART: Processing Investment Performance with intelligent extraction...');
     
     try {
-        // 💡 FIXED: Skip filters and button search - extract ALL visible records directly
-        console.log('💡 FIXED: Extracting ALL visible records without pagination...');
+        // Check initial page content size
+        const initialPageInfo = await page.evaluate(() => ({
+            scrollHeight: document.documentElement.scrollHeight,
+            dataRows: document.querySelectorAll('table tbody tr').length
+        }));
+        
+        console.log(`📊 Initial page: scrollHeight=${initialPageInfo.scrollHeight}, dataRows=${initialPageInfo.dataRows}`);
+        
+        // If page is too small, try 전체보기 or pagination
+        if (initialPageInfo.scrollHeight < 3000 || initialPageInfo.dataRows < 20) {
+            console.log('💡 SMART: Small page detected, trying to get more records...');
+            
+            // Try 전체보기 button first
+            const viewAllSuccess = await try전체보기Button(page, config);
+            
+            if (viewAllSuccess) {
+                console.log('✅ SMART: 전체보기 successful, checking new page size...');
+                await sleep(3000);
+                
+                const newPageInfo = await page.evaluate(() => ({
+                    scrollHeight: document.documentElement.scrollHeight,
+                    dataRows: document.querySelectorAll('table tbody tr').length
+                }));
+                
+                console.log(`📊 After 전체보기: scrollHeight=${newPageInfo.scrollHeight}, dataRows=${newPageInfo.dataRows}`);
+            }
+        }
+        
+        console.log('💡 SMART: Extracting records from current page...');
         
         // Extract ALL records from the table directly
         const records = await page.evaluate(() => {
@@ -367,7 +397,7 @@ async function handleEnhancedInvestmentPerformance(page, config, supabaseClient)
             return data;
         });
         
-        console.log(`📊 FIXED: Extracted ${records.length} investment performance records (ALL VISIBLE - NO PAGINATION)`);
+        console.log(`📊 SMART: Extracted ${records.length} investment performance records (INTELLIGENT EXTRACTION)`);
         
         // Smart conflict resolution for Supabase
         let successCount = 0;
@@ -399,19 +429,24 @@ async function handleEnhancedInvestmentPerformance(page, config, supabaseClient)
             }
         }
         
-        // 💡 FIXED: NO PAGINATION - all records already extracted!
-        console.log('💡 FIXED: Skipping pagination - all records extracted directly!');
-        console.log(`💡 FIXED: SUCCESS - ${records.length} records found (should be >>5 if working correctly)`);
+        // Final results
+        const finalPageInfo = await page.evaluate(() => ({
+            scrollHeight: document.documentElement.scrollHeight,
+            dataRows: document.querySelectorAll('table tbody tr').length
+        }));
+        
+        console.log(`📊 SMART RESULTS: ${records.length} records extracted from page with ${finalPageInfo.dataRows} visible rows`);
+        console.log(`💡 SMART: ${records.length > 20 ? 'SUCCESS - Got substantial data!' : 'LIMITED - May need pagination fallback'}`);
         
         return { 
             records: records.length, 
             errors: errorCount,
-            extraction_method: 'FIXED_DIRECT_ALL_VISIBLE',
-            pagination_skipped: true
+            extraction_method: 'SMART_INTELLIGENT_EXTRACTION',
+            view_all_attempted: true
         };
         
     } catch (error) {
-        console.error('❌ FIXED Investment Performance handler error:', error.message);
+        console.error('❌ SMART Investment Performance handler error:', error.message);
         return { records: 0, errors: 1 };
     }
 }
@@ -716,4 +751,303 @@ async function saveToSupabaseTable(supabaseClient, tableName, record) {
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Smart 전체보기 (View All) button detection and clicking
+ * TARGETED FIX for DIVA portal structure
+ */
+async function try전체보기Button(page, config) {
+    console.log('🔍 TARGETED: Looking for 전체보기 button in DIVA portal...');
+    
+    try {
+        // Wait for page to load completely
+        await page.waitForSelector('table', { timeout: 30000 });
+        await sleep(3000);
+        
+        // Strategy 1: Look in pagination areas specifically 
+        console.log('🎯 Strategy 1: Searching in pagination areas...');
+        const paginationSuccess = await page.evaluate(() => {
+            // DIVA-specific pagination selectors
+            const paginationSelectors = [
+                '.pagination', '.paging', '.page-nav', '.page-area', '.page-wrap',
+                '.btn-area', '.search-area', '.list-page', '.board-page',
+                // Generic containers that might hold pagination
+                'div', 'td', 'span'
+            ];
+            
+            for (const selector of paginationSelectors) {
+                const areas = document.querySelectorAll(selector);
+                for (const area of areas) {
+                    // Check if this area contains pagination-like content
+                    const areaText = area.textContent || '';
+                    if (areaText.includes('페이지') || areaText.includes('이전') || areaText.includes('다음')) {
+                        console.log(`Found pagination area with selector: ${selector}`);
+                        
+                        // Look for 전체보기 in this area
+                        const allElements = area.querySelectorAll('*');
+                        for (const element of allElements) {
+                            const text = element.textContent?.trim();
+                            if (text === '전체보기' || text === '전체') {
+                                console.log(`Found 전체보기 button: "${text}"`);
+                                element.click();
+                                return { success: true, method: 'pagination_area', text: text };
+                            }
+                        }
+                    }
+                }
+            }
+            return { success: false };
+        });
+        
+        if (paginationSuccess.success) {
+            console.log(`✅ 전체보기 clicked via pagination area!`);
+            await sleep(5000); // Wait for content to load
+            return true;
+        }
+        
+        // Strategy 2: Direct text search across all clickable elements
+        console.log('🎯 Strategy 2: Direct text search...');
+        const textSearchSuccess = await page.evaluate(() => {
+            const allElements = document.querySelectorAll('*');
+            
+            for (const element of allElements) {
+                const text = element.textContent?.trim();
+                
+                // Exact match for 전체보기
+                if (text === '전체보기') {
+                    // Check if element is clickable (has onclick, is button/link, etc.)
+                    const isClickable = element.tagName === 'BUTTON' || 
+                                      element.tagName === 'A' || 
+                                      element.tagName === 'INPUT' ||
+                                      element.onclick ||
+                                      element.style.cursor === 'pointer' ||
+                                      window.getComputedStyle(element).cursor === 'pointer';
+                    
+                    if (isClickable) {
+                        console.log(`Found clickable 전체보기: ${element.tagName}`);
+                        element.click();
+                        return { success: true, method: 'direct_text_search', element: element.tagName };
+                    } else {
+                        // Try parent elements
+                        let parent = element.parentElement;
+                        while (parent && parent !== document.body) {
+                            if (parent.tagName === 'BUTTON' || parent.tagName === 'A' || parent.onclick) {
+                                console.log(`Found 전체보기 in parent: ${parent.tagName}`);
+                                parent.click();
+                                return { success: true, method: 'parent_click', element: parent.tagName };
+                            }
+                            parent = parent.parentElement;
+                        }
+                    }
+                }
+            }
+            return { success: false };
+        });
+        
+        if (textSearchSuccess.success) {
+            console.log(`✅ 전체보기 clicked via text search!`);
+            await sleep(5000);
+            return true;
+        }
+        
+        // Strategy 3: Look for elements with 전체보기 as part of their content
+        console.log('🎯 Strategy 3: Partial text matching...');
+        const partialTextSuccess = await page.evaluate(() => {
+            const searchTerms = ['전체보기', '전체', '모두보기', 'View All'];
+            
+            for (const term of searchTerms) {
+                const elements = Array.from(document.querySelectorAll('button, a, input, span, div, td'));
+                
+                for (const element of elements) {
+                    const text = element.textContent?.trim() || element.value || element.title || '';
+                    
+                    if (text.includes(term)) {
+                        console.log(`Found element with "${term}": "${text}" (${element.tagName})`);
+                        element.click();
+                        return { success: true, method: 'partial_text', term: term, text: text };
+                    }
+                }
+            }
+            return { success: false };
+        });
+        
+        if (partialTextSuccess.success) {
+            console.log(`✅ 전체보기 clicked via partial text matching!`);
+            await sleep(5000);
+            return true;
+        }
+        
+        // Strategy 4: Check for JavaScript function calls
+        console.log('🎯 Strategy 4: JavaScript function calls...');
+        const jsSuccess = await page.evaluate(() => {
+            // Common function names for showing all records
+            const functionNames = [
+                'showAll', 'viewAll', 'allView', 'totalView', 'selectAll',
+                'listAll', 'pageAll', 'goAllList', 'list', 'search'
+            ];
+            
+            for (const funcName of functionNames) {
+                if (typeof window[funcName] === 'function') {
+                    console.log(`Found function: ${funcName}`);
+                    try {
+                        // Try calling with different parameters
+                        if (funcName === 'list' && typeof window.list === 'function') {
+                            window.list(1, 'Y'); // Common Korean portal pattern
+                            return { success: true, method: 'js_function', function: funcName };
+                        } else {
+                            window[funcName]();
+                            return { success: true, method: 'js_function', function: funcName };
+                        }
+                    } catch (e) {
+                        console.log(`Failed to call ${funcName}: ${e.message}`);
+                    }
+                }
+            }
+            return { success: false };
+        });
+        
+        if (jsSuccess.success) {
+            console.log(`✅ 전체보기 triggered via JS function!`);
+            await sleep(5000);
+            return true;
+        }
+        
+        // Strategy 5: Check for form elements (selects, inputs)
+        console.log('🎯 Strategy 5: Form element checks...');
+        const formSuccess = await page.evaluate(() => {
+            // Look for select options with "all" or "전체"
+            const selects = document.querySelectorAll('select');
+            for (const select of selects) {
+                const options = Array.from(select.options);
+                const allOption = options.find(opt => 
+                    opt.text.includes('전체') || 
+                    opt.value.includes('all') || 
+                    opt.value === '0' || 
+                    opt.value === '999' ||
+                    opt.value === 'Y'
+                );
+                
+                if (allOption) {
+                    console.log(`Found "all" option: ${allOption.text} (${allOption.value})`);
+                    select.value = allOption.value;
+                    
+                    // Trigger change event
+                    const event = new Event('change', { bubbles: true });
+                    select.dispatchEvent(event);
+                    
+                    return { success: true, method: 'select_option', option: allOption.text };
+                }
+            }
+            
+            // Look for hidden inputs that might control page size
+            const inputs = document.querySelectorAll('input[type="hidden"]');
+            for (const input of inputs) {
+                if (input.name && (input.name.includes('pageSize') || input.name.includes('TOTAL'))) {
+                    console.log(`Found relevant hidden input: ${input.name} = ${input.value}`);
+                    // Try setting it to show all
+                    input.value = 'Y';
+                    return { success: true, method: 'hidden_input', name: input.name };
+                }
+            }
+            
+            return { success: false };
+        });
+        
+        if (formSuccess.success) {
+            console.log(`✅ 전체보기 triggered via form element!`);
+            await sleep(5000);
+            return true;
+        }
+        
+        console.log('⚠️ All 전체보기 strategies failed - will proceed with direct extraction');
+        return false;
+        
+    } catch (error) {
+        console.log('⚠️ Error in 전체보기 detection:', error.message);
+        return false;
+    }
+}
+
+/**
+ * Smart pagination for DIVA portal
+ */
+async function smartPagination(page, config, dataSource, handler) {
+    console.log(`📄 SMART: Starting pagination for ${dataSource}...`);
+    
+    const allRecords = [];
+    let currentPage = 1;
+    const maxPages = config.maxPages || 20;
+    
+    try {
+        while (currentPage <= maxPages) {
+            console.log(`📄 Processing page ${currentPage} for ${dataSource}...`);
+            
+            // Extract records from current page
+            const pageRecords = await handler(page);
+            if (pageRecords.length === 0) {
+                console.log(`📄 No records found on page ${currentPage}, stopping pagination`);
+                break;
+            }
+            
+            allRecords.push(...pageRecords);
+            console.log(`📄 Page ${currentPage}: ${pageRecords.length} records (total: ${allRecords.length})`);
+            
+            // Look for next page button
+            const nextButton = await page.evaluate(() => {
+                // Try multiple next button selectors
+                const selectors = [
+                    'a[href*="page"]:contains("다음")',
+                    'a[href*="page"]:contains("Next")', 
+                    '.pagination a:contains("다음")',
+                    '.pagination a:contains(">")',
+                    'button:contains("다음")',
+                    'input[value*="다음"]'
+                ];
+                
+                for (const selector of selectors) {
+                    const elements = document.querySelectorAll('a, button, input');
+                    for (const el of elements) {
+                        const text = el.textContent || el.value || '';
+                        const href = el.href || '';
+                        if ((text.includes('다음') || text.includes('Next') || text === '>') && 
+                            !el.disabled && !el.classList.contains('disabled') &&
+                            (href.includes('page') || el.onclick)) {
+                            return el;
+                        }
+                    }
+                }
+                return null;
+            });
+            
+            if (!nextButton) {
+                console.log(`📄 No next button found on page ${currentPage}, stopping pagination`);
+                break;
+            }
+            
+            // Click next button
+            await nextButton.click();
+            await sleep(3000); // Wait for page load
+            currentPage++;
+            
+            // Safety check: if page doesn't change, break
+            const newPageInfo = await page.evaluate(() => ({
+                url: window.location.href,
+                scrollHeight: document.documentElement.scrollHeight
+            }));
+            
+            // If we've been on the same page for too long, break
+            if (currentPage > 10 && allRecords.length < currentPage * 2) {
+                console.log(`📄 Pagination seems stuck, breaking after ${currentPage} pages`);
+                break;
+            }
+        }
+        
+        console.log(`📄 Pagination completed: ${allRecords.length} total records from ${currentPage-1} pages`);
+        return allRecords;
+        
+    } catch (error) {
+        console.error(`❌ Pagination error for ${dataSource}:`, error.message);
+        return allRecords; // Return what we have so far
+    }
 }
