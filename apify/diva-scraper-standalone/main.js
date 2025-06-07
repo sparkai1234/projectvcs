@@ -30,7 +30,7 @@ try {
 
     await Actor.setStatusMessage('🌐 Launching browser with Korean locale support...');
 
-    // Launch browser with Korean optimization
+    // Launch browser with Korean optimization and SSL handling
     const browser = await chromium.launch({
         headless: true,
         args: [
@@ -41,7 +41,12 @@ try {
             '--no-first-run',
             '--no-zygote',
             '--disable-gpu',
-            '--lang=ko-KR'
+            '--lang=ko-KR',
+            '--ignore-certificate-errors',
+            '--ignore-ssl-errors',
+            '--ignore-certificate-errors-spki-list',
+            '--allow-running-insecure-content',
+            '--disable-web-security'
         ]
     });
 
@@ -49,7 +54,8 @@ try {
         locale: 'ko-KR',
         timezoneId: 'Asia/Seoul',
         viewport: { width: 1920, height: 1080 },
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        ignoreHTTPSErrors: true
     });
 
     const page = await context.newPage();
