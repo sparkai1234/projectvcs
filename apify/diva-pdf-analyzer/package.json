@@ -1,0 +1,60 @@
+{
+  "name": "diva-pdf-intelligence-system",
+  "version": "1.0.0",
+  "description": "Korean VC Statistics PDF Intelligence System with LLM Analysis for DIVA Portal",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js",
+    "test": "node test.js",
+    "dev": "nodemon main.js"
+  },
+  "author": "Enhanced Korean VC Intelligence Team",
+  "license": "ISC",
+  "dependencies": {
+    "apify": "^3.1.10",
+    "@supabase/supabase-js": "^2.38.4",
+    "puppeteer": "^21.5.2",
+    "pdf-parse": "^1.1.1",
+    "pdf2pic": "^3.0.3",
+    "tesseract.js": "^4.1.4",
+    "openai": "^4.20.1",
+    "@anthropic-ai/sdk": "^0.9.1",
+    "axios": "^1.6.2",
+    "cheerio": "^1.0.0-rc.12",
+    "iconv-lite": "^0.6.3",
+    "node-fetch": "^3.3.2",
+    "sharp": "^0.32.6",
+    "pdfjs-dist": "^3.11.174",
+    "mammoth": "^1.6.0",
+    "xlsx": "^0.18.5",
+    "json2csv": "^6.1.0",
+    "moment": "^2.29.4",
+    "lodash": "^4.17.21",
+    "natural": "^6.8.0",
+    "compromise": "^14.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "jest": "^29.7.0",
+    "@types/node": "^20.10.4"
+  },
+  "apify": {
+    "sdk": "3",
+    "type": "web-scraper"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": [
+    "korean-vc",
+    "diva-portal", 
+    "pdf-analysis",
+    "llm-intelligence",
+    "venture-capital",
+    "statistics",
+    "korean-language",
+    "financial-intelligence",
+    "data-extraction",
+    "market-analysis"
+  ]
+} 
