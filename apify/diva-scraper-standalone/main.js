@@ -47,8 +47,8 @@ Actor.main(async () => {
     };
     
     console.log('Enhanced Configuration v5.3.5:');
-    console.log('PRIMARY TARGET: 92+ violations records');
-    console.log('SECONDARY TARGET: 50+ per other source');
+    console.log('PRIMARY TARGET: 92 violations records (CRITICAL)');
+    console.log('SECONDARY TARGETS: 333, 500, 2231, 251, 1685, 251 per source');
     console.log('STRATEGY: Multi-level button detection + enhanced waiting');
     
     const metrics = {
@@ -71,13 +71,13 @@ Actor.main(async () => {
         },
         
         dataSourceCounts: {
-            investment_performance: { records: 0, errors: 0, status: 'pending', expected: '50+', benchmark: 50 },
-            financial_statements: { records: 0, errors: 0, status: 'pending', expected: '50+', benchmark: 50 },
-            association_status: { records: 0, errors: 0, status: 'pending', expected: '50+', benchmark: 50 },
-            personnel_status: { records: 0, errors: 0, status: 'pending', expected: '50+', benchmark: 50 },
-            professional_personnel: { records: 0, errors: 0, status: 'pending', expected: '50+', benchmark: 50 },
-            violations: { records: 0, errors: 0, status: 'pending', expected: '92+ (CRITICAL)', benchmark: 92 },
-            vc_map: { records: 0, errors: 0, status: 'pending', expected: '50+', benchmark: 50 },
+            investment_performance: { records: 0, errors: 0, status: 'pending', expected: '333', benchmark: 333 },
+            financial_statements: { records: 0, errors: 0, status: 'pending', expected: '500 (250+250)', benchmark: 500 },
+            association_status: { records: 0, errors: 0, status: 'pending', expected: '2231', benchmark: 2231 },
+            personnel_status: { records: 0, errors: 0, status: 'pending', expected: '251', benchmark: 251 },
+            professional_personnel: { records: 0, errors: 0, status: 'pending', expected: '1685', benchmark: 1685 },
+            violations: { records: 0, errors: 0, status: 'pending', expected: '92 (CRITICAL)', benchmark: 92 },
+            vc_map: { records: 0, errors: 0, status: 'pending', expected: '251', benchmark: 251 },
             statistics: { records: 0, errors: 0, status: 'pending', expected: '20+', benchmark: 20 }
         }
     };
