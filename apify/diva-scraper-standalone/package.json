@@ -4,10 +4,12 @@
     "description": "🇰🇷 Korean DIVA Financial Data Scraper - Standalone Edition",
     "main": "main.js",
     "type": "module",
-    "scripts": {
-        "start": "node main.js",
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
+          "scripts": {
+          "start": "node main.js",
+          "test": "echo \"Error: no test specified\" && exit 1",
+          "test-dom": "node test-dom-extraction.js",
+          "test-multi-year": "node test-dom-extraction-enhanced.js"
+      },
     "keywords": [
         "apify",
         "scraping",
