@@ -499,7 +499,7 @@ try {
             const 재무상태표Data = await extractAllTableData('재무상태표') || [];
             allScrapedData.push(...재무상태표Data);
             menuResults['재무상태표'] = 재무상태표Data.length;
-            console.log(`✅ 재무상태표: ${재무상태표Data.length} records (baseline: ${DATA_BASELINES['재무상태표']})`);
+            console.log(`📥 재무상태표: ${재무상태표Data.length} records extracted (RAW - will be filtered later)`);
         }
         
         await scrollToTop();
@@ -515,7 +515,7 @@ try {
                 const 손익계산서Data = await extractAllTableData('손익계산서') || [];
                 allScrapedData.push(...손익계산서Data);
                 menuResults['손익계산서'] = 손익계산서Data.length;
-                console.log(`✅ 손익계산서: ${손익계산서Data.length} records (baseline: ${DATA_BASELINES['손익계산서']})`);
+                console.log(`📥 손익계산서: ${손익계산서Data.length} records extracted (RAW - will be filtered later)`);
             }
         }
     }
@@ -641,9 +641,9 @@ try {
         finalData.push(...filtered재무제표Data);
         
         console.log(`✅ 재무제표 filtering complete:`);
-        console.log(`   Before: ${재무제표Data.length} records`);
-        console.log(`   After: ${filtered재무제표Data.length} records`);
-        console.log(`   Control match: ${filtered재무제표Data.length}/500 (${((filtered재무제표Data.length / 500) * 100).toFixed(1)}%)`);
+        console.log(`   Raw extracted: ${재무제표Data.length} records`);
+        console.log(`   Filtered result: ${filtered재무제표Data.length} records`);
+        console.log(`   Target achievement: ${filtered재무제표Data.length}/500 (${((filtered재무제표Data.length / 500) * 100).toFixed(1)}%)`);
     }
     
     // 2. Extract and filter 조합현황 data
@@ -677,14 +677,16 @@ try {
         const filtered손익계산서Count = finalData.filter(r => r.menuName === '손익계산서').length;
         const filtered조합현황Count = finalData.filter(r => r.menuName === '조합현황').length;
         
-        console.log('\n📊 FINAL FILTERED RESULTS:');
-        console.log('==========================');
-        console.log(`재무상태표: ${filtered재무상태표Count}/250 (${((filtered재무상태표Count / 250) * 100).toFixed(1)}%)`);
-        console.log(`손익계산서: ${filtered손익계산서Count}/250 (${((filtered손익계산서Count / 250) * 100).toFixed(1)}%)`);
-        console.log(`조합현황: ${filtered조합현황Count}/2231 (${((filtered조합현황Count / 2231) * 100).toFixed(1)}%)`);
+        console.log('\n📊 FINAL FILTERED RESULTS (SAVED TO DATASET):');
+        console.log('==============================================');
+        console.log(`✅ 재무상태표: ${filtered재무상태표Count}/250 (${((filtered재무상태표Count / 250) * 100).toFixed(1)}%)`);
+        console.log(`✅ 손익계산서: ${filtered손익계산서Count}/250 (${((filtered손익계산서Count / 250) * 100).toFixed(1)}%)`);
+        console.log(`✅ 조합현황: ${filtered조합현황Count}/2231 (${((filtered조합현황Count / 2231) * 100).toFixed(1)}%)`);
         
         if (filtered재무상태표Count === 250 && filtered손익계산서Count === 250 && filtered조합현황Count === 2231) {
             console.log('🏆 100% CONTROL DATA MATCH ACHIEVED FOR ALL FILTERED MENUS!');
+        } else {
+            console.log('⚠️ Some menus did not achieve 100% target match - check filtering logic');
         }
     }
 
