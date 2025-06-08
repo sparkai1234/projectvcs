@@ -329,7 +329,7 @@ Actor.main(async () => {
 });
 
 async function detectAndBlockInterferenceElementsFirst(page, dataType, metrics) {
-    console.log(`INTERFERENCE-FIRST: Detecting and blocking elements for ${dataType}...`);
+    console.log(`TARGETED INTERFERENCE DETECTION: Blocking specific elements for ${dataType}...`);
     
     try {
         // Take screenshot before interference protection
@@ -340,90 +340,182 @@ async function detectAndBlockInterferenceElementsFirst(page, dataType, metrics) 
         });
         console.log(`Screenshot: debug-before-interference-${dataType}-${timestamp}.png`);
         
-        // Immediate interference detection and blocking
+        // TARGETED interference detection - only block elements that actually interfere
         const blockedCount = await page.evaluate((dataType) => {
             let blocked = 0;
             
-            // Helper function to find and block elements by text
-            function findAndBlockByText(selector, texts) {
+            // Helper function to find and block elements by text (within data area only)
+            function findAndBlockByTextInDataArea(selector, texts) {
                 const elements = document.querySelectorAll(selector);
                 Array.from(elements).forEach(el => {
-                    const text = el.textContent?.trim() || '';
-                    if (texts.some(searchText => text.includes(searchText))) {
-                        el.setAttribute('data-blocked-interference', 'true');
-                        el.style.pointerEvents = 'none';
-                        el.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
-                        el.style.border = '2px solid red';
-                        el.style.cursor = 'not-allowed';
-                        blocked++;
-                        console.log(`BLOCKED: ${el.tagName} - "${text}"`);
+                    // Only target elements within the main content/data area, not header/footer
+                    const isInDataArea = el.closest('table') || 
+                                        el.closest('.content') || 
+                                        el.closest('.container') ||
+                                        el.closest('form') ||
+                                        el.closest('.data-area');
+                    
+                    if (isInDataArea) {
+                        const text = el.textContent?.trim() || '';
+                        if (texts.some(searchText => text.includes(searchText))) {
+                            el.setAttribute('data-blocked-interference', 'true');
+                            el.style.pointerEvents = 'none';
+                            el.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+                            el.style.border = '2px solid red';
+                            el.style.cursor = 'not-allowed';
+                            blocked++;
+                            console.log(`BLOCKED IN DATA AREA: ${el.tagName} - "${text}"`);
+                        }
                     }
                 });
             }
             
-            // Helper function to find and block by exact text
-            function findAndBlockByExactText(selector, texts) {
+            // Helper function to find and block by exact text (within data area only)
+            function findAndBlockByExactTextInDataArea(selector, texts) {
                 const elements = document.querySelectorAll(selector);
                 Array.from(elements).forEach(el => {
-                    const text = el.textContent?.trim() || '';
-                    if (texts.includes(text)) {
-                        el.setAttribute('data-blocked-interference', 'true');
-                        el.style.pointerEvents = 'none';
-                        el.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
-                        el.style.border = '2px solid red';
-                        el.style.cursor = 'not-allowed';
-                        blocked++;
-                        console.log(`BLOCKED EXACT: ${el.tagName} - "${text}"`);
+                    // Only target elements within the main content/data area
+                    const isInDataArea = el.closest('table') || 
+                                        el.closest('.content') || 
+                                        el.closest('.container') ||
+                                        el.closest('form') ||
+                                        el.closest('.data-area');
+                    
+                    if (isInDataArea) {
+                        const text = el.textContent?.trim() || '';
+                        if (texts.includes(text)) {
+                            el.setAttribute('data-blocked-interference', 'true');
+                            el.style.pointerEvents = 'none';
+                            el.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+                            el.style.border = '2px solid red';
+                            el.style.cursor = 'not-allowed';
+                            blocked++;
+                            console.log(`BLOCKED EXACT IN DATA AREA: ${el.tagName} - "${text}"`);
+                        }
                     }
                 });
             }
             
-            // 1. FINANCIAL STATEMENTS SPECIFIC INTERFERENCE
+            // 1. FINANCIAL STATEMENTS SPECIFIC INTERFERENCE (only on DivItmFsInq page)
             if (dataType === 'financial_statements') {
-                // Block 기준연도 (Year dropdown)
-                findAndBlockByText('select, option, button, span, div', ['기준연도', '2024', '2023', '2022', '2021', '2020']);
+                // Block 기준연도 (Year dropdown) - only in form areas
+                const yearDropdowns = document.querySelectorAll('select, option');
+                yearDropdowns.forEach(el => {
+                    const text = el.textContent?.trim() || '';
+                    const value = el.value || '';
+                    if ((text.includes('기준연도') || text.includes('2024') || text.includes('2023') || 
+                         value.includes('2024') || value.includes('2023')) && 
+                        (el.closest('form') || el.closest('.search-area'))) {
+                        el.setAttribute('data-blocked-interference', 'true');
+                        el.style.pointerEvents = 'none';
+                        el.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+                        blocked++;
+                        console.log(`BLOCKED YEAR DROPDOWN: ${el.tagName} - "${text}"`);
+                    }
+                });
                 
-                // Block 재원구분 (Funding type dropdown)  
-                findAndBlockByText('select, option, button, span, div', ['재원구분', '벤처투자회사', '조합']);
+                // Block 재원구분 (Funding type dropdown) - only in form areas
+                findAndBlockByTextInDataArea('select, option', ['재원구분', '벤처투자회사', '조합']);
                 
-                // Block 검색 (Search button)
-                findAndBlockByExactText('button, input', ['검색']);
+                // Block 검색 (Search button) - only buttons with exact text
+                const searchButtons = document.querySelectorAll('button, input[type="button"], input[type="submit"]');
+                searchButtons.forEach(el => {
+                    const text = el.textContent?.trim() || el.value?.trim() || '';
+                    if (text === '검색' && (el.closest('form') || el.closest('.search-area'))) {
+                        el.setAttribute('data-blocked-interference', 'true');
+                        el.style.pointerEvents = 'none';
+                        el.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+                        blocked++;
+                        console.log(`BLOCKED SEARCH BUTTON: ${el.tagName} - "${text}"`);
+                    }
+                });
                 
-                // Block 상세 (Detail buttons) - multiple in table
-                findAndBlockByExactText('a, button, span', ['상세']);
+                // Block 상세 (Detail buttons) - only in table cells
+                const detailLinks = document.querySelectorAll('a, button');
+                detailLinks.forEach(el => {
+                    const text = el.textContent?.trim() || '';
+                    if (text === '상세' && el.closest('td')) {
+                        el.setAttribute('data-blocked-interference', 'true');
+                        el.style.pointerEvents = 'none';
+                        el.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+                        blocked++;
+                        console.log(`BLOCKED DETAIL LINK: ${el.tagName} - "${text}"`);
+                    }
+                });
             }
             
-            // 2. PAGINATION ELEMENTS (for all pages)
-            // Block numbered pagination
-            const pageNumbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
-            findAndBlockByExactText('a, button', pageNumbers);
+            // 2. TABLE PAGINATION ELEMENTS (only within table pagination areas)
+            const paginationArea = document.querySelector('.pagination, .paging, .page-nav');
+            if (paginationArea) {
+                // Block numbered pagination only within pagination areas
+                const pageNumbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+                pageNumbers.forEach(num => {
+                    const pageLinks = paginationArea.querySelectorAll('a, button');
+                    pageLinks.forEach(el => {
+                        const text = el.textContent?.trim() || '';
+                        if (text === num) {
+                            el.setAttribute('data-blocked-interference', 'true');
+                            el.style.pointerEvents = 'none';
+                            el.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+                            blocked++;
+                            console.log(`BLOCKED PAGE NUMBER: ${el.tagName} - "${text}"`);
+                        }
+                    });
+                });
+                
+                // Block navigation arrows only within pagination areas
+                const navElements = paginationArea.querySelectorAll('a, button');
+                navElements.forEach(el => {
+                    const text = el.textContent?.trim() || '';
+                    if (['다음', '이전', 'Next', 'Previous', '첫', '마지막', '◀', '▶', '<<', '>>'].includes(text)) {
+                        el.setAttribute('data-blocked-interference', 'true');
+                        el.style.pointerEvents = 'none';
+                        el.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+                        blocked++;
+                        console.log(`BLOCKED NAV ELEMENT: ${el.tagName} - "${text}"`);
+                    }
+                });
+            }
             
-            // Block navigation arrows and text
-            findAndBlockByText('a, button, span', ['다음', '이전', 'Next', 'Previous', '첫', '마지막', '처음', '끝']);
-            findAndBlockByExactText('a, button', ['◀', '▶', '<<', '>>']);
-            
-            // 3. FORM ELEMENTS THAT MIGHT INTERFERE
-            const formElements = document.querySelectorAll('select[onchange], input[type="submit"], button[type="submit"]');
-            formElements.forEach(el => {
-                el.setAttribute('data-blocked-interference', 'true');
-                el.style.pointerEvents = 'none';
-                el.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
-                blocked++;
+            // 3. FORM ELEMENTS THAT TRIGGER NAVIGATION (only within forms)
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                const formElements = form.querySelectorAll('select[onchange], input[type="submit"], button[type="submit"]');
+                formElements.forEach(el => {
+                    // Don't block the 전체보기 button
+                    const text = el.textContent?.trim() || el.value?.trim() || '';
+                    if (text !== '전체보기') {
+                        el.setAttribute('data-blocked-interference', 'true');
+                        el.style.pointerEvents = 'none';
+                        el.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+                        blocked++;
+                        console.log(`BLOCKED FORM ELEMENT: ${el.tagName} - "${text}"`);
+                    }
+                });
             });
             
-            // 4. PREVENT POPUP TRIGGERS
-            const popupTriggers = document.querySelectorAll('[onclick*="popup"], [onclick*="window.open"], [href*="javascript:"]');
+            // 4. POPUP TRIGGERS (only with specific popup attributes)
+            const popupTriggers = document.querySelectorAll('[onclick*="popup"], [onclick*="window.open"], [onclick*="modal"]');
             popupTriggers.forEach(el => {
                 const text = el.textContent?.trim() || '';
-                if (text !== '전체보기') { // Don't block 전체보기
+                // Don't block legitimate navigation or 전체보기
+                if (text !== '전체보기' && 
+                    !text.includes('투자실적') && 
+                    !text.includes('재무제표') && 
+                    !text.includes('조합현황') && 
+                    !text.includes('인력현황') && 
+                    !text.includes('전문인력현황') && 
+                    !text.includes('법규위반') && 
+                    !text.includes('VC MAP')) {
                     el.setAttribute('data-blocked-interference', 'true');
                     el.style.pointerEvents = 'none';
                     el.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
                     blocked++;
+                    console.log(`BLOCKED POPUP TRIGGER: ${el.tagName} - "${text}"`);
                 }
             });
             
-            console.log(`INTERFERENCE-FIRST: Blocked ${blocked} elements immediately`);
+            console.log(`TARGETED INTERFERENCE: Blocked ${blocked} elements specifically for ${dataType}`);
             return blocked;
         }, dataType);
         
@@ -436,12 +528,13 @@ async function detectAndBlockInterferenceElementsFirst(page, dataType, metrics) 
         
         metrics.interferenceElementsBlocked += blockedCount;
         
-        console.log(`INTERFERENCE-FIRST SUCCESS: ${blockedCount} elements blocked for ${dataType}`);
+        console.log(`TARGETED INTERFERENCE SUCCESS: ${blockedCount} specific elements blocked for ${dataType}`);
+        console.log(`AVOIDED: Header/footer elements, legitimate navigation, irrelevant page elements`);
         
         return blockedCount;
         
     } catch (error) {
-        console.error('Error in interference-first detection:', error.message);
+        console.error('Error in targeted interference detection:', error.message);
         return 0;
     }
 }
