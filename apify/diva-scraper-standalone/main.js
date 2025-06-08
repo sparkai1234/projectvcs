@@ -26,7 +26,7 @@ console.log('IMPROVEMENTS: Block FAMILY SITE selector, TOP button + all navigati
 console.log('TARGET: Prevent external site navigation during financial statements extraction');
 
 Actor.main(async () => {
-        console.log('Starting DIVA Scraper v5.3.14.10 - NUCLEAR PART 2 TOTAL LOCKDOWN Edition...');
+        console.log('Starting DIVA Scraper v5.3.14.11 - NUCLEAR FIX - Safe Navigation Blocking Edition...');
 
     const input = await Actor.getInput();
     
@@ -52,11 +52,11 @@ Actor.main(async () => {
         }
     };
     
-    console.log('NUCLEAR PART 2 TOTAL LOCKDOWN Configuration v5.3.14.10:');
+    console.log('NUCLEAR FIX - Safe Navigation Blocking Configuration v5.3.14.11:');
     console.log('CONTROL TARGETS: 333, 500, 2231, 251, 1685, 92, 251');
     console.log('STEP 1: Immediate interference detection and blocking');
     console.log('STEP 2: Clean 전체보기 button detection and clicking');
-    console.log('STEP 3: NUCLEAR PART 2 - Total lockdown of ALL navigation and detail buttons');
+    console.log('STEP 3: NUCLEAR FIX - Safe navigation blocking without breaking browser security');
     
     const metrics = {
         startTime: Date.now(),
@@ -1378,25 +1378,31 @@ async function disableAllNavigationFunctions(page) {
             };
         }
         
-        // Disable location changes
-        const originalLocationAttr = $.fn.attr;
-        $.fn.attr = function(name, value) {
-            if (name === 'href' && arguments.length > 1) {
-                console.log('🚫 BLOCKED: $(location).attr("href") prevented');
-                return this;
-            }
-            return originalLocationAttr.apply(this, arguments);
+        // Disable location changes via jQuery
+        if (typeof $ !== 'undefined' && $.fn && $.fn.attr) {
+            const originalLocationAttr = $.fn.attr;
+            $.fn.attr = function(name, value) {
+                if (name === 'href' && arguments.length > 1) {
+                    console.log('🚫 BLOCKED: $(location).attr("href") prevented');
+                    return this;
+                }
+                return originalLocationAttr.apply(this, arguments);
+            };
+        }
+        
+        // Block common window navigation methods (without redefining protected properties)
+        const originalReplace = window.location.replace;
+        const originalAssign = window.location.assign;
+        
+        window.location.replace = function(url) {
+            console.log('🚫 BLOCKED: window.location.replace() prevented');
+            return false;
         };
         
-        // Disable window.location changes
-        Object.defineProperty(window.location, 'href', {
-            set: function(value) {
-                console.log('🚫 BLOCKED: window.location.href change prevented');
-            },
-            get: function() {
-                return window.location.toString();
-            }
-        });
+        window.location.assign = function(url) {
+            console.log('🚫 BLOCKED: window.location.assign() prevented');
+            return false;
+        };
     });
 }
 
