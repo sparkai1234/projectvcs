@@ -1,12 +1,12 @@
 // DIVA Scraper v5.2 - 100% CONTROL DATA MATCH EDITION
-// Comprehensive scraping of all 항목별공시 menus with enhanced 재무제표 + 조합현황 filtering
+// Comprehensive scraping of all ??��별공??menus with enhanced ?�무?�표 + 조합?�황 filtering
 
 import { Actor } from 'apify';
 import { chromium } from 'playwright';
 import fs from 'fs';
 import path from 'path';
-import { process재무제표Data } from './재무제표-filter.js';
-import { filter조합현황Records } from './조합현황-filter.js';
+import { process?�무?�표Data } from './?�무?�표-filter.js';
+import { filter조합?�황Records } from './조합?�황-filter.js';
 
 // Robust configuration for Korean government sites
 const config = {
@@ -23,22 +23,22 @@ const config = {
 // IMPORTANT: Baseline data references for algorithm development (NOT fixed validation thresholds)
 // These counts are TODAY's baseline for monitoring and algorithm establishment - actual data will vary
 const DATA_BASELINES = {
-    '투자실적': 333,
-    '재무상태표': 250,  // Updated to match actual menu names
-    '손익계산서': 250,   // Updated to match actual menu names  
-    '조합현황': 2231,
-    '인력현황': 251,
-    '전문인력현황': 1685,
-    '법규위반현황': 92,
+    '?�자?�적': 333,
+    '?�무?�태??: 250,  // Updated to match actual menu names
+    '?�익계산??: 250,   // Updated to match actual menu names  
+    '조합?�황': 2231,
+    '?�력?�황': 251,
+    '?�문?�력?�황': 1685,
+    '법규?�반?�황': 92,
     'VC MAP': 251
-    // VC통계정보 removed - handled by separate PDF scraper app
+    // VC?�계?�보 removed - handled by separate PDF scraper app
 };
 
 Actor.main(async () => {
-    console.log('🚀 Starting DIVA COMPLETE 7-MENU TRAVERSAL SCRAPER');
-    console.log('📋 BASELINES (Reference Only):', DATA_BASELINES);
+    console.log('?? Starting DIVA COMPLETE 7-MENU TRAVERSAL SCRAPER');
+    console.log('?�� BASELINES (Reference Only):', DATA_BASELINES);
     
-    await Actor.setStatusMessage('🎯 Initializing complete menu traversal...');
+    await Actor.setStatusMessage('?�� Initializing complete menu traversal...');
 
     let browser;
     let page;
@@ -81,17 +81,17 @@ try {
     // Enhanced error handling
     page.on('response', response => {
         if (!response.ok()) {
-            console.log(`⚠️ HTTP ${response.status()}: ${response.url()}`);
+            console.log(`?�️ HTTP ${response.status()}: ${response.url()}`);
         }
     });
 
     page.on('pageerror', error => {
-        console.log(`🐛 Page error: ${error.message}`);
+        console.log(`?�� Page error: ${error.message}`);
     });
 
     // Navigate to the starting page
     const baseUrl = 'http://ediva.kvca.or.kr/div/dii/DivItmInvstPrfmInq';
-    console.log(`🌐 Navigating to: ${baseUrl}`);
+    console.log(`?�� Navigating to: ${baseUrl}`);
     await page.goto(baseUrl, { 
         waitUntil: config.waitStrategy,
         timeout: 30000 
@@ -103,20 +103,20 @@ try {
         await page.waitForTimeout(1000);
     }
 
-    // Utility function to find and click 전체보기 button
-    async function findAndClick전체보기(menuName) {
-        console.log(`🔍 Looking for 전체보기 button for ${menuName}...`);
+    // Utility function to find and click ?�체보기 button
+    async function findAndClick?�체보기(menuName) {
+        console.log(`?�� Looking for ?�체보기 button for ${menuName}...`);
         
         const viewAllSelectors = [
-            'text=전체보기',
-            'a:has-text("전체보기")',
-            'button:has-text("전체보기")',
-            'input[value="전체보기"]',
-            'table + *:has-text("전체보기")',
-            'table ~ *:has-text("전체보기")',
-            '.pagination *:has-text("전체보기")',
-            'td:last-child a:has-text("전체보기")',
-            'div:last-child a:has-text("전체보기")'
+            'text=?�체보기',
+            'a:has-text("?�체보기")',
+            'button:has-text("?�체보기")',
+            'input[value="?�체보기"]',
+            'table + *:has-text("?�체보기")',
+            'table ~ *:has-text("?�체보기")',
+            '.pagination *:has-text("?�체보기")',
+            'td:last-child a:has-text("?�체보기")',
+            'div:last-child a:has-text("?�체보기")'
         ];
         
         for (const selector of viewAllSelectors) {
@@ -124,7 +124,7 @@ try {
                 const elements = await page.locator(selector).all();
                 for (const element of elements) {
                     if (await element.isVisible({ timeout: 1000 })) {
-                        console.log(`✅ Found 전체보기 button for ${menuName}`);
+                        console.log(`??Found ?�체보기 button for ${menuName}`);
                         await element.click();
                         await page.waitForTimeout(3000);
                         return true;
@@ -134,14 +134,14 @@ try {
                 // Continue to next selector
             }
         }
-        console.log(`⚠️ Could not find 전체보기 button for ${menuName}`);
+        console.log(`?�️ Could not find ?�체보기 button for ${menuName}`);
         return false;
     }
 
     // ADDED: Function to extract all table data from page
     async function extractAllTableData(menuName) {
         try {
-            console.log(`📊 Extracting data for ${menuName}...`);
+            console.log(`?�� Extracting data for ${menuName}...`);
             await page.waitForTimeout(2000); // Wait for data to load
             
             const tableData = await page.evaluate((menuName) => {
@@ -177,11 +177,11 @@ try {
                 return validation.isValid;
             });
             
-            console.log(`📊 Extracted ${validData.length} valid records from ${tableData.length} total rows for ${menuName}`);
+            console.log(`?�� Extracted ${validData.length} valid records from ${tableData.length} total rows for ${menuName}`);
             return validData;
             
         } catch (error) {
-            console.log(`❌ Error extracting data for ${menuName}: ${error.message}`);
+            console.log(`??Error extracting data for ${menuName}: ${error.message}`);
             return [];
         }
     }
@@ -197,17 +197,17 @@ try {
         let validationDetails = '';
 
         switch (menuName) {
-            case '인력현황':
-                // Based on screenshot: [회사명, 출자원, 전문인력, 투자실사, 경영관리]
+            case '?�력?�황':
+                // Based on screenshot: [?�사�? 출자?? ?�문?�력, ?�자?�사, 경영관�?
                 if (cells.length >= 5) {
                     const companyName = cells[0]?.trim();
                     if (companyName && companyName.length >= 3 && companyName.length <= 50 &&
-                        !companyName.includes('회사명') && !companyName.includes('구분') && 
-                        !companyName.includes('합계') && !companyName.includes('총계') &&
-                        !companyName.includes('출자원') && !companyName.includes('전문인력') &&
-                        !companyName.includes('투자실사') && !companyName.includes('경영관리')) {
+                        !companyName.includes('?�사�?) && !companyName.includes('구분') && 
+                        !companyName.includes('?�계') && !companyName.includes('총계') &&
+                        !companyName.includes('출자??) && !companyName.includes('?�문?�력') &&
+                        !companyName.includes('?�자?�사') && !companyName.includes('경영관�?)) {
                         
-                        // Validate numeric columns (출자원, 전문인력, 투자실사, 경영관리)
+                        // Validate numeric columns (출자?? ?�문?�력, ?�자?�사, 경영관�?
                         let numericValid = true;
                         for (let i = 1; i <= 4; i++) {
                             if (!cells[i] || !/^\d+$/.test(cells[i].trim())) {
@@ -224,17 +224,17 @@ try {
                 }
                 break;
 
-            case '투자실적':
-                // Based on screenshot: [회사명, 고유계정(영제수, 금액), 조합(영제수, 금액), 합계(영제수, 금액)]
+            case '?�자?�적':
+                // Based on screenshot: [?�사�? 고유계정(?�제?? 금액), 조합(?�제?? 금액), ?�계(?�제?? 금액)]
                 if (cells.length >= 7) {
                     const companyName = cells[0]?.trim();
                     if (companyName && companyName.length >= 3 && companyName.length <= 50 &&
-                        !companyName.includes('회사명') && !companyName.includes('고유계정') && 
-                        !companyName.includes('조합') && !companyName.includes('합계') &&
-                        !companyName.includes('영제수') && !companyName.includes('금액') &&
+                        !companyName.includes('?�사�?) && !companyName.includes('고유계정') && 
+                        !companyName.includes('조합') && !companyName.includes('?�계') &&
+                        !companyName.includes('?�제??) && !companyName.includes('금액') &&
                         !companyName.includes('구분') && !companyName.includes('총계')) {
                         
-                        // Validate count columns (영제수): 2, 4, 6
+                        // Validate count columns (?�제??: 2, 4, 6
                         const count1Valid = cells[1] && /^\d+$/.test(cells[1].trim());
                         const count2Valid = cells[3] && /^\d+$/.test(cells[3].trim());
                         const count3Valid = cells[5] && /^\d+$/.test(cells[5].trim());
@@ -252,30 +252,30 @@ try {
                 }
                 break;
 
-            case '재무상태표':
-            case '손익계산서':
-                // Based on screenshot: [회사명, 재원, 결산월, 회계기준, 자구주본, 자산, 창업투자자산, 부채, 자본금, 자본, 상세]
+            case '?�무?�태??:
+            case '?�익계산??:
+                // Based on screenshot: [?�사�? ?�원, 결산?? ?�계기�?, ?�구주본, ?�산, 창업?�자?�산, 부�? ?�본�? ?�본, ?�세]
                 if (cells.length >= 10) {
                     const companyName = cells[0]?.trim();
-                    const sourceType = cells[1]?.trim(); // 재원
-                    const month = cells[2]?.trim(); // 결산월
-                    const accountStandard = cells[3]?.trim(); // 회계기준
-                    const scopeType = cells[4]?.trim(); // 자구주본
+                    const sourceType = cells[1]?.trim(); // ?�원
+                    const month = cells[2]?.trim(); // 결산??
+                    const accountStandard = cells[3]?.trim(); // ?�계기�?
+                    const scopeType = cells[4]?.trim(); // ?�구주본
                     
-                    // Debug sampling for 재무제표
-                    if ((menuName === '재무상태표' || menuName === '손익계산서') && Math.random() < 0.01) {
-                        console.log(`🔍 DEBUG ${menuName} row: ${JSON.stringify(cells.slice(0, 8))}`);
+                    // Debug sampling for ?�무?�표
+                    if ((menuName === '?�무?�태?? || menuName === '?�익계산??) && Math.random() < 0.01) {
+                        console.log(`?�� DEBUG ${menuName} row: ${JSON.stringify(cells.slice(0, 8))}`);
                     }
                     
                     if (companyName && companyName.length >= 3 && companyName.length <= 80 &&
-                        !companyName.includes('회사명') && !companyName.includes('재원') &&
-                        !companyName.includes('결산월') && !companyName.includes('회계기준') &&
+                        !companyName.includes('?�사�?) && !companyName.includes('?�원') &&
+                        !companyName.includes('결산??) && !companyName.includes('?�계기�?') &&
                         !companyName.includes('구분') && !companyName.includes('총계') &&
-                        !companyName.includes('합계') && !companyName.includes('소계') &&
-                        sourceType && (sourceType.includes('계정') || sourceType.includes('자기계정') || sourceType.includes('고유계정')) &&
-                        month && (month === '12' || month === '12월') && // Stricter month validation
-                        accountStandard && (accountStandard.includes('일반') || accountStandard.includes('K-IFRS') || accountStandard.includes('IFRS')) &&
-                        scopeType && (scopeType.includes('개별') || scopeType.includes('연결') || scopeType.includes('별도'))) {
+                        !companyName.includes('?�계') && !companyName.includes('?�계') &&
+                        sourceType && (sourceType.includes('계정') || sourceType.includes('?�기계정') || sourceType.includes('고유계정')) &&
+                        month && (month.includes('12') || month === '12' || month === '12��') && // More flexible month validation
+                        accountStandard && (accountStandard.includes('�Ϲ�') || accountStandard.includes('K-IFRS') || accountStandard.includes('IFRS') || accountStandard.includes('GAAP') || accountStandard.length > 0) &&
+                        scopeType && (scopeType.includes('����') || scopeType.includes('����') || scopeType.includes('����') || scopeType.includes('�ܵ�') || scopeType.length > 0)) {
                         
                         // Stricter financial data validation (85% threshold)
                         let hasFinancialData = false;
@@ -301,8 +301,8 @@ try {
                 }
                 break;
 
-            case '조합현황':
-                // Based on screenshot: [번호, 회사명, 조합명, 출자일, 결산총액(원), 만기일, 투자분야구분, 목적구분, 지원구분]
+            case '조합?�황':
+                // Based on screenshot: [번호, ?�사�? 조합�? 출자?? 결산총액(??, 만기?? ?�자분야구분, 목적구분, 지?�구�?
                 if (cells.length >= 9) {
                     const id = cells[0]?.trim();
                     const companyName = cells[1]?.trim();
@@ -314,14 +314,14 @@ try {
                     
                     if (id && /^\d{3,4}$/.test(id) &&
                         companyName && companyName.length >= 3 &&
-                        !companyName.includes('회사명') && !companyName.includes('조합명') &&
+                        !companyName.includes('?�사�?) && !companyName.includes('조합�?) &&
                         !companyName.includes('구분') && !companyName.includes('총계') &&
                         partnershipName && partnershipName.length >= 3 &&
                         !partnershipName.includes('구분') &&
                         startDate && /^\d{4}-\d{2}-\d{2}$/.test(startDate) &&
                         amount && /^\d{1,3}(,\d{3})*$/.test(amount) &&
                         endDate && /^\d{4}-\d{2}-\d{2}$/.test(endDate) &&
-                        investmentField && (investmentField.includes('일반') || investmentField.includes('문화') || investmentField.includes('바이오'))) {
+                        investmentField && (investmentField.includes('?�반') || investmentField.includes('문화') || investmentField.includes('바이??))) {
                         
                         isValid = true;
                         validationDetails = `Valid: ID=${id}, Company=${companyName}, Partnership=${partnershipName.substring(0, 30)}...`;
@@ -329,25 +329,25 @@ try {
                 }
                 break;
 
-            case '전문인력현황':
-                // Based on screenshot: [회사명, 이름, 금무경력, 전문인력경력, 총VC근무경력, 총VC전문인력경력]
+            case '?�문?�력?�황':
+                // Based on screenshot: [?�사�? ?�름, 금무경력, ?�문?�력경력, 총VC근무경력, 총VC?�문?�력경력]
                 if (cells.length >= 5) { // More flexible minimum length
                     const companyName = cells[0]?.trim();
                     const personName = cells[1]?.trim();
                     
                     // Debug: Log first few rows to understand actual data structure  
-                    if (menuName === '전문인력현황' && Math.random() < 0.05) { // 5% sampling for debug
-                        console.log(`🔍 DEBUG 전문인력현황 row: ${JSON.stringify(cells)}`);
+                    if (menuName === '?�문?�력?�황' && Math.random() < 0.05) { // 5% sampling for debug
+                        console.log(`?�� DEBUG ?�문?�력?�황 row: ${JSON.stringify(cells)}`);
                     }
                     
                     if (companyName && companyName.length >= 2 && companyName.length <= 100 &&
-                        !companyName.includes('회사명') && !companyName.includes('이름') &&
+                        !companyName.includes('?�사�?) && !companyName.includes('?�름') &&
                         !companyName.includes('경력') && !companyName.includes('구분') && !companyName.includes('총계') &&
-                        !companyName.includes('합계') && !companyName.includes('소계') &&
+                        !companyName.includes('?�계') && !companyName.includes('?�계') &&
                         personName && personName.length >= 1 && personName.length <= 50 &&
                         !personName.includes('경력') && !personName.includes('구분') &&
-                        !personName.includes('총계') && !personName.includes('합계') &&
-                        !personName.includes('회사명') && !personName.includes('이름')) {
+                        !personName.includes('총계') && !personName.includes('?�계') &&
+                        !personName.includes('?�사�?) && !personName.includes('?�름')) {
                         
                         // Much more flexible validation for experience columns
                         // Allow: numbers, decimals, dashes, empty, Korean text, special chars
@@ -358,7 +358,7 @@ try {
                             const cell = cells[i]?.trim() || '';
                             // Very permissive: allow almost any content except obvious headers
                             if (!cell.includes('경력') && !cell.includes('구분') && 
-                                !cell.includes('회사명') && !cell.includes('총계')) {
+                                !cell.includes('?�사�?) && !cell.includes('총계')) {
                                 validExperienceFields++;
                             }
                         }
@@ -372,8 +372,8 @@ try {
                 }
                 break;
 
-            case '법규위반현황':
-                // Based on screenshot: [번호, 회사명, 조치일, 조치명칭일, 시정완료일, 점검구분, 위반항목, 조치구분]
+            case '법규?�반?�황':
+                // Based on screenshot: [번호, ?�사�? 조치?? 조치명칭?? ?�정?�료?? ?��?구분, ?�반??��, 조치구분]
                 if (cells.length >= 8) {
                     const id = cells[0]?.trim();
                     const companyName = cells[1]?.trim();
@@ -386,14 +386,14 @@ try {
                     
                     if (id && /^\d+$/.test(id) && parseInt(id) >= 1 && parseInt(id) <= 100 &&
                         companyName && companyName.length >= 3 &&
-                        !companyName.includes('회사명') && !companyName.includes('조치일') &&
+                        !companyName.includes('?�사�?) && !companyName.includes('조치??) &&
                         !companyName.includes('구분') && !companyName.includes('총계') && !companyName.includes('번호') &&
                         actionDate && /^\d{4}-\d{2}-\d{2}$/.test(actionDate) &&
                         (noticeDate === '-' || /^\d{4}-\d{2}-\d{2}$/.test(noticeDate)) &&
                         (completionDate === '-' || /^\d{4}-\d{2}-\d{2}$/.test(completionDate)) &&
-                        inspectionType && ['전자보고', '정기검사', '수시검사'].includes(inspectionType) &&
+                        inspectionType && ['?�자보고', '?�기검??, '?�시검??].includes(inspectionType) &&
                         violationType && violationType.length >= 2 &&
-                        actionType && ['경고', '시정명령', '경영개선요구'].includes(actionType)) {
+                        actionType && ['경고', '?�정명령', '경영개선?�구'].includes(actionType)) {
                         
                         isValid = true;
                         validationDetails = `Valid: ID=${id}, Company=${companyName}, Action=${actionDate}, Type=${inspectionType}, Violation=${violationType}`;
@@ -402,7 +402,7 @@ try {
                 break;
 
             case 'VC MAP':
-                // Based on screenshot: [순위, 회사명, 인력총수, 전문인력수]
+                // Based on screenshot: [?�위, ?�사�? ?�력총수, ?�문?�력??
                 if (cells.length >= 4) {
                     const rank = cells[0]?.trim();
                     const companyName = cells[1]?.trim();
@@ -411,8 +411,8 @@ try {
                     
                     if (rank && /^\d+$/.test(rank) && parseInt(rank) >= 1 && parseInt(rank) <= 500 &&
                         companyName && companyName.length >= 3 && companyName.length <= 50 &&
-                        !companyName.includes('회사명') && !companyName.includes('순위') &&
-                        !companyName.includes('인력총수') && !companyName.includes('전문인력수') &&
+                        !companyName.includes('?�사�?) && !companyName.includes('?�위') &&
+                        !companyName.includes('?�력총수') && !companyName.includes('?�문?�력??) &&
                         !companyName.includes('구분') && !companyName.includes('총계') &&
                         totalStaff && /^\d+$/.test(totalStaff) &&
                         expertStaff && /^\d+$/.test(expertStaff)) {
@@ -426,9 +426,9 @@ try {
             default:
                 // Basic validation for other sections
                 if (cells.length >= 3 && cells[0]?.trim() && 
-                    !cells[0].includes('합계') && !cells[0].includes('소계') && 
+                    !cells[0].includes('?�계') && !cells[0].includes('?�계') && 
                     !cells[0].includes('총계') && !cells[0].includes('구분') &&
-                    !cells[0].includes('업체수') && !cells[0].includes('금액')) {
+                    !cells[0].includes('?�체??) && !cells[0].includes('금액')) {
                     isValid = true;
                     validationDetails = `Basic validation: ${cells[0]?.substring(0, 30)}...`;
                 }
@@ -443,7 +443,7 @@ try {
 
     // Utility function to click sidebar menu
     async function clickSidebarMenu(menuText) {
-        console.log(`🔍 Looking for sidebar menu: ${menuText}`);
+        console.log(`?�� Looking for sidebar menu: ${menuText}`);
         
         const menuSelectors = [
             `text=${menuText}`,
@@ -459,7 +459,7 @@ try {
                 const elements = await page.locator(selector).all();
                 for (const element of elements) {
                     if (await element.isVisible({ timeout: 2000 })) {
-                        console.log(`✅ Found sidebar menu: ${menuText}`);
+                        console.log(`??Found sidebar menu: ${menuText}`);
                         await element.click();
                         await page.waitForTimeout(2000);
                         return true;
@@ -469,132 +469,132 @@ try {
                 // Continue to next selector
             }
         }
-        console.log(`⚠️ Could not find sidebar menu: ${menuText}`);
+        console.log(`?�️ Could not find sidebar menu: ${menuText}`);
         return false;
     }
 
     // 8-MENU TRAVERSAL SEQUENCE
-    console.log('\n🎯 STARTING 7-MENU TRAVERSAL SEQUENCE');
+    console.log('\n?�� STARTING 7-MENU TRAVERSAL SEQUENCE');
 
-    // 1. 투자실적 (Already on this page)
-    await Actor.setStatusMessage('📊 MENU 1/8: 투자실적...');
-    console.log('\n📊 MENU 1/8: 투자실적');
+    // 1. ?�자?�적 (Already on this page)
+    await Actor.setStatusMessage('?�� MENU 1/8: ?�자?�적...');
+    console.log('\n?�� MENU 1/8: ?�자?�적');
     
-    if (await findAndClick전체보기('투자실적')) {
-        const 투자실적Data = await extractAllTableData('투자실적') || [];
-        allScrapedData.push(...투자실적Data);
-        menuResults['투자실적'] = 투자실적Data.length;
-        console.log(`✅ 투자실적: ${투자실적Data.length} records (baseline: ${DATA_BASELINES['투자실적']})`);
+    if (await findAndClick?�체보기('?�자?�적')) {
+        const ?�자?�적Data = await extractAllTableData('?�자?�적') || [];
+        allScrapedData.push(...?�자?�적Data);
+        menuResults['?�자?�적'] = ?�자?�적Data.length;
+        console.log(`???�자?�적: ${?�자?�적Data.length} records (baseline: ${DATA_BASELINES['?�자?�적']})`);
     }
 
-    // 2. 재무제표 (2 sub-sections)
-    await Actor.setStatusMessage('📊 MENU 2/8: 재무제표...');
-    console.log('\n📊 MENU 2/8: 재무제표');
+    // 2. ?�무?�표 (2 sub-sections)
+    await Actor.setStatusMessage('?�� MENU 2/8: ?�무?�표...');
+    console.log('\n?�� MENU 2/8: ?�무?�표');
     await scrollToTop();
     
-    if (await clickSidebarMenu('재무제표')) {
-        // 2a. 재무상태표 (default highlighted)
-        console.log('📋 Sub-section: 재무상태표');
-        if (await findAndClick전체보기('재무제표-재무상태표')) {
-            const 재무상태표Data = await extractAllTableData('재무상태표') || [];
-            allScrapedData.push(...재무상태표Data);
-            menuResults['재무상태표'] = 재무상태표Data.length;
-            console.log(`📥 재무상태표: ${재무상태표Data.length} records extracted (RAW - will be filtered later)`);
+    if (await clickSidebarMenu('?�무?�표')) {
+        // 2a. ?�무?�태??(default highlighted)
+        console.log('?�� Sub-section: ?�무?�태??);
+        if (await findAndClick?�체보기('?�무?�표-?�무?�태??)) {
+            const ?�무?�태?�Data = await extractAllTableData('?�무?�태??) || [];
+            allScrapedData.push(...?�무?�태?�Data);
+            menuResults['?�무?�태??] = ?�무?�태?�Data.length;
+            console.log(`?�� ?�무?�태?? ${?�무?�태?�Data.length} records extracted (RAW - will be filtered later)`);
         }
         
         await scrollToTop();
         
-        // 2b. 손익계산서 tab
-        console.log('📋 Sub-section: 손익계산서');
-        const 손익계산서Tab = await page.locator('text=손익계산서').first();
-        if (await 손익계산서Tab.isVisible({ timeout: 3000 })) {
-            await 손익계산서Tab.click();
+        // 2b. ?�익계산??tab
+        console.log('?�� Sub-section: ?�익계산??);
+        const ?�익계산?�Tab = await page.locator('text=?�익계산??).first();
+        if (await ?�익계산?�Tab.isVisible({ timeout: 3000 })) {
+            await ?�익계산?�Tab.click();
             await page.waitForTimeout(2000);
             
-            if (await findAndClick전체보기('재무제표-손익계산서')) {
-                const 손익계산서Data = await extractAllTableData('손익계산서') || [];
-                allScrapedData.push(...손익계산서Data);
-                menuResults['손익계산서'] = 손익계산서Data.length;
-                console.log(`📥 손익계산서: ${손익계산서Data.length} records extracted (RAW - will be filtered later)`);
+            if (await findAndClick?�체보기('?�무?�표-?�익계산??)) {
+                const ?�익계산?�Data = await extractAllTableData('?�익계산??) || [];
+                allScrapedData.push(...?�익계산?�Data);
+                menuResults['?�익계산??] = ?�익계산?�Data.length;
+                console.log(`?�� ?�익계산?? ${?�익계산?�Data.length} records extracted (RAW - will be filtered later)`);
             }
         }
     }
 
-    // 3. 조합현황
-    await Actor.setStatusMessage('📊 MENU 3/8: 조합현황...');
-    console.log('\n📊 MENU 3/8: 조합현황');
+    // 3. 조합?�황
+    await Actor.setStatusMessage('?�� MENU 3/8: 조합?�황...');
+    console.log('\n?�� MENU 3/8: 조합?�황');
     await scrollToTop();
     
-    if (await clickSidebarMenu('조합현황')) {
-        if (await findAndClick전체보기('조합현황')) {
-            const 조합현황Data = await extractAllTableData('조합현황') || [];
-            allScrapedData.push(...조합현황Data);
-            menuResults['조합현황'] = 조합현황Data.length;
-            console.log(`✅ 조합현황: ${조합현황Data.length} records (baseline: ${DATA_BASELINES['조합현황']})`);
+    if (await clickSidebarMenu('조합?�황')) {
+        if (await findAndClick?�체보기('조합?�황')) {
+            const 조합?�황Data = await extractAllTableData('조합?�황') || [];
+            allScrapedData.push(...조합?�황Data);
+            menuResults['조합?�황'] = 조합?�황Data.length;
+            console.log(`??조합?�황: ${조합?�황Data.length} records (baseline: ${DATA_BASELINES['조합?�황']})`);
         }
     }
 
-    // 4. 인력현황
-    await Actor.setStatusMessage('📊 MENU 4/8: 인력현황...');
-    console.log('\n📊 MENU 4/8: 인력현황');
+    // 4. ?�력?�황
+    await Actor.setStatusMessage('?�� MENU 4/8: ?�력?�황...');
+    console.log('\n?�� MENU 4/8: ?�력?�황');
     await scrollToTop();
     
-    if (await clickSidebarMenu('인력현황')) {
-        if (await findAndClick전체보기('인력현황')) {
-            const 인력현황Data = await extractAllTableData('인력현황') || [];
-            allScrapedData.push(...인력현황Data);
-            menuResults['인력현황'] = 인력현황Data.length;
-            console.log(`✅ 인력현황: ${인력현황Data.length} records (baseline: ${DATA_BASELINES['인력현황']})`);
+    if (await clickSidebarMenu('?�력?�황')) {
+        if (await findAndClick?�체보기('?�력?�황')) {
+            const ?�력?�황Data = await extractAllTableData('?�력?�황') || [];
+            allScrapedData.push(...?�력?�황Data);
+            menuResults['?�력?�황'] = ?�력?�황Data.length;
+            console.log(`???�력?�황: ${?�력?�황Data.length} records (baseline: ${DATA_BASELINES['?�력?�황']})`);
         }
     }
 
-    // 5. 전문인력현황
-    await Actor.setStatusMessage('📊 MENU 5/8: 전문인력현황...');
-    console.log('\n📊 MENU 5/8: 전문인력현황');
+    // 5. ?�문?�력?�황
+    await Actor.setStatusMessage('?�� MENU 5/8: ?�문?�력?�황...');
+    console.log('\n?�� MENU 5/8: ?�문?�력?�황');
     await scrollToTop();
     
-    if (await clickSidebarMenu('전문인력현황')) {
-        if (await findAndClick전체보기('전문인력현황')) {
-            const 전문인력현황Data = await extractAllTableData('전문인력현황') || [];
-            allScrapedData.push(...전문인력현황Data);
-            menuResults['전문인력현황'] = 전문인력현황Data.length;
-            console.log(`✅ 전문인력현황: ${전문인력현황Data.length} records (baseline: ${DATA_BASELINES['전문인력현황']})`);
+    if (await clickSidebarMenu('?�문?�력?�황')) {
+        if (await findAndClick?�체보기('?�문?�력?�황')) {
+            const ?�문?�력?�황Data = await extractAllTableData('?�문?�력?�황') || [];
+            allScrapedData.push(...?�문?�력?�황Data);
+            menuResults['?�문?�력?�황'] = ?�문?�력?�황Data.length;
+            console.log(`???�문?�력?�황: ${?�문?�력?�황Data.length} records (baseline: ${DATA_BASELINES['?�문?�력?�황']})`);
         }
     }
 
-    // 6. 법규위반현황
-    await Actor.setStatusMessage('📊 MENU 6/8: 법규위반현황...');
-    console.log('\n📊 MENU 6/8: 법규위반현황');
+    // 6. 법규?�반?�황
+    await Actor.setStatusMessage('?�� MENU 6/8: 법규?�반?�황...');
+    console.log('\n?�� MENU 6/8: 법규?�반?�황');
     await scrollToTop();
     
-    if (await clickSidebarMenu('법규위반현황')) {
-        if (await findAndClick전체보기('법규위반현황')) {
-            const 법규위반현황Data = await extractAllTableData('법규위반현황') || [];
-            allScrapedData.push(...법규위반현황Data);
-            menuResults['법규위반현황'] = 법규위반현황Data.length;
-            console.log(`✅ 법규위반현황: ${법규위반현황Data.length} records (baseline: ${DATA_BASELINES['법규위반현황']})`);
+    if (await clickSidebarMenu('법규?�반?�황')) {
+        if (await findAndClick?�체보기('법규?�반?�황')) {
+            const 법규?�반?�황Data = await extractAllTableData('법규?�반?�황') || [];
+            allScrapedData.push(...법규?�반?�황Data);
+            menuResults['법규?�반?�황'] = 법규?�반?�황Data.length;
+            console.log(`??법규?�반?�황: ${법규?�반?�황Data.length} records (baseline: ${DATA_BASELINES['법규?�반?�황']})`);
         }
     }
 
     // 7. VC MAP
-    await Actor.setStatusMessage('📊 MENU 7/8: VC MAP...');
-    console.log('\n📊 MENU 7/8: VC MAP');
+    await Actor.setStatusMessage('?�� MENU 7/8: VC MAP...');
+    console.log('\n?�� MENU 7/8: VC MAP');
     await scrollToTop();
     
     if (await clickSidebarMenu('VC MAP')) {
-        if (await findAndClick전체보기('VC MAP')) {
+        if (await findAndClick?�체보기('VC MAP')) {
             const VCMAPData = await extractAllTableData('VC MAP') || [];
             allScrapedData.push(...VCMAPData);
             menuResults['VC MAP'] = VCMAPData.length;
-            console.log(`✅ VC MAP: ${VCMAPData.length} records (baseline: ${DATA_BASELINES['VC MAP']})`);
+            console.log(`??VC MAP: ${VCMAPData.length} records (baseline: ${DATA_BASELINES['VC MAP']})`);
         }
     }
 
-    // VC통계정보 section removed - handled by separate PDF scraper app
-    console.log('\n📊 MENU 8/8: Skipping VC통계정보 (handled by separate PDF app)');
+    // VC?�계?�보 section removed - handled by separate PDF scraper app
+    console.log('\n?�� MENU 8/8: Skipping VC?�계?�보 (handled by separate PDF app)');
 
     // FINAL RESULTS SUMMARY
-    console.log('\n🎯 7-MENU TRAVERSAL COMPLETE - FINAL RESULTS:');
+    console.log('\n?�� 7-MENU TRAVERSAL COMPLETE - FINAL RESULTS:');
     console.log('==========================================');
     
     let totalRecords = 0;
@@ -602,7 +602,7 @@ try {
     
     for (const [menuName, baseline] of Object.entries(DATA_BASELINES)) {
         const actual = menuResults[menuName] || 0;
-        const status = actual >= baseline * 0.8 ? '✅' : actual > 0 ? '⚠️' : '❌';
+        const status = actual >= baseline * 0.8 ? '?? : actual > 0 ? '?�️' : '??;
         const percentage = baseline > 0 ? `(${Math.round(actual/baseline*100)}%)` : '';
         
         console.log(`${status} ${menuName}: ${actual}/${baseline} ${percentage}`);
@@ -614,94 +614,94 @@ try {
     }
     
     console.log('==========================================');
-    console.log(`📊 Total Records: ${totalRecords}`);
-    console.log(`✅ Successful Menus: ${successfulMenus}/7`);
-    console.log(`📁 Raw Data Collected: ${allScrapedData.length} records`);
+    console.log(`?�� Total Records: ${totalRecords}`);
+    console.log(`??Successful Menus: ${successfulMenus}/7`);
+    console.log(`?�� Raw Data Collected: ${allScrapedData.length} records`);
 
     // APPLY FILTERING FOR 100% CONTROL DATA MATCH
-    console.log('\n🎯 APPLYING FILTERING FOR 100% CONTROL MATCH...');
+    console.log('\n?�� APPLYING FILTERING FOR 100% CONTROL MATCH...');
     
     let finalData = [...allScrapedData];
     
-    // 1. Extract and filter 재무제표 data
-    const 재무제표Data = allScrapedData.filter(record => 
-        record.menuName === '재무상태표' || record.menuName === '손익계산서'
+    // 1. Extract and filter ?�무?�표 data
+    const ?�무?�표Data = allScrapedData.filter(record => 
+        record.menuName === '?�무?�태?? || record.menuName === '?�익계산??
     );
     
-    if (재무제표Data.length > 0) {
-        console.log(`📊 Processing ${재무제표Data.length} 재무제표 records...`);
+    if (?�무?�표Data.length > 0) {
+        console.log(`?�� Processing ${?�무?�표Data.length} ?�무?�표 records...`);
         
         // Apply filtering logic
-        const filtered재무제표Data = process재무제표Data(재무제표Data);
+        const filtered?�무?�표Data = process?�무?�표Data(?�무?�표Data);
         
-        // Replace 재무제표 data in final dataset
+        // Replace ?�무?�표 data in final dataset
         finalData = allScrapedData.filter(record => 
-            record.menuName !== '재무상태표' && record.menuName !== '손익계산서'
+            record.menuName !== '?�무?�태?? && record.menuName !== '?�익계산??
         );
-        finalData.push(...filtered재무제표Data);
+        finalData.push(...filtered?�무?�표Data);
         
-        console.log(`✅ 재무제표 filtering complete:`);
-        console.log(`   Raw extracted: ${재무제표Data.length} records`);
-        console.log(`   Filtered result: ${filtered재무제표Data.length} records`);
-        console.log(`   Target achievement: ${filtered재무제표Data.length}/500 (${((filtered재무제표Data.length / 500) * 100).toFixed(1)}%)`);
+        console.log(`???�무?�표 filtering complete:`);
+        console.log(`   Raw extracted: ${?�무?�표Data.length} records`);
+        console.log(`   Filtered result: ${filtered?�무?�표Data.length} records`);
+        console.log(`   Target achievement: ${filtered?�무?�표Data.length}/500 (${((filtered?�무?�표Data.length / 500) * 100).toFixed(1)}%)`);
     }
     
-    // 2. Extract and filter 조합현황 data
-    const 조합현황Data = finalData.filter(record => record.menuName === '조합현황');
+    // 2. Extract and filter 조합?�황 data
+    const 조합?�황Data = finalData.filter(record => record.menuName === '조합?�황');
     
-    if (조합현황Data.length > 0) {
-        console.log(`📊 Processing ${조합현황Data.length} 조합현황 records...`);
+    if (조합?�황Data.length > 0) {
+        console.log(`?�� Processing ${조합?�황Data.length} 조합?�황 records...`);
         
         // Apply filtering logic to achieve exactly 2231 records
-        const filtered조합현황Data = filter조합현황Records(조합현황Data, 2231);
+        const filtered조합?�황Data = filter조합?�황Records(조합?�황Data, 2231);
         
-        // Replace 조합현황 data in final dataset
-        finalData = finalData.filter(record => record.menuName !== '조합현황');
-        finalData.push(...filtered조합현황Data);
+        // Replace 조합?�황 data in final dataset
+        finalData = finalData.filter(record => record.menuName !== '조합?�황');
+        finalData.push(...filtered조합?�황Data);
         
-        console.log(`✅ 조합현황 filtering complete:`);
-        console.log(`   Before: ${조합현황Data.length} records`);
-        console.log(`   After: ${filtered조합현황Data.length} records`);
-        console.log(`   Control match: ${filtered조합현황Data.length}/2231 (${((filtered조합현황Data.length / 2231) * 100).toFixed(1)}%)`);
+        console.log(`??조합?�황 filtering complete:`);
+        console.log(`   Before: ${조합?�황Data.length} records`);
+        console.log(`   After: ${filtered조합?�황Data.length} records`);
+        console.log(`   Control match: ${filtered조합?�황Data.length}/2231 (${((filtered조합?�황Data.length / 2231) * 100).toFixed(1)}%)`);
     }
 
     // Save filtered data
     if (finalData.length > 0) {
-        for (const record of finalData) {
-            await Actor.pushData(record);
-        }
-        console.log(`💾 Final filtered data saved: ${finalData.length} records`);
+        // Batch save all records at once for performance
+        await Actor.pushData(finalData);
+        console.log(? Final filtered data saved:  records);
+
         
         // Updated summary with filtered results
-        const filtered재무상태표Count = finalData.filter(r => r.menuName === '재무상태표').length;
-        const filtered손익계산서Count = finalData.filter(r => r.menuName === '손익계산서').length;
-        const filtered조합현황Count = finalData.filter(r => r.menuName === '조합현황').length;
+        const filtered?�무?�태?�Count = finalData.filter(r => r.menuName === '?�무?�태??).length;
+        const filtered?�익계산?�Count = finalData.filter(r => r.menuName === '?�익계산??).length;
+        const filtered조합?�황Count = finalData.filter(r => r.menuName === '조합?�황').length;
         
-        console.log('\n📊 FINAL FILTERED RESULTS (SAVED TO DATASET):');
+        console.log('\n?�� FINAL FILTERED RESULTS (SAVED TO DATASET):');
         console.log('==============================================');
-        console.log(`✅ 재무상태표: ${filtered재무상태표Count}/250 (${((filtered재무상태표Count / 250) * 100).toFixed(1)}%)`);
-        console.log(`✅ 손익계산서: ${filtered손익계산서Count}/250 (${((filtered손익계산서Count / 250) * 100).toFixed(1)}%)`);
-        console.log(`✅ 조합현황: ${filtered조합현황Count}/2231 (${((filtered조합현황Count / 2231) * 100).toFixed(1)}%)`);
+        console.log(`???�무?�태?? ${filtered?�무?�태?�Count}/250 (${((filtered?�무?�태?�Count / 250) * 100).toFixed(1)}%)`);
+        console.log(`???�익계산?? ${filtered?�익계산?�Count}/250 (${((filtered?�익계산?�Count / 250) * 100).toFixed(1)}%)`);
+        console.log(`??조합?�황: ${filtered조합?�황Count}/2231 (${((filtered조합?�황Count / 2231) * 100).toFixed(1)}%)`);
         
-        if (filtered재무상태표Count === 250 && filtered손익계산서Count === 250 && filtered조합현황Count === 2231) {
-            console.log('🏆 100% CONTROL DATA MATCH ACHIEVED FOR ALL FILTERED MENUS!');
+        if (filtered?�무?�태?�Count === 250 && filtered?�익계산?�Count === 250 && filtered조합?�황Count === 2231) {
+            console.log('?�� 100% CONTROL DATA MATCH ACHIEVED FOR ALL FILTERED MENUS!');
         } else {
-            console.log('⚠️ Some menus did not achieve 100% target match - check filtering logic');
+            console.log('?�️ Some menus did not achieve 100% target match - check filtering logic');
         }
     }
 
     // Final status
     if (successfulMenus >= 6) {
-        await Actor.setStatusMessage(`✅ SUCCESS: ${successfulMenus}/7 menus, ${totalRecords} records`);
+        await Actor.setStatusMessage(`??SUCCESS: ${successfulMenus}/7 menus, ${totalRecords} records`);
     } else if (successfulMenus >= 4) {
-        await Actor.setStatusMessage(`⚠️ PARTIAL: ${successfulMenus}/7 menus, ${totalRecords} records`);
+        await Actor.setStatusMessage(`?�️ PARTIAL: ${successfulMenus}/7 menus, ${totalRecords} records`);
     } else {
-        await Actor.setStatusMessage(`❌ FAILED: Only ${successfulMenus}/7 menus successful`);
+        await Actor.setStatusMessage(`??FAILED: Only ${successfulMenus}/7 menus successful`);
     }
 
 } catch (error) {
-    console.log(`❌ SCRAPER ERROR: ${error.message}`);
-    await Actor.setStatusMessage(`❌ Error: ${error.message}`);
+    console.log(`??SCRAPER ERROR: ${error.message}`);
+    await Actor.setStatusMessage(`??Error: ${error.message}`);
     await Actor.fail(error.message);
 } finally {
     if (page) {
@@ -712,5 +712,5 @@ try {
     }
 }
 
-    console.log('🏁 COMPLETE 7-MENU TRAVERSAL SCRAPER FINISHED');
+    console.log('?�� COMPLETE 7-MENU TRAVERSAL SCRAPER FINISHED');
 }); 
