@@ -717,12 +717,12 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
             // Enhanced DOM stability check
             await enhancedDOMStabilityCheck(page, 'financial_statements_balance');
             
-            // Extract balance sheet data with 250 record limit
-            const balanceSheetData = await extractFinancialTabDataLimited(page, '재무상태표', 250);
+            // Extract balance sheet data with NO artificial limit
+            const balanceSheetData = await extractFinancialTabDataComplete(page, '재무상태표');
             allRecords.push(...balanceSheetData);
             metrics.dataSourceCounts.financial_statements.subTabs.balance_sheet = balanceSheetData.length;
             
-            console.log(`Balance Sheet Records: ${balanceSheetData.length} (limit: 250)`);
+            console.log(`Balance Sheet Records: ${balanceSheetData.length} (no limit - complete extraction)`);
         } else {
             console.log('Could not click 전체보기 for 재무상태표');
         }
@@ -750,12 +750,12 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
                     // Enhanced DOM stability check
                     await enhancedDOMStabilityCheck(page, 'financial_statements_income');
                     
-                    // Extract income statement data with 250 record limit
-                    const incomeStatementData = await extractFinancialTabDataLimited(page, '손익계산서', 250);
+                    // Extract income statement data with NO artificial limit
+                    const incomeStatementData = await extractFinancialTabDataComplete(page, '손익계산서');
                     allRecords.push(...incomeStatementData);
                     metrics.dataSourceCounts.financial_statements.subTabs.income_statement = incomeStatementData.length;
                     
-                    console.log(`Income Statement Records: ${incomeStatementData.length} (limit: 250)`);
+                    console.log(`Income Statement Records: ${incomeStatementData.length} (no limit - complete extraction)`);
                 } else {
                     console.log('Could not click 전체보기 for 손익계산서');
                 }
@@ -767,7 +767,7 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
         }
         
         console.log(`\nDual-tab workflow complete: ${allRecords.length} total records`);
-        console.log(`Target: 500 records (250 per tab)`);
+        console.log(`NO ARTIFICIAL LIMITS - Complete extraction from both tabs`);
         console.log(`Interference-first protection applied`);
         
         return allRecords;
@@ -778,8 +778,8 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
     }
 }
 
-async function extractFinancialTabDataLimited(page, tabType, limit) {
-    console.log(`Extracting data from ${tabType} tab (limit: ${limit} records)...`);
+async function extractFinancialTabDataComplete(page, tabType) {
+    console.log(`Extracting ALL data from ${tabType} tab (NO artificial limits)...`);
     
     try {
         // Take screenshot during extraction for debugging
@@ -790,15 +790,16 @@ async function extractFinancialTabDataLimited(page, tabType, limit) {
         });
         console.log(`Screenshot: debug-extracting-${tabType}-${extractTimestamp}.png`);
         
-        const extractedData = await page.evaluate((tabType, limit) => {
+        const extractedData = await page.evaluate((tabType) => {
             const rows = document.querySelectorAll('table tbody tr, .data-row, tr');
             const data = [];
             
-            console.log(`Found ${rows.length} rows for ${tabType}`);
+            console.log(`Found ${rows.length} rows for ${tabType} - extracting ALL records`);
             
             let validRowCount = 0;
             
-            for (let i = 0; i < rows.length && validRowCount < limit; i++) {
+            // Extract ALL rows without any artificial limit
+            for (let i = 0; i < rows.length; i++) {
                 const row = rows[i];
                 const cells = row.querySelectorAll('td, .cell, .data-cell');
                 
@@ -839,11 +840,11 @@ async function extractFinancialTabDataLimited(page, tabType, limit) {
                 }
             }
             
-            console.log(`${tabType} extracted: ${data.length} records (limit: ${limit})`);
+            console.log(`${tabType} extracted: ${data.length} records (NO LIMITS - complete extraction)`);
             return data;
-        }, tabType, limit);
+        }, tabType);
         
-        console.log(`${tabType} final count: ${extractedData.length} records`);
+        console.log(`${tabType} final count: ${extractedData.length} records (complete extraction)`);
         
         return extractedData;
         
