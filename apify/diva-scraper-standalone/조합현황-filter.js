@@ -2,6 +2,11 @@
 // Current: 2132 records, Target: 2231 records (need +99 more)
 
 export function filter조합현황Records(records, targetCount = 2231) {
+    return filterPartnershipStatusRecords(records, targetCount);
+}
+
+// English alias to avoid encoding issues
+export function filterPartnershipStatusRecords(records, targetCount = 2231) {
     console.log(`🔍 Filtering 조합현황: ${records.length} → ${targetCount} records`);
     
     if (records.length === targetCount) {

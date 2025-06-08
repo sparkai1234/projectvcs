@@ -202,6 +202,11 @@ function parseFinancialValue(value) {
 
 // Main function to process all 재무제표 data
 export function process재무제표Data(allRecords) {
+    return processFinancialStatementsData(allRecords);
+}
+
+// English alias to avoid encoding issues
+export function processFinancialStatementsData(allRecords) {
     console.log('\n🏦 PROCESSING 재무제표 DATA FOR 100% CONTROL MATCH');
     console.log('================================================');
     

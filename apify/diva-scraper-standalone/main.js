@@ -5,8 +5,8 @@ import { Actor } from 'apify';
 import { chromium } from 'playwright';
 import fs from 'fs';
 import path from 'path';
-import { processÀç¹«Á¦Ç¥Data } from './Àç¹«Á¦Ç¥-filter.js';
-import { filterÁ¶ÇÕÇöÈ²Records } from './Á¶ÇÕÇöÈ²-filter.js';
+import { processFinancialStatementsData } from './Àç¹«Á¦Ç¥-filter.js';
+import { filterPartnershipStatusRecords } from './Á¶ÇÕÇöÈ²-filter.js';
 
 // Robust configuration for Korean government sites
 const config = {
@@ -632,18 +632,18 @@ try {
         console.log(`?“Š Processing ${?¬ë¬´?œí‘œData.length} ?¬ë¬´?œí‘œ records...`);
         
         // Apply filtering logic
-        const filtered?¬ë¬´?œí‘œData = process?¬ë¬´?œí‘œData(?¬ë¬´?œí‘œData);
+        const filteredFinancialStatementsData = processFinancialStatementsData(Àç¹«Á¦Ç¥Data);
         
         // Replace ?¬ë¬´?œí‘œ data in final dataset
         finalData = allScrapedData.filter(record => 
             record.menuName !== '?¬ë¬´?íƒœ?? && record.menuName !== '?ìµê³„ì‚°??
         );
-        finalData.push(...filtered?¬ë¬´?œí‘œData);
+        finalData.push(...filteredFinancialStatementsData);
         
         console.log(`???¬ë¬´?œí‘œ filtering complete:`);
         console.log(`   Raw extracted: ${?¬ë¬´?œí‘œData.length} records`);
-        console.log(`   Filtered result: ${filtered?¬ë¬´?œí‘œData.length} records`);
-        console.log(`   Target achievement: ${filtered?¬ë¬´?œí‘œData.length}/500 (${((filtered?¬ë¬´?œí‘œData.length / 500) * 100).toFixed(1)}%)`);
+        console.log(   Filtered result:  records);
+        console.log(   Target achievement: /500 (%));
     }
     
     // 2. Extract and filter ì¡°í•©?„í™© data
@@ -653,16 +653,16 @@ try {
         console.log(`?“Š Processing ${ì¡°í•©?„í™©Data.length} ì¡°í•©?„í™© records...`);
         
         // Apply filtering logic to achieve exactly 2231 records
-        const filteredì¡°í•©?„í™©Data = filterì¡°í•©?„í™©Records(ì¡°í•©?„í™©Data, 2231);
+        const filteredPartnershipStatusData = filterPartnershipStatusRecords(Á¶ÇÕÇöÈ²Data, 2231);
         
         // Replace ì¡°í•©?„í™© data in final dataset
         finalData = finalData.filter(record => record.menuName !== 'ì¡°í•©?„í™©');
         finalData.push(...filteredì¡°í•©?„í™©Data);
-        
+        finalData.push(...filteredPartnershipStatusData);
         console.log(`??ì¡°í•©?„í™© filtering complete:`);
         console.log(`   Before: ${ì¡°í•©?„í™©Data.length} records`);
-        console.log(`   After: ${filteredì¡°í•©?„í™©Data.length} records`);
-        console.log(`   Control match: ${filteredì¡°í•©?„í™©Data.length}/2231 (${((filteredì¡°í•©?„í™©Data.length / 2231) * 100).toFixed(1)}%)`);
+        console.log(   After:  records);
+        console.log(   Control match: /2231 (%));
     }
 
     // Save filtered data
