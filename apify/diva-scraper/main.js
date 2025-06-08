@@ -210,12 +210,12 @@ Actor.main(async () => {
                     const visibleText = document.body.innerText.length;
                     
                     return {
-                        scrollHeight: document.documentElement.scrollHeight,
+                    scrollHeight: document.documentElement.scrollHeight,
                         tableCount: tables.length,
                         tableRows: tableRows,
                         dataRows: dataRows,
                         visibleTextLength: visibleText,
-                        allElements: document.querySelectorAll('*').length
+                    allElements: document.querySelectorAll('*').length
                     };
                 });
                 
@@ -464,10 +464,10 @@ async function findAndClick전체보기V5(page, metrics) {
                         await page.waitForTimeout(2000);
                         
                         console.log(`✅ v5.0: Successfully clicked 전체보기 using ${strategy.name}!`);
-                        
-                        return {
-                            found: true,
-                            clicked: true,
+                    
+                    return { 
+                        found: true, 
+                        clicked: true, 
                             strategy: strategy.name,
                             method: strategy.description
                         };
@@ -493,8 +493,8 @@ async function findAndClick전체보기V5(page, metrics) {
                     console.log(`⚠️ Element found but not clickable: visible=${isVisible}, enabled=${isEnabled}`);
                 }
                 
-                return {
-                    found: true,
+                return { 
+                    found: true, 
                     clicked: false,
                     strategy: strategy.name,
                     method: strategy.description
@@ -557,7 +557,7 @@ async function extractWithPlaywrightV5(page, config, supabaseClient, dataType, m
                     const headerText = Array.from(cells).map(cell => cell.textContent.trim()).join('|');
                     if (headerText.includes('번호') || headerText.includes('구분') || headerText.includes('회사') || headerText.includes('이름')) {
                         headerRow = rows[i];
-                        break;
+                    break;
                     }
                 }
             }
@@ -612,16 +612,16 @@ async function extractWithPlaywrightV5(page, config, supabaseClient, dataType, m
                         
                         try {
                             const { data, error } = await supabaseClient
-                                .from(tableName)
+                        .from(tableName)
                                 .upsert(batch, { 
                                     onConflict: 'id,scraped_at',
-                                    ignoreDuplicates: false 
-                                });
-                            
+                            ignoreDuplicates: false 
+                        });
+                        
                             if (error) {
                                 console.error(`❌ v5.0: Supabase error for ${dataType} batch ${i}:`, error.message);
                                 errorCount += batch.length;
-                            } else {
+                    } else {
                                 successCount += batch.length;
                                 console.log(`✅ v5.0: Inserted batch ${i}-${i+batch.length} for ${dataType}`);
                             }
@@ -662,7 +662,7 @@ function transformRecordForSupabaseV5(rawData, dataType) {
     try {
         const baseRecord = {
             id: `${dataType}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            data_type: dataType,
+        data_type: dataType,
             scraped_at: new Date().toISOString(),
             raw_data: rawData,
             metadata: {
@@ -732,12 +732,12 @@ async function initializeSupabaseClientV5(input) {
     try {
         const supabaseUrl = input.supabaseUrl || process.env.SUPABASE_URL;
         const supabaseKey = input.supabaseServiceRoleKey || process.env.SUPABASE_SERVICE_ROLE_KEY;
-        
-        if (!supabaseUrl || !supabaseKey) {
+    
+    if (!supabaseUrl || !supabaseKey) {
             console.error('❌ v5.0: Missing Supabase credentials');
-            return null;
-        }
-        
+        return null;
+    }
+    
         console.log('🔧 v5.0: Initializing enhanced Supabase client...');
         
         const client = createClient(supabaseUrl, supabaseKey, {
