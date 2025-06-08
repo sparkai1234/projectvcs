@@ -26,7 +26,7 @@ console.log('IMPROVEMENTS: Block FAMILY SITE selector, TOP button + all navigati
 console.log('TARGET: Prevent external site navigation during financial statements extraction');
 
 Actor.main(async () => {
-        console.log('Starting DIVA Scraper v5.3.14.7 - Aggressive Navigation Blocking Edition...');
+        console.log('Starting DIVA Scraper v5.3.14.9 - Screenshot Filename Fix Edition...');
 
     const input = await Actor.getInput();
     
@@ -52,11 +52,11 @@ Actor.main(async () => {
         }
     };
     
-    console.log('Aggressive Navigation Blocking Configuration v5.3.14.7:');
+    console.log('Screenshot Filename Fix Configuration v5.3.14.9:');
     console.log('CONTROL TARGETS: 333, 500, 2231, 251, 1685, 92, 251');
     console.log('STEP 1: Immediate interference detection and blocking');
     console.log('STEP 2: Clean 전체보기 button detection and clicking');
-    console.log('STEP 3: Complete data extraction with 17 debug screenshots for financial statements');
+    console.log('STEP 3: ASCII screenshot filenames + NUCLEAR navigation defense');
     
     const metrics = {
         startTime: Date.now(),
@@ -790,9 +790,18 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
         // STEP 1: 재무상태표 (Balance Sheet) Tab
         console.log('STEP 1: Processing 재무상태표 (Balance Sheet) tab...');
         
-        // First block interference elements specific to financial statements
+        // NUCLEAR STEP 1: Disable all navigation functions first
+        console.log('🚫 NUCLEAR STEP 1: Disabling all navigation functions...');
+        await disableAllNavigationFunctions(page);
+        
+        // NUCLEAR STEP 2: Block family site selector specifically  
+        console.log('🚫 NUCLEAR STEP 2: Blocking family site selector...');
+        await blockFamilySiteSelector(page);
+        
+        // NUCLEAR STEP 3: Block interference elements specific to financial statements
+        console.log('🚫 NUCLEAR STEP 3: Blocking interference elements...');
         const blockedElements1 = await detectAndBlockInterferenceElementsFirst(page, 'financial_statements', metrics);
-        console.log(`Blocked ${blockedElements1} interference elements for Balance Sheet tab`);
+        console.log(`🚫 NUCLEAR BLOCKED: ${blockedElements1} interference elements for Balance Sheet tab`);
         
         // SCREENSHOT 2: After blocking interference
         const interferenceTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -1097,7 +1106,9 @@ async function extractFinancialTabDataComplete(page, tabType) {
         // Take screenshot during extraction for debugging and save to key-value store
         const extractTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const extractScreenshot = await page.screenshot({ fullPage: true });
-        const extractFilename = `debug-extracting-${tabType}-${extractTimestamp}.png`;
+        // Convert Korean tab names to ASCII for Apify key names
+        const tabTypeAscii = tabType === '재무상태표' ? 'balance-sheet' : 'income-statement';
+        const extractFilename = `debug-extracting-${tabTypeAscii}-${extractTimestamp}.png`;
         await Actor.setValue(extractFilename, extractScreenshot, { contentType: 'image/png' });
         console.log(`✅ Screenshot saved to key-value store: ${extractFilename}`);
         
@@ -1349,4 +1360,57 @@ async function extractCleanDataV14(page, config, dataType, metrics) {
         console.error(`Clean extraction failed for ${dataType}:`, error.message);
         return [];
     }
+}
+
+// 1. NUCLEAR OPTION: DISABLE ALL NAVIGATION FUNCTIONS
+async function disableAllNavigationFunctions(page) {
+    await page.evaluate(() => {
+        // Disable the menu function that causes navigation
+        if (window.menu) {
+            window.menu = function() { 
+                console.log('🚫 BLOCKED: menu() function call prevented');
+                return false; 
+            };
+        }
+        
+        // Disable location changes
+        const originalLocationAttr = $.fn.attr;
+        $.fn.attr = function(name, value) {
+            if (name === 'href' && arguments.length > 1) {
+                console.log('🚫 BLOCKED: $(location).attr("href") prevented');
+                return this;
+            }
+            return originalLocationAttr.apply(this, arguments);
+        };
+        
+        // Disable window.location changes
+        Object.defineProperty(window.location, 'href', {
+            set: function(value) {
+                console.log('🚫 BLOCKED: window.location.href change prevented');
+            },
+            get: function() {
+                return window.location.toString();
+            }
+        });
+    });
+}
+
+// 2. FAMILY SITE SELECTOR - TARGET DESTRUCTION
+async function blockFamilySiteSelector(page) {
+    await page.evaluate(() => {
+        let blocked = 0;
+        
+        // Block family site selector specifically
+        const familySiteElements = document.querySelectorAll('select[name*="family"], select[id*="family"], .family-site, .family-selector, select option[value*="kvco"], select option[value*="fund"]');
+        familySiteElements.forEach(el => {
+            el.setAttribute('data-blocked-interference', 'true');
+            el.style.pointerEvents = 'none';
+            el.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
+            el.disabled = true;
+            blocked++;
+            console.log(`🚫 BLOCKED FAMILY SITE SELECTOR: ${el.tagName} - "${el.textContent?.trim()}"`);
+        });
+        
+        return blocked;
+    });
 } 
