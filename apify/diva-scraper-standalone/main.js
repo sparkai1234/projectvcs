@@ -5,8 +5,8 @@ import { Actor } from 'apify';
 import { chromium } from 'playwright';
 import fs from 'fs';
 import path from 'path';
-import { process?щТ?쒗몴Data } from './?щТ?쒗몴-filter.js';
-import { filter議고빀?꾪솴Records } from './議고빀?꾪솴-filter.js';
+import { process재무제표Data } from './재무제표-filter.js';
+import { filter조합현황Records } from './조합현황-filter.js';
 
 // Robust configuration for Korean government sites
 const config = {
