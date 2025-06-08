@@ -1,6 +1,6 @@
 /**
- * DIVA SCRAPER v5.3.12 - KOREAN UI COMPREHENSIVE PROTECTION EDITION
- * ==================================================================
+ * DIVA SCRAPER v5.3.13 - FIXED CSS SELECTOR SYNTAX FOR KOREAN UI PROTECTION
+ * ========================================================================
  *
  * SCALABILITY IMPROVEMENTS:
  * 1. Financial Statements: REMOVED hard limits - natural count scaling
@@ -20,12 +20,12 @@
 import { Actor } from 'apify';
 import { PlaywrightCrawler } from 'crawlee';
 
-console.log('DIVA SCRAPER v5.3.12 - KOREAN UI COMPREHENSIVE PROTECTION EDITION');
+console.log('DIVA SCRAPER v5.3.13 - FIXED CSS SELECTOR SYNTAX FOR KOREAN UI PROTECTION');
 console.log('IMPROVEMENTS: Removed hard limits + 상세 button interference protection');
 console.log('TARGET: Scalable production deployment for unknown dataset sizes');
 
 Actor.main(async () => {
-    console.log('Starting DIVA Scraper v5.3.12 - Korean UI Comprehensive Protection Edition...');
+    console.log('Starting DIVA Scraper v5.3.13 - Fixed CSS Selector Syntax for Korean UI Protection...');
     
     const input = await Actor.getInput();
     
@@ -51,7 +51,7 @@ Actor.main(async () => {
         }
     };
     
-    console.log('Korean UI Protection Configuration v5.3.12:');
+    console.log('Fixed CSS Selector Syntax Configuration v5.3.13:');
     console.log('CONTROL TARGETS: 333, 500, 2231, 251, 1685, 92, 251');
     console.log('IMPROVEMENT 1: Financial statements - NO hard limits (natural scaling)');
     console.log('IMPROVEMENT 2: Interference protection against 상세 buttons');
@@ -144,7 +144,7 @@ Actor.main(async () => {
                                 ...record,
                                 dataSource: dataType,
                                 extractedAt: new Date().toISOString(),
-                                version: 'v5.3.12-korean-ui-comprehensive-protection'
+                                version: 'v5.3.13-fixed-css-selector-syntax'
                             });
                         }
                     } else {
@@ -246,7 +246,7 @@ Actor.main(async () => {
                             ...record,
                             dataSource: dataType,
                             extractedAt: new Date().toISOString(),
-                                version: 'v5.3.12-korean-ui-comprehensive-protection'
+                                version: 'v5.3.13-fixed-css-selector-syntax'
                         });
                     }
                 } else {
@@ -286,7 +286,7 @@ Actor.main(async () => {
     const endTime = Date.now();
     const duration = (endTime - metrics.startTime) / 1000;
     
-            console.log(`\n=== DIVA SCRAPER v5.3.12 - KOREAN UI COMPREHENSIVE PROTECTION REPORT ===`);
+            console.log(`\n=== DIVA SCRAPER v5.3.13 - FIXED CSS SELECTOR SYNTAX REPORT ===`);
     console.log(`Total Runtime: ${duration.toFixed(1)} seconds`);
     console.log(`Total Records: ${metrics.totalRecords}`);
     console.log(`Successful Records: ${metrics.successfulRecords}`);
@@ -431,66 +431,121 @@ async function detectPaginationElements(page) {
     });
     console.log(`📸 Pagination Screenshot: debug-pagination-detection-${paginationTimestamp}.png`);
     
-    // Comprehensive pagination element detection and avoidance
+    // Comprehensive pagination element detection and avoidance with PROPER CSS SELECTORS
     const detectedAndMarked = await page.evaluate(() => {
-        const paginationSelectors = [
-            // Korean pagination text
-            'text=/더보기|더 보기/i', 'text=/다음|Next/i', 'text=/이전|Previous/i', 'text=/페이지|Page/i',
-            'text=/첫페이지/i', 'text=/마지막페이지/i', 'text=/처음/i', 'text=/끝/i',
-            
-            // Standard pagination classes
-            '[class*="pagination"]', '[class*="pager"]', '[class*="more"]', '[class*="next"]', '[class*="prev"]',
-            
-            // Numbered pagination (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-            'a:has-text("1")', 'a:has-text("2")', 'a:has-text("3")', 'a:has-text("4")', 'a:has-text("5")',
-            'a:has-text("6")', 'a:has-text("7")', 'a:has-text("8")', 'a:has-text("9")', 'a:has-text("10")',
-            'button:has-text("1")', 'button:has-text("2")', 'button:has-text("3")', 'button:has-text("4")', 'button:has-text("5")',
-            'button:has-text("6")', 'button:has-text("7")', 'button:has-text("8")', 'button:has-text("9")', 'button:has-text("10")',
-            
-            // Navigation arrows and symbols
-            'button:has-text("◀")', 'button:has-text("▶")', 'button:has-text("<<")', 'button:has-text(">>")',
-            'a:has-text("◀")', 'a:has-text("▶")', 'a:has-text("<<")', 'a:has-text(">>")',
-            
-            // Page-related onclick handlers
-            '[onclick*="page"]', '[href*="page"]', '[onclick*="Page"]', '[href*="Page"]',
-            '[onclick*="pageNo"]', '[href*="pageNo"]', '[onclick*="currentPage"]',
-            
-            // Form elements that might trigger pagination
-            'select[name*="page"]', 'input[name*="page"]', 'select[onchange*="page"]'
-        ];
+        // Helper function to find elements by text content
+        function findElementsByText(selector, text) {
+            const elements = document.querySelectorAll(selector);
+            return Array.from(elements).filter(el => 
+                el.textContent && el.textContent.includes(text)
+            );
+        }
         
+        // Helper function to find elements by exact text content
+        function findElementsByExactText(selector, text) {
+            const elements = document.querySelectorAll(selector);
+            return Array.from(elements).filter(el => 
+                el.textContent && el.textContent.trim() === text
+            );
+        }
+        
+        const paginationElements = [];
+        
+        // Standard pagination classes - these use proper CSS selectors
+        const classBased = document.querySelectorAll('[class*="pagination"], [class*="pager"], [class*="more"], [class*="next"], [class*="prev"]');
+        paginationElements.push(...classBased);
+        
+        // Korean pagination text using proper text search
+        const koreanPagination = [
+            ...findElementsByText('*', '더보기'),
+            ...findElementsByText('*', '더 보기'),
+            ...findElementsByText('*', '다음'),
+            ...findElementsByText('*', 'Next'),
+            ...findElementsByText('*', '이전'),
+            ...findElementsByText('*', 'Previous'),
+            ...findElementsByText('*', '페이지'),
+            ...findElementsByText('*', 'Page'),
+            ...findElementsByText('*', '첫페이지'),
+            ...findElementsByText('*', '마지막페이지'),
+            ...findElementsByText('*', '처음'),
+            ...findElementsByText('*', '끝')
+        ];
+        paginationElements.push(...koreanPagination);
+        
+        // Numbered pagination (1, 2, 3, 4, 5, 6, 7, 8, 9, 10) - exact text match
+        const numberedPagination = [
+            ...findElementsByExactText('a', '1'),
+            ...findElementsByExactText('a', '2'), 
+            ...findElementsByExactText('a', '3'),
+            ...findElementsByExactText('a', '4'),
+            ...findElementsByExactText('a', '5'),
+            ...findElementsByExactText('a', '6'),
+            ...findElementsByExactText('a', '7'),
+            ...findElementsByExactText('a', '8'),
+            ...findElementsByExactText('a', '9'),
+            ...findElementsByExactText('a', '10'),
+            ...findElementsByExactText('button', '1'),
+            ...findElementsByExactText('button', '2'),
+            ...findElementsByExactText('button', '3'),
+            ...findElementsByExactText('button', '4'),
+            ...findElementsByExactText('button', '5'),
+            ...findElementsByExactText('button', '6'),
+            ...findElementsByExactText('button', '7'),
+            ...findElementsByExactText('button', '8'),
+            ...findElementsByExactText('button', '9'),
+            ...findElementsByExactText('button', '10')
+        ];
+        paginationElements.push(...numberedPagination);
+        
+        // Navigation arrows and symbols using text search
+        const navigationArrows = [
+            ...findElementsByExactText('button', '◀'),
+            ...findElementsByExactText('button', '▶'),
+            ...findElementsByExactText('button', '<<'),
+            ...findElementsByExactText('button', '>>'),
+            ...findElementsByExactText('a', '◀'),
+            ...findElementsByExactText('a', '▶'),
+            ...findElementsByExactText('a', '<<'),
+            ...findElementsByExactText('a', '>>')
+        ];
+        paginationElements.push(...navigationArrows);
+        
+        // Page-related onclick handlers and attributes - proper CSS selectors
+        const attributeBased = document.querySelectorAll('[onclick*="page"], [href*="page"], [onclick*="Page"], [href*="Page"], [onclick*="pageNo"], [href*="pageNo"], [onclick*="currentPage"]');
+        paginationElements.push(...attributeBased);
+        
+        // Form elements that might trigger pagination
+        const formBased = document.querySelectorAll('select[name*="page"], input[name*="page"], select[onchange*="page"]');
+        paginationElements.push(...formBased);
+        
+        // Mark all detected pagination elements for avoidance
         const markedElements = [];
         const detectedInfo = [];
         
-        paginationSelectors.forEach(selector => {
+        paginationElements.forEach((element, index) => {
             try {
-                const elements = document.querySelectorAll(selector);
-                elements.forEach(element => {
-                    // Mark for complete avoidance
-                    element.setAttribute('data-avoid-pagination', 'true');
-                    element.style.pointerEvents = 'none';
-                    element.style.backgroundColor = 'rgba(255, 165, 0, 0.3)'; // Orange warning
-                    element.style.border = '3px solid orange';
-                    element.style.cursor = 'not-allowed';
-                    
-                    const elementInfo = {
-                        tag: element.tagName,
-                        text: element.textContent?.trim() || '',
-                        className: element.className || '',
-                        onclick: element.onclick ? 'has onclick' : '',
-                        href: element.href || '',
-                        selector: selector
-                    };
-                    
-                    markedElements.push(element);
-                    detectedInfo.push(elementInfo);
-                });
+                // Mark for complete avoidance
+                element.setAttribute('data-avoid-pagination', 'true');
+                element.style.pointerEvents = 'none';
+                element.style.backgroundColor = 'rgba(255, 165, 0, 0.3)'; // Orange warning
+                element.style.border = '3px solid orange';
+                element.style.cursor = 'not-allowed';
                 
-                if (elements.length > 0) {
-                    console.log(`🚫 MARKED PAGINATION: ${selector} (${elements.length} elements)`);
-                }
+                const elementInfo = {
+                    tag: element.tagName,
+                    text: element.textContent?.trim() || '',
+                    className: element.className || '',
+                    onclick: element.onclick ? 'has onclick' : '',
+                    href: element.href || '',
+                    index: index
+                };
+                
+                markedElements.push(element);
+                detectedInfo.push(elementInfo);
+                
+                console.log(`🚫 MARKED PAGINATION ${index + 1}: ${elementInfo.tag} - "${elementInfo.text}"`);
             } catch (e) {
-                // Ignore selector errors
+                console.log(`Error marking pagination element ${index}: ${e.message}`);
             }
         });
         
@@ -614,22 +669,39 @@ async function detectAndAvoidInterferenceElements(page) {
         });
         console.log(`📸 Screenshot taken: debug-before-interference-${timestamp}.png`);
         
-        // Comprehensive Korean UI interference detection
+        // Comprehensive Korean UI interference detection with PROPER CSS SELECTORS
         const interferenceElements = await page.evaluate(() => {
             const interferenceSources = [];
             
-            // 1. 기준연도 (Year dropdown) - AVOID
+            // Helper function to find elements by text content
+            function findElementsByText(selector, text) {
+                const elements = document.querySelectorAll(selector);
+                return Array.from(elements).filter(el => 
+                    el.textContent && el.textContent.includes(text)
+                );
+            }
+            
+            // 1. 기준연도 (Year dropdown) - AVOID using proper CSS selectors
             const yearDropdowns = document.querySelectorAll('select, .dropdown, [name*="년"], [name*="year"], [id*="year"], [class*="year"]');
-            const yearButtons = document.querySelectorAll('button:has-text("기준연도"), [onclick*="기준연도"], [title*="기준연도"]');
+            const yearButtons = [
+                ...findElementsByText('button', '기준연도'),
+                ...document.querySelectorAll('[onclick*="기준연도"], [title*="기준연도"]')
+            ];
             interferenceSources.push(...yearDropdowns, ...yearButtons);
             
             // 2. 재원구분 (Funding type dropdown) - AVOID
             const fundingDropdowns = document.querySelectorAll('[name*="재원"], [id*="재원"], [class*="재원"], [title*="재원구분"]');
-            const fundingButtons = document.querySelectorAll('button:has-text("재원구분"), [onclick*="재원구분"]');
+            const fundingButtons = [
+                ...findElementsByText('button', '재원구분'),
+                ...document.querySelectorAll('[onclick*="재원구분"]')
+            ];
             interferenceSources.push(...fundingDropdowns, ...fundingButtons);
             
-            // 3. 검색 (Search button) - AVOID
-            const searchButtons = document.querySelectorAll('button:has-text("검색"), input[type="submit"][value*="검색"], [onclick*="search"], [class*="search"], [id*="search"]');
+            // 3. 검색 (Search button) - AVOID using proper selectors
+            const searchButtons = [
+                ...findElementsByText('button', '검색'),
+                ...document.querySelectorAll('input[type="submit"][value*="검색"], [onclick*="search"], [class*="search"], [id*="search"]')
+            ];
             interferenceSources.push(...searchButtons);
             
             // 4. Pagination elements - AVOID
@@ -638,13 +710,20 @@ async function detectAndAvoidInterferenceElements(page) {
             const navArrows = document.querySelectorAll('[class*="prev"], [class*="next"], [onclick*="prev"], [onclick*="next"]');
             interferenceSources.push(...paginationElements, ...pageNumbers, ...navArrows);
             
-            // 5. 상세 (Detail) buttons - AVOID
-            const detailButtons = document.querySelectorAll('button:has-text("상세"), [onclick*="상세"], [href*="상세"], .detail-btn, .상세');
+            // 5. 상세 (Detail) buttons - AVOID using proper selectors
+            const detailButtons = [
+                ...findElementsByText('button', '상세'),
+                ...document.querySelectorAll('[onclick*="상세"], [href*="상세"], .detail-btn, .상세')
+            ];
             interferenceSources.push(...detailButtons);
             
             // 6. Other popup triggers - AVOID
             const popupTriggers = document.querySelectorAll('[onclick*="popup"], [onclick*="window.open"], [onclick*="modal"]');
-            const otherInterference = document.querySelectorAll('button:has-text("더보기"), button:has-text("자세히"), .more-btn');
+            const otherInterference = [
+                ...findElementsByText('button', '더보기'),
+                ...findElementsByText('button', '자세히'),
+                ...document.querySelectorAll('.more-btn')
+            ];
             interferenceSources.push(...popupTriggers, ...otherInterference);
             
             // 7. Form submit elements - AVOID
