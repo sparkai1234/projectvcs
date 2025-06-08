@@ -1,716 +1,781 @@
-// DIVA Scraper v5.2 - 100% CONTROL DATA MATCH EDITION
-// Comprehensive scraping of all ??ª©ë³„ê³µ??menus with enhanced ?¬ë¬´?œí‘œ + ì¡°í•©?„í™© filtering
+/**
+ * ğŸ¯ DIVA SCRAPER v5.0 - ENHANCED PLAYWRIGHT EDITION
+ * CRITICAL UPGRADE: Targeting 92+ violations records benchmark
+ * 
+ * MANUAL DISCOVERY INSIGHTS:
+ * - User manually captured 92 violations records using ì „ì²´ë³´ê¸°
+ * - Previous versions only captured 5 records (missing 94.6%)
+ * - Key: Better ì „ì²´ë³´ê¸° button detection and page loading strategies
+ * 
+ * v5.0 ENHANCEMENTS:
+ * - Multi-strategy ì „ì²´ë³´ê¸° button detection (text, value, class, xpath)
+ * - Enhanced waiting strategies for complete data loading
+ * - Improved Korean text extraction and processing
+ * - Better error handling and retry mechanisms
+ * - Advanced Playwright features: networkidle, screenshots on failure
+ * 
+ * TARGET: 92+ violations + 50+ per other source = 500+ total records
+ */
 
-import { Actor } from 'apify';
-import { chromium } from 'playwright';
-import fs from 'fs';
-import path from 'path';
-import { processFinancialStatementsData } from './Àç¹«Á¦Ç¥-filter.js';
-import { filterPartnershipStatusRecords } from './Á¶ÇÕÇöÈ²-filter.js';
+const { Actor } = require('apify');
+const { PlaywrightCrawler } = require('crawlee');
+const { createClient } = require('@supabase/supabase-js');
 
-// Robust configuration for Korean government sites
-const config = {
-    waitStrategy: 'domcontentloaded',
-    timeouts: {
-        navigation: 30000,
-        element: 10000,
-        content: 5000
-    },
-    retries: 3,
-    headless: true
-};
-
-// IMPORTANT: Baseline data references for algorithm development (NOT fixed validation thresholds)
-// These counts are TODAY's baseline for monitoring and algorithm establishment - actual data will vary
-const DATA_BASELINES = {
-    '?¬ì?¤ì ': 333,
-    '?¬ë¬´?íƒœ??: 250,  // Updated to match actual menu names
-    '?ìµê³„ì‚°??: 250,   // Updated to match actual menu names  
-    'ì¡°í•©?„í™©': 2231,
-    '?¸ë ¥?„í™©': 251,
-    '?„ë¬¸?¸ë ¥?„í™©': 1685,
-    'ë²•ê·œ?„ë°˜?„í™©': 92,
-    'VC MAP': 251
-    // VC?µê³„?•ë³´ removed - handled by separate PDF scraper app
-};
+console.log('ğŸ¯ === DIVA SCRAPER v5.0 - ENHANCED PLAYWRIGHT EDITION ===');
+console.log('ğŸš€ TARGETING: 92+ violations records (manual benchmark)');
+console.log('âœ¨ NEW: Multi-strategy ì „ì²´ë³´ê¸° detection + advanced Playwright features');
 
 Actor.main(async () => {
-    console.log('?? Starting DIVA COMPLETE 7-MENU TRAVERSAL SCRAPER');
-    console.log('?“‹ BASELINES (Reference Only):', DATA_BASELINES);
+    console.log('ğŸš€ Starting DIVA Scraper v5.0 with Enhanced Playwright...');
     
-    await Actor.setStatusMessage('?¯ Initializing complete menu traversal...');
-
-    let browser;
-    let page;
-    let allScrapedData = [];
-    let menuResults = {};
-
-try {
-    // Launch browser with Korean support
-    browser = await chromium.launch({
-        headless: config.headless,
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--disable-gpu',
-            '--window-size=1920,1080',
-            '--lang=ko-KR',
-            '--accept-lang=ko-KR,ko,en',
-            // Enhanced HTTPS bypass
-            '--ignore-certificate-errors',
-            '--ignore-ssl-errors',
-            '--ignore-certificate-errors-spki-list',
-            '--disable-web-security',
-            '--allow-running-insecure-content'
-        ]
-    });
-
-    const context = await browser.newContext({
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        viewport: { width: 1920, height: 1080 },
-        locale: 'ko-KR',
-        extraHTTPHeaders: {
-            'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8'
+    const input = await Actor.getInput();
+    
+    const config = {
+        updateMode: input?.updateMode || 'incremental',
+        maxPages: input?.maxPages || 999,
+        dataSource: input?.dataSource || 'all',
+        exportToSupabase: input?.exportToSupabase !== false,
+        testMode: input?.testMode || false,
+        
+        delay: input?.delay || 3000,
+        navigationTimeout: 180000, // Increased for better reliability
+        requestTimeout: 600000,    // Increased for complete data loading
+        
+        baseUrl: 'http://diva.kvca.or.kr',
+        urls: {
+            investment_performance: 'http://diva.kvca.or.kr/div/dii/DivItmInvstPrfmInq',
+            financial_statements: 'http://diva.kvca.or.kr/div/dii/DivItmFsInq',
+            association_status: 'http://diva.kvca.or.kr/div/dii/DivItmAssoInq',
+            personnel_status: 'http://diva.kvca.or.kr/div/dii/DivItmMnpwrInq',
+            professional_personnel: 'http://diva.kvca.or.kr/div/dii/DivItmProfsInq',
+            violations: 'http://diva.kvca.or.kr/div/dii/DivItmViolInq',
+            vc_map: 'http://diva.kvca.or.kr/div/dii/DivItmVcmapInq',
+            statistics: 'http://diva.kvca.or.kr/div/cmn/DivStatsMainInq'
         }
-    });
-
-    page = await context.newPage();
-
-    // Enhanced error handling
-    page.on('response', response => {
-        if (!response.ok()) {
-            console.log(`? ï¸ HTTP ${response.status()}: ${response.url()}`);
-        }
-    });
-
-    page.on('pageerror', error => {
-        console.log(`?› Page error: ${error.message}`);
-    });
-
-    // Navigate to the starting page
-    const baseUrl = 'http://ediva.kvca.or.kr/div/dii/DivItmInvstPrfmInq';
-    console.log(`?Œ Navigating to: ${baseUrl}`);
-    await page.goto(baseUrl, { 
-        waitUntil: config.waitStrategy,
-        timeout: 30000 
-    });
-
-    // Utility function to scroll to top
-    async function scrollToTop() {
-        await page.evaluate(() => window.scrollTo(0, 0));
-        await page.waitForTimeout(1000);
+    };
+    
+    console.log('ğŸ“‹ Enhanced Playwright Configuration v5.0:');
+    console.log(`ğŸ¯ PRIMARY TARGET: 92+ violations records (user manual verification)`);
+    console.log(`ğŸ¯ SECONDARY TARGET: 50+ per other source`);
+    console.log(`ğŸ’¡ NEW STRATEGY: Multi-level ì „ì²´ë³´ê¸° detection + networkidle waiting`);
+    
+    // Initialize Supabase with enhanced error handling
+    let supabaseClient = null;
+    if (config.exportToSupabase) {
+        supabaseClient = await initializeSupabaseClientV5(input);
     }
-
-    // Utility function to find and click ?„ì²´ë³´ê¸° button
-    async function findAndClick?„ì²´ë³´ê¸°(menuName) {
-        console.log(`?” Looking for ?„ì²´ë³´ê¸° button for ${menuName}...`);
+    
+    const metrics = {
+        startTime: Date.now(),
+        totalRecords: 0,
+        successfulRecords: 0,
+        errors: 0,
+        pagesProcessed: 0,
+        ì „ì²´ë³´ê¸°ButtonsFound: 0,
+        ì „ì²´ë³´ê¸°ButtonsClicked: 0,
+        screenshotsTaken: 0,
+        retryAttempts: 0,
         
-        const viewAllSelectors = [
-            'text=?„ì²´ë³´ê¸°',
-            'a:has-text("?„ì²´ë³´ê¸°")',
-            'button:has-text("?„ì²´ë³´ê¸°")',
-            'input[value="?„ì²´ë³´ê¸°"]',
-            'table + *:has-text("?„ì²´ë³´ê¸°")',
-            'table ~ *:has-text("?„ì²´ë³´ê¸°")',
-            '.pagination *:has-text("?„ì²´ë³´ê¸°")',
-            'td:last-child a:has-text("?„ì²´ë³´ê¸°")',
-            'div:last-child a:has-text("?„ì²´ë³´ê¸°")'
-        ];
+        detectionStrategies: {
+            textMatch: 0,
+            valueMatch: 0,
+            classMatch: 0,
+            xpathMatch: 0,
+            cssMatch: 0
+        },
         
-        for (const selector of viewAllSelectors) {
+        dataSourceCounts: {
+            investment_performance: { records: 0, errors: 0, status: 'pending', expected: '50+', benchmark: 50 },
+            financial_statements: { records: 0, errors: 0, status: 'pending', expected: '50+', benchmark: 50 },
+            association_status: { records: 0, errors: 0, status: 'pending', expected: '50+', benchmark: 50 },
+            personnel_status: { records: 0, errors: 0, status: 'pending', expected: '50+', benchmark: 50 },
+            professional_personnel: { records: 0, errors: 0, status: 'pending', expected: '50+', benchmark: 50 },
+            violations: { records: 0, errors: 0, status: 'pending', expected: '92+ (CRITICAL)', benchmark: 92 },
+            vc_map: { records: 0, errors: 0, status: 'pending', expected: '50+', benchmark: 50 },
+            statistics: { records: 0, errors: 0, status: 'pending', expected: '20+', benchmark: 20 }
+        }
+    };
+    
+    // ğŸš€ ENHANCED PLAYWRIGHT CRAWLER v5.0
+    const crawler = new PlaywrightCrawler({
+        launchContext: {
+            launchOptions: {
+                headless: input.headless !== false,
+                timeout: config.navigationTimeout,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-web-security',
+                    '--lang=ko-KR'  // Enhanced Korean support
+                ]
+            }
+        },
+        
+        requestHandlerTimeoutSecs: config.requestTimeout / 1000,
+        navigationTimeoutSecs: config.navigationTimeout / 1000,
+        maxConcurrency: 1,
+        
+        requestHandler: async ({ page, request }) => {
+            console.log(`ğŸ” PLAYWRIGHT v5.0 Processing: ${request.url}`);
+            
             try {
-                const elements = await page.locator(selector).all();
-                for (const element of elements) {
-                    if (await element.isVisible({ timeout: 1000 })) {
-                        console.log(`??Found ?„ì²´ë³´ê¸° button for ${menuName}`);
-                        await element.click();
-                        await page.waitForTimeout(3000);
-                        return true;
+                // Enhanced Korean language setup
+                await page.setExtraHTTPHeaders({
+                    'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                });
+                
+                const url = request.url;
+                
+                // Enhanced initial page load detection
+                console.log('â³ v5.0: Waiting for initial page load with multiple strategies...');
+                
+                try {
+                    await page.waitForSelector('table, .content, .container, body', { timeout: 45000 });
+                } catch (e) {
+                    console.log('âš ï¸ Table selector timeout, trying alternative selectors...');
+                    await page.waitForSelector('div, span, td', { timeout: 30000 });
+                }
+                
+                await page.waitForTimeout(5000); // Allow initial render
+                
+                // ğŸ¯ ENHANCED ì „ì²´ë³´ê¸° DETECTION v5.0
+                console.log('ğŸ” v5.0: Starting enhanced ì „ì²´ë³´ê¸° button detection...');
+                
+                const ì „ì²´ë³´ê¸°Result = await findAndClickì „ì²´ë³´ê¸°V5(page, metrics);
+                
+                if (ì „ì²´ë³´ê¸°Result.found) {
+                    metrics.ì „ì²´ë³´ê¸°ButtonsFound++;
+                    console.log(`âœ… v5.0 SUCCESS: Found ì „ì²´ë³´ê¸° using ${ì „ì²´ë³´ê¸°Result.strategy}!`);
+                    console.log(`ğŸ“Š Detection method: ${ì „ì²´ë³´ê¸°Result.method}`);
+                    
+                    if (ì „ì²´ë³´ê¸°Result.clicked) {
+                        metrics.ì „ì²´ë³´ê¸°ButtonsClicked++;
+                        console.log('ğŸ¯ v5.0: Successfully clicked ì „ì²´ë³´ê¸°! Initiating enhanced wait...');
+                        
+                        // Enhanced waiting strategy for complete data loading
+                        console.log('â³ v5.0: Enhanced networkidle + DOM stability wait...');
+                        
+                        // Multiple wait strategies for reliability
+                        await Promise.race([
+                            page.waitForLoadState('networkidle', { timeout: 60000 }),
+                            page.waitForTimeout(15000)
+                        ]);
+                        
+                        // Additional wait for DOM updates
+                        let previousRowCount = 0;
+                        let currentRowCount = 0;
+                        let stabilityChecks = 0;
+                        
+                        for (let i = 0; i < 5; i++) {
+                            await page.waitForTimeout(3000);
+                            currentRowCount = await page.evaluate(() => 
+                                document.querySelectorAll('table tbody tr, .data-row, tr').length
+                            );
+                            
+                            console.log(`ğŸ“Š v5.0: DOM stability check ${i+1}/5 - rows: ${currentRowCount}`);
+                            
+                            if (currentRowCount === previousRowCount && currentRowCount > 0) {
+                                stabilityChecks++;
+                                if (stabilityChecks >= 2) {
+                                    console.log('âœ… v5.0: DOM stabilized, proceeding with extraction');
+                                    break;
+                                }
+                            } else {
+                                stabilityChecks = 0;
+                            }
+                            previousRowCount = currentRowCount;
+                        }
+                        
+                        console.log(`âœ… v5.0: Enhanced data loading complete! Final row count: ${currentRowCount}`);
+                    }
+                } else {
+                    console.log('âŒ v5.0: ì „ì²´ë³´ê¸° button not found - extracting visible records only');
+                    
+                    // Take screenshot for debugging if button not found on violations page
+                    if (url.includes('DivItmViolInq')) {
+                        const screenshotPath = `violations-no-button-${Date.now()}.png`;
+                        await page.screenshot({ path: screenshotPath, fullPage: true });
+                        metrics.screenshotsTaken++;
+                        console.log(`ğŸ“¸ Debug screenshot saved: ${screenshotPath}`);
                     }
                 }
+                
+                // Enhanced final page analysis
+                const pageInfo = await page.evaluate(() => {
+                    const tables = document.querySelectorAll('table');
+                    const tableRows = document.querySelectorAll('table tr').length;
+                    const dataRows = document.querySelectorAll('table tbody tr').length;
+                    const visibleText = document.body.innerText.length;
+                    
+                    return {
+                        scrollHeight: document.documentElement.scrollHeight,
+                        tableCount: tables.length,
+                        tableRows: tableRows,
+                        dataRows: dataRows,
+                        visibleTextLength: visibleText,
+                        allElements: document.querySelectorAll('*').length
+                    };
+                });
+                
+                console.log(`ğŸ“Š v5.0 Enhanced analysis:`);
+                console.log(`   Tables: ${pageInfo.tableCount}, Rows: ${pageInfo.tableRows}, Data rows: ${pageInfo.dataRows}`);
+                console.log(`   Text length: ${pageInfo.visibleTextLength}, Elements: ${pageInfo.allElements}`);
+                
+                // Enhanced record extraction
+                let pageResults = { records: 0, errors: 0 };
+                let currentDataSource = '';
+                
+                if (url.includes('DivItmInvstPrfmInq')) {
+                    currentDataSource = 'investment_performance';
+                    pageResults = await extractWithPlaywrightV5(page, config, supabaseClient, 'investment_performance', metrics);
+                } else if (url.includes('DivItmFsInq')) {
+                    currentDataSource = 'financial_statements';
+                    pageResults = await extractWithPlaywrightV5(page, config, supabaseClient, 'financial_statements', metrics);
+                } else if (url.includes('DivItmAssoInq')) {
+                    currentDataSource = 'association_status';
+                    pageResults = await extractWithPlaywrightV5(page, config, supabaseClient, 'association_status', metrics);
+                } else if (url.includes('DivItmMnpwrInq')) {
+                    currentDataSource = 'personnel_status';
+                    pageResults = await extractWithPlaywrightV5(page, config, supabaseClient, 'personnel_status', metrics);
+                } else if (url.includes('DivItmProfsInq')) {
+                    currentDataSource = 'professional_personnel';
+                    pageResults = await extractWithPlaywrightV5(page, config, supabaseClient, 'professional_personnel', metrics);
+                } else if (url.includes('DivItmViolInq')) {
+                    currentDataSource = 'violations';
+                    pageResults = await extractWithPlaywrightV5(page, config, supabaseClient, 'violations', metrics);
+                } else if (url.includes('DivItmVcmapInq')) {
+                    currentDataSource = 'vc_map';
+                    pageResults = await extractWithPlaywrightV5(page, config, supabaseClient, 'vc_map', metrics);
+                } else if (url.includes('DivStatsMainInq')) {
+                    currentDataSource = 'statistics';
+                    pageResults = await extractWithPlaywrightV5(page, config, supabaseClient, 'statistics', metrics);
+                }
+                
+                // Enhanced metrics update with benchmark comparison
+                if (currentDataSource && metrics.dataSourceCounts[currentDataSource]) {
+                    const source = metrics.dataSourceCounts[currentDataSource];
+                    source.records = pageResults.records;
+                    source.errors = pageResults.errors;
+                    source.status = pageResults.records > 0 ? 'success' : 'completed';
+                    
+                    const benchmark = source.benchmark;
+                    const percentage = benchmark > 0 ? ((pageResults.records / benchmark) * 100).toFixed(1) : 'N/A';
+                    
+                    console.log(`ğŸ“Š v5.0 RESULT: ${currentDataSource}`);
+                    console.log(`   Records: ${pageResults.records} / ${benchmark} benchmark (${percentage}%)`);
+                    
+                    if (currentDataSource === 'violations') {
+                        if (pageResults.records >= 70) {
+                            console.log(`ğŸ¯ EXCELLENT: ${pageResults.records} violations records (${percentage}% of 92 benchmark)!`);
+                        } else if (pageResults.records >= 30) {
+                            console.log(`âš ï¸ PROGRESS: ${pageResults.records} violations records (${percentage}% of benchmark)`);
+                        } else {
+                            console.log(`âŒ CRITICAL: Only ${pageResults.records} violations, need 92+ for benchmark`);
+                        }
+                    }
+                    
+                    if (pageResults.records >= benchmark) {
+                        console.log(`âœ… BENCHMARK ACHIEVED: ${currentDataSource} - ${pageResults.records}/${benchmark}`);
+                    }
+                }
+                
+                metrics.totalRecords += pageResults.records;
+                metrics.successfulRecords += pageResults.records - pageResults.errors;
+                metrics.errors += pageResults.errors;
+                metrics.pagesProcessed++;
+                
             } catch (error) {
-                // Continue to next selector
+                console.error(`âŒ v5.0 Error processing ${request.url}:`, error.message);
+                
+                // Enhanced error handling with screenshots
+                const screenshotPath = `error-${Date.now()}.png`;
+                try {
+                    await page.screenshot({ path: screenshotPath, fullPage: true });
+                    metrics.screenshotsTaken++;
+                    console.log(`ğŸ“¸ Error screenshot saved: ${screenshotPath}`);
+                } catch (screenshotError) {
+                    console.log('Failed to take error screenshot:', screenshotError.message);
+                }
+                
+                metrics.errors++;
             }
         }
-        console.log(`? ï¸ Could not find ?„ì²´ë³´ê¸° button for ${menuName}`);
-        return false;
-    }
-
-    // ADDED: Function to extract all table data from page
-    async function extractAllTableData(menuName) {
-        try {
-            console.log(`?“Š Extracting data for ${menuName}...`);
-            await page.waitForTimeout(2000); // Wait for data to load
-            
-            const tableData = await page.evaluate((menuName) => {
-                const tables = document.querySelectorAll('table, .data-table');
-                if (tables.length === 0) return [];
-                
-                const results = [];
-                tables.forEach(table => {
-                    const rows = table.querySelectorAll('tr');
-                    rows.forEach((row, rowIndex) => {
-                        if (rowIndex === 0) return; // Skip header
-                        
-                        const cells = Array.from(row.querySelectorAll('td, th')).map(cell => 
-                            cell.textContent?.trim() || ''
-                        );
-                        
-                        if (cells.length > 0 && cells.some(cell => cell.length > 0)) {
-                            results.push({
-                                menuName: menuName,
-                                rowData: cells,
-                                rowIndex: rowIndex,
-                                timestamp: new Date().toISOString()
-                            });
-                        }
-                    });
-                });
-                return results;
-            }, menuName);
-            
-            // Filter and validate the data using our validation logic
-            const validData = tableData.filter(record => {
-                const validation = scrapeTableData(record.rowData, menuName);
-                return validation.isValid;
-            });
-            
-            console.log(`?“Š Extracted ${validData.length} valid records from ${tableData.length} total rows for ${menuName}`);
-            return validData;
-            
-        } catch (error) {
-            console.log(`??Error extracting data for ${menuName}: ${error.message}`);
-            return [];
+    });
+    
+    // Get target URLs based on configuration
+    const targetSources = getDataSources(config.dataSource, config.urls);
+    
+    console.log(`ğŸ¯ v5.0: Targeting ${targetSources.length} data sources for enhanced extraction`);
+    console.log('ğŸš€ v5.0: Starting enhanced Playwright crawling...');
+    
+    // Add URLs to crawler
+    await crawler.addRequests(targetSources.map(url => ({ url })));
+    
+    // Run the enhanced crawler
+    await crawler.run();
+    
+    // Enhanced final reporting
+    const endTime = Date.now();
+    const duration = ((endTime - metrics.startTime) / 1000 / 60).toFixed(1);
+    
+    console.log('\nğŸ¯ === DIVA SCRAPER v5.0 - ENHANCED RESULTS ===');
+    console.log(`â±ï¸ Duration: ${duration} minutes`);
+    console.log(`ğŸ“Š Total Records: ${metrics.totalRecords}`);
+    console.log(`âœ… Successful: ${metrics.successfulRecords}`);
+    console.log(`âŒ Errors: ${metrics.errors}`);
+    console.log(`ğŸ“„ Pages: ${metrics.pagesProcessed}`);
+    console.log(`ğŸ”˜ ì „ì²´ë³´ê¸° Found: ${metrics.ì „ì²´ë³´ê¸°ButtonsFound}`);
+    console.log(`ğŸ¯ ì „ì²´ë³´ê¸° Clicked: ${metrics.ì „ì²´ë³´ê¸°ButtonsClicked}`);
+    console.log(`ğŸ“¸ Screenshots: ${metrics.screenshotsTaken}`);
+    
+    console.log('\nğŸ“Š === DETECTION STRATEGY PERFORMANCE ===');
+    Object.entries(metrics.detectionStrategies).forEach(([strategy, count]) => {
+        if (count > 0) {
+            console.log(`   ${strategy}: ${count} successes`);
         }
-    }
-
-    // UPDATED: Enhanced filtering logic based on actual website field structures from screenshots
-    function scrapeTableData(cells, menuName) {
-        if (!cells || cells.length === 0) {
-            return { isValid: false, reason: 'Empty row' };
-        }
-
-        // Enhanced validation based on real website field structures
-        let isValid = false;
-        let validationDetails = '';
-
-        switch (menuName) {
-            case '?¸ë ¥?„í™©':
-                // Based on screenshot: [?Œì‚¬ëª? ì¶œì?? ?„ë¬¸?¸ë ¥, ?¬ì?¤ì‚¬, ê²½ì˜ê´€ë¦?
-                if (cells.length >= 5) {
-                    const companyName = cells[0]?.trim();
-                    if (companyName && companyName.length >= 3 && companyName.length <= 50 &&
-                        !companyName.includes('?Œì‚¬ëª?) && !companyName.includes('êµ¬ë¶„') && 
-                        !companyName.includes('?©ê³„') && !companyName.includes('ì´ê³„') &&
-                        !companyName.includes('ì¶œì??) && !companyName.includes('?„ë¬¸?¸ë ¥') &&
-                        !companyName.includes('?¬ì?¤ì‚¬') && !companyName.includes('ê²½ì˜ê´€ë¦?)) {
-                        
-                        // Validate numeric columns (ì¶œì?? ?„ë¬¸?¸ë ¥, ?¬ì?¤ì‚¬, ê²½ì˜ê´€ë¦?
-                        let numericValid = true;
-                        for (let i = 1; i <= 4; i++) {
-                            if (!cells[i] || !/^\d+$/.test(cells[i].trim())) {
-                                numericValid = false;
-                                break;
-                            }
-                        }
-                        
-                        if (numericValid) {
-                            isValid = true;
-                            validationDetails = `Valid: Company=${companyName}, Personnel data: ${cells[1]},${cells[2]},${cells[3]},${cells[4]}`;
-                        }
-                    }
-                }
-                break;
-
-            case '?¬ì?¤ì ':
-                // Based on screenshot: [?Œì‚¬ëª? ê³ ìœ ê³„ì •(?ì œ?? ê¸ˆì•¡), ì¡°í•©(?ì œ?? ê¸ˆì•¡), ?©ê³„(?ì œ?? ê¸ˆì•¡)]
-                if (cells.length >= 7) {
-                    const companyName = cells[0]?.trim();
-                    if (companyName && companyName.length >= 3 && companyName.length <= 50 &&
-                        !companyName.includes('?Œì‚¬ëª?) && !companyName.includes('ê³ ìœ ê³„ì •') && 
-                        !companyName.includes('ì¡°í•©') && !companyName.includes('?©ê³„') &&
-                        !companyName.includes('?ì œ??) && !companyName.includes('ê¸ˆì•¡') &&
-                        !companyName.includes('êµ¬ë¶„') && !companyName.includes('ì´ê³„')) {
-                        
-                        // Validate count columns (?ì œ??: 2, 4, 6
-                        const count1Valid = cells[1] && /^\d+$/.test(cells[1].trim());
-                        const count2Valid = cells[3] && /^\d+$/.test(cells[3].trim());
-                        const count3Valid = cells[5] && /^\d+$/.test(cells[5].trim());
-                        
-                        // Validate amount columns (ê¸ˆì•¡): 3, 5, 7
-                        const amount1Valid = cells[2] && (/^0$/.test(cells[2].trim()) || /^\d{1,3}(,\d{3})*$/.test(cells[2].trim()));
-                        const amount2Valid = cells[4] && (/^0$/.test(cells[4].trim()) || /^\d{1,3}(,\d{3})*$/.test(cells[4].trim()));
-                        const amount3Valid = cells[6] && (/^0$/.test(cells[6].trim()) || /^\d{1,3}(,\d{3})*$/.test(cells[6].trim()));
-                        
-                        if (count1Valid && count2Valid && count3Valid && amount1Valid && amount2Valid && amount3Valid) {
-                            isValid = true;
-                            validationDetails = `Valid: Company=${companyName}, Counts: ${cells[1]},${cells[3]},${cells[5]}, Amounts: ${cells[2]},${cells[4]},${cells[6]}`;
-                        }
-                    }
-                }
-                break;
-
-            case '?¬ë¬´?íƒœ??:
-            case '?ìµê³„ì‚°??:
-                // Based on screenshot: [?Œì‚¬ëª? ?¬ì›, ê²°ì‚°?? ?Œê³„ê¸°ì?, ?êµ¬ì£¼ë³¸, ?ì‚°, ì°½ì—…?¬ì?ì‚°, ë¶€ì±? ?ë³¸ê¸? ?ë³¸, ?ì„¸]
-                if (cells.length >= 10) {
-                    const companyName = cells[0]?.trim();
-                    const sourceType = cells[1]?.trim(); // ?¬ì›
-                    const month = cells[2]?.trim(); // ê²°ì‚°??
-                    const accountStandard = cells[3]?.trim(); // ?Œê³„ê¸°ì?
-                    const scopeType = cells[4]?.trim(); // ?êµ¬ì£¼ë³¸
-                    
-                    // Debug sampling for ?¬ë¬´?œí‘œ
-                    if ((menuName === '?¬ë¬´?íƒœ?? || menuName === '?ìµê³„ì‚°??) && Math.random() < 0.01) {
-                        console.log(`?” DEBUG ${menuName} row: ${JSON.stringify(cells.slice(0, 8))}`);
-                    }
-                    
-                    if (companyName && companyName.length >= 3 && companyName.length <= 80 &&
-                        !companyName.includes('?Œì‚¬ëª?) && !companyName.includes('?¬ì›') &&
-                        !companyName.includes('ê²°ì‚°??) && !companyName.includes('?Œê³„ê¸°ì?') &&
-                        !companyName.includes('êµ¬ë¶„') && !companyName.includes('ì´ê³„') &&
-                        !companyName.includes('?©ê³„') && !companyName.includes('?Œê³„') &&
-                        sourceType && (sourceType.includes('ê³„ì •') || sourceType.includes('?ê¸°ê³„ì •') || sourceType.includes('ê³ ìœ ê³„ì •')) &&
-                        month && (month.includes('12') || month === '12' || month === '12¿ù') && // More flexible month validation
-                        accountStandard && (accountStandard.includes('ÀÏ¹İ') || accountStandard.includes('K-IFRS') || accountStandard.includes('IFRS') || accountStandard.includes('GAAP') || accountStandard.length > 0) &&
-                        scopeType && (scopeType.includes('°³º°') || scopeType.includes('¿¬°á') || scopeType.includes('º°µµ') || scopeType.includes('´Üµ¶') || scopeType.length > 0)) {
-                        
-                        // Stricter financial data validation (85% threshold)
-                        let hasFinancialData = false;
-                        let validFinancialFields = 0;
-                        
-                        for (let i = 5; i < cells.length - 1; i++) {
-                            const cell = cells[i]?.trim() || '';
-                            // Allow: numbers with commas, zeros, negative numbers, dashes, empty
-                            if (/^(\d{1,3}(,\d{3})*|-?\d+|0|-|\s*)$/.test(cell) || cell === '') {
-                                validFinancialFields++;
-                                if (cell && cell !== '-' && cell !== '' && cell !== '0') {
-                                    hasFinancialData = true;
-                                }
-                            }
-                        }
-                        
-                        // Stricter validation: 85% threshold and require actual financial data
-                        if (hasFinancialData && validFinancialFields >= (cells.length - 6) * 0.85) {
-                            isValid = true;
-                            validationDetails = `Valid: Company=${companyName}, Source=${sourceType}, Month=${month}, Standard=${accountStandard}, Scope=${scopeType}`;
-                        }
-                    }
-                }
-                break;
-
-            case 'ì¡°í•©?„í™©':
-                // Based on screenshot: [ë²ˆí˜¸, ?Œì‚¬ëª? ì¡°í•©ëª? ì¶œì?? ê²°ì‚°ì´ì•¡(??, ë§Œê¸°?? ?¬ìë¶„ì•¼êµ¬ë¶„, ëª©ì êµ¬ë¶„, ì§€?êµ¬ë¶?
-                if (cells.length >= 9) {
-                    const id = cells[0]?.trim();
-                    const companyName = cells[1]?.trim();
-                    const partnershipName = cells[2]?.trim();
-                    const startDate = cells[3]?.trim();
-                    const amount = cells[4]?.trim();
-                    const endDate = cells[5]?.trim();
-                    const investmentField = cells[6]?.trim();
-                    
-                    if (id && /^\d{3,4}$/.test(id) &&
-                        companyName && companyName.length >= 3 &&
-                        !companyName.includes('?Œì‚¬ëª?) && !companyName.includes('ì¡°í•©ëª?) &&
-                        !companyName.includes('êµ¬ë¶„') && !companyName.includes('ì´ê³„') &&
-                        partnershipName && partnershipName.length >= 3 &&
-                        !partnershipName.includes('êµ¬ë¶„') &&
-                        startDate && /^\d{4}-\d{2}-\d{2}$/.test(startDate) &&
-                        amount && /^\d{1,3}(,\d{3})*$/.test(amount) &&
-                        endDate && /^\d{4}-\d{2}-\d{2}$/.test(endDate) &&
-                        investmentField && (investmentField.includes('?¼ë°˜') || investmentField.includes('ë¬¸í™”') || investmentField.includes('ë°”ì´??))) {
-                        
-                        isValid = true;
-                        validationDetails = `Valid: ID=${id}, Company=${companyName}, Partnership=${partnershipName.substring(0, 30)}...`;
-                    }
-                }
-                break;
-
-            case '?„ë¬¸?¸ë ¥?„í™©':
-                // Based on screenshot: [?Œì‚¬ëª? ?´ë¦„, ê¸ˆë¬´ê²½ë ¥, ?„ë¬¸?¸ë ¥ê²½ë ¥, ì´VCê·¼ë¬´ê²½ë ¥, ì´VC?„ë¬¸?¸ë ¥ê²½ë ¥]
-                if (cells.length >= 5) { // More flexible minimum length
-                    const companyName = cells[0]?.trim();
-                    const personName = cells[1]?.trim();
-                    
-                    // Debug: Log first few rows to understand actual data structure  
-                    if (menuName === '?„ë¬¸?¸ë ¥?„í™©' && Math.random() < 0.05) { // 5% sampling for debug
-                        console.log(`?” DEBUG ?„ë¬¸?¸ë ¥?„í™© row: ${JSON.stringify(cells)}`);
-                    }
-                    
-                    if (companyName && companyName.length >= 2 && companyName.length <= 100 &&
-                        !companyName.includes('?Œì‚¬ëª?) && !companyName.includes('?´ë¦„') &&
-                        !companyName.includes('ê²½ë ¥') && !companyName.includes('êµ¬ë¶„') && !companyName.includes('ì´ê³„') &&
-                        !companyName.includes('?©ê³„') && !companyName.includes('?Œê³„') &&
-                        personName && personName.length >= 1 && personName.length <= 50 &&
-                        !personName.includes('ê²½ë ¥') && !personName.includes('êµ¬ë¶„') &&
-                        !personName.includes('ì´ê³„') && !personName.includes('?©ê³„') &&
-                        !personName.includes('?Œì‚¬ëª?) && !personName.includes('?´ë¦„')) {
-                        
-                        // Much more flexible validation for experience columns
-                        // Allow: numbers, decimals, dashes, empty, Korean text, special chars
-                        let validExperienceFields = 0;
-                        const totalExperienceFields = Math.min(4, cells.length - 2); // Flexible field count
-                        
-                        for (let i = 2; i < Math.min(cells.length, 6); i++) {
-                            const cell = cells[i]?.trim() || '';
-                            // Very permissive: allow almost any content except obvious headers
-                            if (!cell.includes('ê²½ë ¥') && !cell.includes('êµ¬ë¶„') && 
-                                !cell.includes('?Œì‚¬ëª?) && !cell.includes('ì´ê³„')) {
-                                validExperienceFields++;
-                            }
-                        }
-                        
-                        // Require at least 50% of experience fields to be non-header content
-                        if (validExperienceFields >= Math.max(2, totalExperienceFields * 0.5)) {
-                            isValid = true;
-                            validationDetails = `Valid: Company=${companyName}, Person=${personName}, Valid fields: ${validExperienceFields}/${totalExperienceFields}`;
-                        }
-                    }
-                }
-                break;
-
-            case 'ë²•ê·œ?„ë°˜?„í™©':
-                // Based on screenshot: [ë²ˆí˜¸, ?Œì‚¬ëª? ì¡°ì¹˜?? ì¡°ì¹˜ëª…ì¹­?? ?œì •?„ë£Œ?? ?ê?êµ¬ë¶„, ?„ë°˜??ª©, ì¡°ì¹˜êµ¬ë¶„]
-                if (cells.length >= 8) {
-                    const id = cells[0]?.trim();
-                    const companyName = cells[1]?.trim();
-                    const actionDate = cells[2]?.trim();
-                    const noticeDate = cells[3]?.trim();
-                    const completionDate = cells[4]?.trim();
-                    const inspectionType = cells[5]?.trim();
-                    const violationType = cells[6]?.trim();
-                    const actionType = cells[7]?.trim();
-                    
-                    if (id && /^\d+$/.test(id) && parseInt(id) >= 1 && parseInt(id) <= 100 &&
-                        companyName && companyName.length >= 3 &&
-                        !companyName.includes('?Œì‚¬ëª?) && !companyName.includes('ì¡°ì¹˜??) &&
-                        !companyName.includes('êµ¬ë¶„') && !companyName.includes('ì´ê³„') && !companyName.includes('ë²ˆí˜¸') &&
-                        actionDate && /^\d{4}-\d{2}-\d{2}$/.test(actionDate) &&
-                        (noticeDate === '-' || /^\d{4}-\d{2}-\d{2}$/.test(noticeDate)) &&
-                        (completionDate === '-' || /^\d{4}-\d{2}-\d{2}$/.test(completionDate)) &&
-                        inspectionType && ['?„ìë³´ê³ ', '?•ê¸°ê²€??, '?˜ì‹œê²€??].includes(inspectionType) &&
-                        violationType && violationType.length >= 2 &&
-                        actionType && ['ê²½ê³ ', '?œì •ëª…ë ¹', 'ê²½ì˜ê°œì„ ?”êµ¬'].includes(actionType)) {
-                        
-                        isValid = true;
-                        validationDetails = `Valid: ID=${id}, Company=${companyName}, Action=${actionDate}, Type=${inspectionType}, Violation=${violationType}`;
-                    }
-                }
-                break;
-
-            case 'VC MAP':
-                // Based on screenshot: [?œìœ„, ?Œì‚¬ëª? ?¸ë ¥ì´ìˆ˜, ?„ë¬¸?¸ë ¥??
-                if (cells.length >= 4) {
-                    const rank = cells[0]?.trim();
-                    const companyName = cells[1]?.trim();
-                    const totalStaff = cells[2]?.trim();
-                    const expertStaff = cells[3]?.trim();
-                    
-                    if (rank && /^\d+$/.test(rank) && parseInt(rank) >= 1 && parseInt(rank) <= 500 &&
-                        companyName && companyName.length >= 3 && companyName.length <= 50 &&
-                        !companyName.includes('?Œì‚¬ëª?) && !companyName.includes('?œìœ„') &&
-                        !companyName.includes('?¸ë ¥ì´ìˆ˜') && !companyName.includes('?„ë¬¸?¸ë ¥??) &&
-                        !companyName.includes('êµ¬ë¶„') && !companyName.includes('ì´ê³„') &&
-                        totalStaff && /^\d+$/.test(totalStaff) &&
-                        expertStaff && /^\d+$/.test(expertStaff)) {
-                        
-                        isValid = true;
-                        validationDetails = `Valid: Rank=${rank}, Company=${companyName}, Total=${totalStaff}, Expert=${expertStaff}`;
-                    }
-                }
-                break;
-
-            default:
-                // Basic validation for other sections
-                if (cells.length >= 3 && cells[0]?.trim() && 
-                    !cells[0].includes('?©ê³„') && !cells[0].includes('?Œê³„') && 
-                    !cells[0].includes('ì´ê³„') && !cells[0].includes('êµ¬ë¶„') &&
-                    !cells[0].includes('?…ì²´??) && !cells[0].includes('ê¸ˆì•¡')) {
-                    isValid = true;
-                    validationDetails = `Basic validation: ${cells[0]?.substring(0, 30)}...`;
-                }
-        }
-
-        return {
-            isValid,
-            reason: isValid ? validationDetails : `Failed ${menuName} validation: insufficient or invalid data`,
-            data: isValid ? cells : null
-        };
-    }
-
-    // Utility function to click sidebar menu
-    async function clickSidebarMenu(menuText) {
-        console.log(`?” Looking for sidebar menu: ${menuText}`);
+    });
+    
+    console.log('\nğŸ“Š === BENCHMARK COMPARISON v5.0 ===');
+    let benchmarksAchieved = 0;
+    let totalBenchmarks = 0;
+    
+    Object.entries(metrics.dataSourceCounts).forEach(([source, data]) => {
+        const percentage = data.benchmark > 0 ? ((data.records / data.benchmark) * 100).toFixed(1) : 'N/A';
+        const status = data.records >= data.benchmark ? 'âœ…' : (data.records >= data.benchmark * 0.5 ? 'âš ï¸' : 'âŒ');
         
-        const menuSelectors = [
-            `text=${menuText}`,
-            `a:has-text("${menuText}")`,
-            `[href*="${menuText}"]`,
-            `.menu a:has-text("${menuText}")`,
-            `li a:has-text("${menuText}")`,
-            `nav a:has-text("${menuText}")`
-        ];
+        console.log(`${status} ${source}: ${data.records}/${data.benchmark} (${percentage}%)`);
         
-        for (const selector of menuSelectors) {
-            try {
-                const elements = await page.locator(selector).all();
+        if (data.records >= data.benchmark) benchmarksAchieved++;
+        totalBenchmarks++;
+    });
+    
+    console.log(`\nğŸ¯ BENCHMARK SUMMARY: ${benchmarksAchieved}/${totalBenchmarks} achieved`);
+    
+    const violationsCount = metrics.dataSourceCounts.violations.records;
+    if (violationsCount >= 92) {
+        console.log(`ğŸ† SUCCESS: ${violationsCount} violations records matches manual benchmark!`);
+    } else if (violationsCount >= 50) {
+        console.log(`ğŸ“ˆ PROGRESS: ${violationsCount} violations records, approaching 92 benchmark`);
+    } else {
+        console.log(`ğŸ”„ RETRY NEEDED: Only ${violationsCount} violations, manual process found 92`);
+    }
+    
+    console.log('\nâœ… DIVA Scraper v5.0 Enhanced Playwright Edition Complete!');
+});
+
+// ğŸ¯ ENHANCED ì „ì²´ë³´ê¸° DETECTION v5.0 - Multi-strategy approach
+async function findAndClickì „ì²´ë³´ê¸°V5(page, metrics) {
+    console.log('ğŸ” v5.0: Starting multi-strategy ì „ì²´ë³´ê¸° detection...');
+    
+    const strategies = [
+        {
+            name: 'textMatch',
+            description: 'Text content matching',
+            selector: async () => {
+                const elements = await page.$$('button, input[type="button"], input[type="submit"], a, span, div');
                 for (const element of elements) {
-                    if (await element.isVisible({ timeout: 2000 })) {
-                        console.log(`??Found sidebar menu: ${menuText}`);
+                    const text = await element.textContent();
+                    if (text && (text.includes('ì „ì²´ë³´ê¸°') || text.includes('ì „ì²´') || text.includes('ëª¨ë‘ë³´ê¸°'))) {
+                        return element;
+                    }
+                }
+                return null;
+            }
+        },
+        {
+            name: 'valueMatch',
+            description: 'Value attribute matching',
+            selector: async () => {
+                return await page.$('input[value*="ì „ì²´"], input[value*="ì „ì²´ë³´ê¸°"], button[value*="ì „ì²´"]');
+            }
+        },
+        {
+            name: 'classMatch',
+            description: 'Class name matching',
+            selector: async () => {
+                return await page.$('.ì „ì²´, .ì „ì²´ë³´ê¸°, .all-view, .show-all, [class*="ì „ì²´"], [class*="all"]');
+            }
+        },
+        {
+            name: 'xpathMatch',
+            description: 'XPath text matching',
+            selector: async () => {
+                try {
+                    return await page.$('xpath=//button[contains(text(), "ì „ì²´")] | //input[contains(@value, "ì „ì²´")] | //a[contains(text(), "ì „ì²´")]');
+                } catch (e) {
+                    return null;
+                }
+            }
+        },
+        {
+            name: 'cssMatch',
+            description: 'Advanced CSS selector',
+            selector: async () => {
+                const selectors = [
+                    'button[onclick*="ì „ì²´"]',
+                    'input[onclick*="ì „ì²´"]',
+                    '[title*="ì „ì²´"]',
+                    '[alt*="ì „ì²´"]',
+                    'a[href*="ì „ì²´"]'
+                ];
+                
+                for (const selector of selectors) {
+                    try {
+                        const element = await page.$(selector);
+                        if (element) return element;
+                    } catch (e) {
+                        continue;
+                    }
+                }
+                return null;
+            }
+        }
+    ];
+    
+    for (const strategy of strategies) {
+        try {
+            console.log(`ğŸ” v5.0: Trying ${strategy.name} - ${strategy.description}...`);
+            
+            const element = await strategy.selector();
+            
+            if (element) {
+                console.log(`âœ… v5.0: Found ì „ì²´ë³´ê¸° using ${strategy.name}!`);
+                metrics.detectionStrategies[strategy.name]++;
+                
+                // Verify element is clickable
+                const isVisible = await element.isVisible();
+                const isEnabled = await element.isEnabled();
+                
+                console.log(`ğŸ“Š Element state: visible=${isVisible}, enabled=${isEnabled}`);
+                
+                if (isVisible && isEnabled) {
+                    try {
+                        // Enhanced clicking with multiple attempts
+                        console.log(`ğŸ¯ v5.0: Attempting to click using ${strategy.name}...`);
+                        
+                        // Scroll element into view
+                        await element.scrollIntoViewIfNeeded();
+                        await page.waitForTimeout(1000);
+                        
+                        // Try clicking
                         await element.click();
                         await page.waitForTimeout(2000);
-                        return true;
+                        
+                        console.log(`âœ… v5.0: Successfully clicked ì „ì²´ë³´ê¸° using ${strategy.name}!`);
+                        
+                        return {
+                            found: true,
+                            clicked: true,
+                            strategy: strategy.name,
+                            method: strategy.description
+                        };
+                        
+                    } catch (clickError) {
+                        console.log(`âš ï¸ Click failed with ${strategy.name}:`, clickError.message);
+                        
+                        // Try alternative click methods
+                        try {
+                            await element.click({ force: true });
+                            console.log(`âœ… v5.0: Force click succeeded with ${strategy.name}!`);
+                            return {
+                                found: true,
+                                clicked: true,
+                                strategy: strategy.name,
+                                method: `${strategy.description} (force click)`
+                            };
+                        } catch (forceClickError) {
+                            console.log(`âŒ Force click also failed with ${strategy.name}`);
+                        }
+                    }
+                } else {
+                    console.log(`âš ï¸ Element found but not clickable: visible=${isVisible}, enabled=${isEnabled}`);
+                }
+                
+                return {
+                    found: true,
+                    clicked: false,
+                    strategy: strategy.name,
+                    method: strategy.description
+                };
+            }
+            
+        } catch (error) {
+            console.log(`âŒ Strategy ${strategy.name} failed:`, error.message);
+        }
+    }
+    
+    console.log('âŒ v5.0: All ì „ì²´ë³´ê¸° detection strategies failed');
+    return {
+        found: false,
+        clicked: false,
+        strategy: 'none',
+        method: 'all strategies failed'
+    };
+}
+
+// ğŸ¯ ENHANCED EXTRACTION v5.0 - Better Korean text handling
+async function extractWithPlaywrightV5(page, config, supabaseClient, dataType, metrics) {
+    console.log(`ğŸ“Š v5.0: Starting enhanced extraction for ${dataType}...`);
+    
+    try {
+        // Enhanced table detection
+        const tableData = await page.evaluate(() => {
+            // Multiple table selection strategies
+            const tables = [
+                ...document.querySelectorAll('table'),
+                ...document.querySelectorAll('.data-table'),
+                ...document.querySelectorAll('.grid'),
+                ...document.querySelectorAll('[role="table"]')
+            ];
+            
+            let bestTable = null;
+            let maxRows = 0;
+            
+            // Find table with most data rows
+            tables.forEach(table => {
+                const rows = table.querySelectorAll('tr');
+                if (rows.length > maxRows) {
+                    maxRows = rows.length;
+                    bestTable = table;
+                }
+            });
+            
+            if (!bestTable) {
+                return [];
+            }
+            
+            const rows = Array.from(bestTable.querySelectorAll('tr'));
+            const records = [];
+            
+            // Enhanced header detection
+            let headerRow = null;
+            for (let i = 0; i < Math.min(3, rows.length); i++) {
+                const cells = rows[i].querySelectorAll('th, td');
+                if (cells.length > 0) {
+                    const headerText = Array.from(cells).map(cell => cell.textContent.trim()).join('|');
+                    if (headerText.includes('ë²ˆí˜¸') || headerText.includes('êµ¬ë¶„') || headerText.includes('íšŒì‚¬') || headerText.includes('ì´ë¦„')) {
+                        headerRow = rows[i];
+                        break;
                     }
                 }
-            } catch (error) {
-                // Continue to next selector
             }
-        }
-        console.log(`? ï¸ Could not find sidebar menu: ${menuText}`);
-        return false;
-    }
-
-    // 8-MENU TRAVERSAL SEQUENCE
-    console.log('\n?¯ STARTING 7-MENU TRAVERSAL SEQUENCE');
-
-    // 1. ?¬ì?¤ì  (Already on this page)
-    await Actor.setStatusMessage('?“Š MENU 1/8: ?¬ì?¤ì ...');
-    console.log('\n?“Š MENU 1/8: ?¬ì?¤ì ');
-    
-    if (await findAndClick?„ì²´ë³´ê¸°('?¬ì?¤ì ')) {
-        const ?¬ì?¤ì Data = await extractAllTableData('?¬ì?¤ì ') || [];
-        allScrapedData.push(...?¬ì?¤ì Data);
-        menuResults['?¬ì?¤ì '] = ?¬ì?¤ì Data.length;
-        console.log(`???¬ì?¤ì : ${?¬ì?¤ì Data.length} records (baseline: ${DATA_BASELINES['?¬ì?¤ì ']})`);
-    }
-
-    // 2. ?¬ë¬´?œí‘œ (2 sub-sections)
-    await Actor.setStatusMessage('?“Š MENU 2/8: ?¬ë¬´?œí‘œ...');
-    console.log('\n?“Š MENU 2/8: ?¬ë¬´?œí‘œ');
-    await scrollToTop();
-    
-    if (await clickSidebarMenu('?¬ë¬´?œí‘œ')) {
-        // 2a. ?¬ë¬´?íƒœ??(default highlighted)
-        console.log('?“‹ Sub-section: ?¬ë¬´?íƒœ??);
-        if (await findAndClick?„ì²´ë³´ê¸°('?¬ë¬´?œí‘œ-?¬ë¬´?íƒœ??)) {
-            const ?¬ë¬´?íƒœ?œData = await extractAllTableData('?¬ë¬´?íƒœ??) || [];
-            allScrapedData.push(...?¬ë¬´?íƒœ?œData);
-            menuResults['?¬ë¬´?íƒœ??] = ?¬ë¬´?íƒœ?œData.length;
-            console.log(`?“¥ ?¬ë¬´?íƒœ?? ${?¬ë¬´?íƒœ?œData.length} records extracted (RAW - will be filtered later)`);
-        }
-        
-        await scrollToTop();
-        
-        // 2b. ?ìµê³„ì‚°??tab
-        console.log('?“‹ Sub-section: ?ìµê³„ì‚°??);
-        const ?ìµê³„ì‚°?œTab = await page.locator('text=?ìµê³„ì‚°??).first();
-        if (await ?ìµê³„ì‚°?œTab.isVisible({ timeout: 3000 })) {
-            await ?ìµê³„ì‚°?œTab.click();
-            await page.waitForTimeout(2000);
             
-            if (await findAndClick?„ì²´ë³´ê¸°('?¬ë¬´?œí‘œ-?ìµê³„ì‚°??)) {
-                const ?ìµê³„ì‚°?œData = await extractAllTableData('?ìµê³„ì‚°??) || [];
-                allScrapedData.push(...?ìµê³„ì‚°?œData);
-                menuResults['?ìµê³„ì‚°??] = ?ìµê³„ì‚°?œData.length;
-                console.log(`?“¥ ?ìµê³„ì‚°?? ${?ìµê³„ì‚°?œData.length} records extracted (RAW - will be filtered later)`);
+            const startIndex = headerRow ? rows.indexOf(headerRow) + 1 : 1;
+            
+            // Extract data rows with enhanced Korean text handling
+            for (let i = startIndex; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = Array.from(row.querySelectorAll('td, th'));
+                
+                if (cells.length > 0) {
+                    const record = {};
+                    
+                    cells.forEach((cell, index) => {
+                        const text = cell.textContent.trim();
+                        if (text && text !== '-' && text !== '0') {
+                            record[`field_${index}`] = text;
+                        }
+                    });
+                    
+                    // Only include rows with meaningful data
+                    if (Object.keys(record).length > 1) {
+                        records.push(record);
+                    }
+                }
             }
+            
+            return records;
+        });
+        
+        console.log(`ğŸ“Š v5.0: Extracted ${tableData.length} raw records for ${dataType}`);
+        
+        // Enhanced record transformation and storage
+        let successCount = 0;
+        let errorCount = 0;
+        
+        if (tableData.length > 0 && supabaseClient && config.exportToSupabase) {
+            const transformedRecords = tableData.map(record => 
+                transformRecordForSupabaseV5(record, dataType)
+            ).filter(record => record !== null);
+            
+            console.log(`ğŸ“Š v5.0: Transformed ${transformedRecords.length} records for Supabase`);
+            
+            if (transformedRecords.length > 0) {
+                try {
+                    const tableName = getSupabaseTableNameV5(dataType);
+                    
+                    // Enhanced batch insertion with retry logic
+                    for (let i = 0; i < transformedRecords.length; i += 50) {
+                        const batch = transformedRecords.slice(i, i + 50);
+                        
+                        try {
+                            const { data, error } = await supabaseClient
+                                .from(tableName)
+                                .upsert(batch, { 
+                                    onConflict: 'id,scraped_at',
+                                    ignoreDuplicates: false 
+                                });
+                            
+                            if (error) {
+                                console.error(`âŒ v5.0: Supabase error for ${dataType} batch ${i}:`, error.message);
+                                errorCount += batch.length;
+                            } else {
+                                successCount += batch.length;
+                                console.log(`âœ… v5.0: Inserted batch ${i}-${i+batch.length} for ${dataType}`);
+                            }
+                        } catch (batchError) {
+                            console.error(`âŒ v5.0: Batch insertion error:`, batchError.message);
+                            errorCount += batch.length;
+                        }
+                    }
+                    
+                } catch (supabaseError) {
+                    console.error(`âŒ v5.0: Supabase operation failed for ${dataType}:`, supabaseError.message);
+                    errorCount = transformedRecords.length;
+                }
+            }
+        } else if (tableData.length > 0) {
+            successCount = tableData.length;
+            console.log(`ğŸ“Š v5.0: ${successCount} records extracted (Supabase export disabled)`);
         }
-    }
-
-    // 3. ì¡°í•©?„í™©
-    await Actor.setStatusMessage('?“Š MENU 3/8: ì¡°í•©?„í™©...');
-    console.log('\n?“Š MENU 3/8: ì¡°í•©?„í™©');
-    await scrollToTop();
-    
-    if (await clickSidebarMenu('ì¡°í•©?„í™©')) {
-        if (await findAndClick?„ì²´ë³´ê¸°('ì¡°í•©?„í™©')) {
-            const ì¡°í•©?„í™©Data = await extractAllTableData('ì¡°í•©?„í™©') || [];
-            allScrapedData.push(...ì¡°í•©?„í™©Data);
-            menuResults['ì¡°í•©?„í™©'] = ì¡°í•©?„í™©Data.length;
-            console.log(`??ì¡°í•©?„í™©: ${ì¡°í•©?„í™©Data.length} records (baseline: ${DATA_BASELINES['ì¡°í•©?„í™©']})`);
-        }
-    }
-
-    // 4. ?¸ë ¥?„í™©
-    await Actor.setStatusMessage('?“Š MENU 4/8: ?¸ë ¥?„í™©...');
-    console.log('\n?“Š MENU 4/8: ?¸ë ¥?„í™©');
-    await scrollToTop();
-    
-    if (await clickSidebarMenu('?¸ë ¥?„í™©')) {
-        if (await findAndClick?„ì²´ë³´ê¸°('?¸ë ¥?„í™©')) {
-            const ?¸ë ¥?„í™©Data = await extractAllTableData('?¸ë ¥?„í™©') || [];
-            allScrapedData.push(...?¸ë ¥?„í™©Data);
-            menuResults['?¸ë ¥?„í™©'] = ?¸ë ¥?„í™©Data.length;
-            console.log(`???¸ë ¥?„í™©: ${?¸ë ¥?„í™©Data.length} records (baseline: ${DATA_BASELINES['?¸ë ¥?„í™©']})`);
-        }
-    }
-
-    // 5. ?„ë¬¸?¸ë ¥?„í™©
-    await Actor.setStatusMessage('?“Š MENU 5/8: ?„ë¬¸?¸ë ¥?„í™©...');
-    console.log('\n?“Š MENU 5/8: ?„ë¬¸?¸ë ¥?„í™©');
-    await scrollToTop();
-    
-    if (await clickSidebarMenu('?„ë¬¸?¸ë ¥?„í™©')) {
-        if (await findAndClick?„ì²´ë³´ê¸°('?„ë¬¸?¸ë ¥?„í™©')) {
-            const ?„ë¬¸?¸ë ¥?„í™©Data = await extractAllTableData('?„ë¬¸?¸ë ¥?„í™©') || [];
-            allScrapedData.push(...?„ë¬¸?¸ë ¥?„í™©Data);
-            menuResults['?„ë¬¸?¸ë ¥?„í™©'] = ?„ë¬¸?¸ë ¥?„í™©Data.length;
-            console.log(`???„ë¬¸?¸ë ¥?„í™©: ${?„ë¬¸?¸ë ¥?„í™©Data.length} records (baseline: ${DATA_BASELINES['?„ë¬¸?¸ë ¥?„í™©']})`);
-        }
-    }
-
-    // 6. ë²•ê·œ?„ë°˜?„í™©
-    await Actor.setStatusMessage('?“Š MENU 6/8: ë²•ê·œ?„ë°˜?„í™©...');
-    console.log('\n?“Š MENU 6/8: ë²•ê·œ?„ë°˜?„í™©');
-    await scrollToTop();
-    
-    if (await clickSidebarMenu('ë²•ê·œ?„ë°˜?„í™©')) {
-        if (await findAndClick?„ì²´ë³´ê¸°('ë²•ê·œ?„ë°˜?„í™©')) {
-            const ë²•ê·œ?„ë°˜?„í™©Data = await extractAllTableData('ë²•ê·œ?„ë°˜?„í™©') || [];
-            allScrapedData.push(...ë²•ê·œ?„ë°˜?„í™©Data);
-            menuResults['ë²•ê·œ?„ë°˜?„í™©'] = ë²•ê·œ?„ë°˜?„í™©Data.length;
-            console.log(`??ë²•ê·œ?„ë°˜?„í™©: ${ë²•ê·œ?„ë°˜?„í™©Data.length} records (baseline: ${DATA_BASELINES['ë²•ê·œ?„ë°˜?„í™©']})`);
-        }
-    }
-
-    // 7. VC MAP
-    await Actor.setStatusMessage('?“Š MENU 7/8: VC MAP...');
-    console.log('\n?“Š MENU 7/8: VC MAP');
-    await scrollToTop();
-    
-    if (await clickSidebarMenu('VC MAP')) {
-        if (await findAndClick?„ì²´ë³´ê¸°('VC MAP')) {
-            const VCMAPData = await extractAllTableData('VC MAP') || [];
-            allScrapedData.push(...VCMAPData);
-            menuResults['VC MAP'] = VCMAPData.length;
-            console.log(`??VC MAP: ${VCMAPData.length} records (baseline: ${DATA_BASELINES['VC MAP']})`);
-        }
-    }
-
-    // VC?µê³„?•ë³´ section removed - handled by separate PDF scraper app
-    console.log('\n?“Š MENU 8/8: Skipping VC?µê³„?•ë³´ (handled by separate PDF app)');
-
-    // FINAL RESULTS SUMMARY
-    console.log('\n?¯ 7-MENU TRAVERSAL COMPLETE - FINAL RESULTS:');
-    console.log('==========================================');
-    
-    let totalRecords = 0;
-    let successfulMenus = 0;
-    
-    for (const [menuName, baseline] of Object.entries(DATA_BASELINES)) {
-        const actual = menuResults[menuName] || 0;
-        const status = actual >= baseline * 0.8 ? '?? : actual > 0 ? '? ï¸' : '??;
-        const percentage = baseline > 0 ? `(${Math.round(actual/baseline*100)}%)` : '';
         
-        console.log(`${status} ${menuName}: ${actual}/${baseline} ${percentage}`);
+        const result = {
+            records: successCount + errorCount,
+            errors: errorCount
+        };
         
-        if (actual > 0) {
-            totalRecords += actual;
-            if (actual >= baseline * 0.8) successfulMenus++;
-        }
-    }
-    
-    console.log('==========================================');
-    console.log(`?“Š Total Records: ${totalRecords}`);
-    console.log(`??Successful Menus: ${successfulMenus}/7`);
-    console.log(`?“ Raw Data Collected: ${allScrapedData.length} records`);
-
-    // APPLY FILTERING FOR 100% CONTROL DATA MATCH
-    console.log('\n?¯ APPLYING FILTERING FOR 100% CONTROL MATCH...');
-    
-    let finalData = [...allScrapedData];
-    
-    // 1. Extract and filter ?¬ë¬´?œí‘œ data
-    const ?¬ë¬´?œí‘œData = allScrapedData.filter(record => 
-        record.menuName === '?¬ë¬´?íƒœ?? || record.menuName === '?ìµê³„ì‚°??
-    );
-    
-    if (?¬ë¬´?œí‘œData.length > 0) {
-        console.log(`?“Š Processing ${?¬ë¬´?œí‘œData.length} ?¬ë¬´?œí‘œ records...`);
+        console.log(`ğŸ“Š v5.0 EXTRACTION RESULT for ${dataType}:`);
+        console.log(`   Total: ${result.records}, Success: ${successCount}, Errors: ${errorCount}`);
         
-        // Apply filtering logic
-        const filteredFinancialStatementsData = processFinancialStatementsData(Àç¹«Á¦Ç¥Data);
+        return result;
         
-        // Replace ?¬ë¬´?œí‘œ data in final dataset
-        finalData = allScrapedData.filter(record => 
-            record.menuName !== '?¬ë¬´?íƒœ?? && record.menuName !== '?ìµê³„ì‚°??
-        );
-        finalData.push(...filteredFinancialStatementsData);
-        
-        console.log(`???¬ë¬´?œí‘œ filtering complete:`);
-        console.log(`   Raw extracted: ${?¬ë¬´?œí‘œData.length} records`);
-        console.log(   Filtered result:  records);
-        console.log(   Target achievement: /500 (%));
-    }
-    
-    // 2. Extract and filter ì¡°í•©?„í™© data
-    const ì¡°í•©?„í™©Data = finalData.filter(record => record.menuName === 'ì¡°í•©?„í™©');
-    
-    if (ì¡°í•©?„í™©Data.length > 0) {
-        console.log(`?“Š Processing ${ì¡°í•©?„í™©Data.length} ì¡°í•©?„í™© records...`);
-        
-        // Apply filtering logic to achieve exactly 2231 records
-        const filteredPartnershipStatusData = filterPartnershipStatusRecords(Á¶ÇÕÇöÈ²Data, 2231);
-        
-        // Replace ì¡°í•©?„í™© data in final dataset
-        finalData = finalData.filter(record => record.menuName !== 'ì¡°í•©?„í™©');
-        finalData.push(...filteredì¡°í•©?„í™©Data);
-        finalData.push(...filteredPartnershipStatusData);
-        console.log(`??ì¡°í•©?„í™© filtering complete:`);
-        console.log(`   Before: ${ì¡°í•©?„í™©Data.length} records`);
-        console.log(   After:  records);
-        console.log(   Control match: /2231 (%));
-    }
-
-    // Save filtered data
-    if (finalData.length > 0) {
-        // Batch save all records at once for performance
-        await Actor.pushData(finalData);
-        console.log(? Final filtered data saved:  records);
-
-        
-        // Updated summary with filtered results
-        const filtered?¬ë¬´?íƒœ?œCount = finalData.filter(r => r.menuName === '?¬ë¬´?íƒœ??).length;
-        const filtered?ìµê³„ì‚°?œCount = finalData.filter(r => r.menuName === '?ìµê³„ì‚°??).length;
-        const filteredì¡°í•©?„í™©Count = finalData.filter(r => r.menuName === 'ì¡°í•©?„í™©').length;
-        
-        console.log('\n?“Š FINAL FILTERED RESULTS (SAVED TO DATASET):');
-        console.log('==============================================');
-        console.log(`???¬ë¬´?íƒœ?? ${filtered?¬ë¬´?íƒœ?œCount}/250 (${((filtered?¬ë¬´?íƒœ?œCount / 250) * 100).toFixed(1)}%)`);
-        console.log(`???ìµê³„ì‚°?? ${filtered?ìµê³„ì‚°?œCount}/250 (${((filtered?ìµê³„ì‚°?œCount / 250) * 100).toFixed(1)}%)`);
-        console.log(`??ì¡°í•©?„í™©: ${filteredì¡°í•©?„í™©Count}/2231 (${((filteredì¡°í•©?„í™©Count / 2231) * 100).toFixed(1)}%)`);
-        
-        if (filtered?¬ë¬´?íƒœ?œCount === 250 && filtered?ìµê³„ì‚°?œCount === 250 && filteredì¡°í•©?„í™©Count === 2231) {
-            console.log('?† 100% CONTROL DATA MATCH ACHIEVED FOR ALL FILTERED MENUS!');
-        } else {
-            console.log('? ï¸ Some menus did not achieve 100% target match - check filtering logic');
-        }
-    }
-
-    // Final status
-    if (successfulMenus >= 6) {
-        await Actor.setStatusMessage(`??SUCCESS: ${successfulMenus}/7 menus, ${totalRecords} records`);
-    } else if (successfulMenus >= 4) {
-        await Actor.setStatusMessage(`? ï¸ PARTIAL: ${successfulMenus}/7 menus, ${totalRecords} records`);
-    } else {
-        await Actor.setStatusMessage(`??FAILED: Only ${successfulMenus}/7 menus successful`);
-    }
-
-} catch (error) {
-    console.log(`??SCRAPER ERROR: ${error.message}`);
-    await Actor.setStatusMessage(`??Error: ${error.message}`);
-    await Actor.fail(error.message);
-} finally {
-    if (page) {
-        await page.close();
-    }
-    if (browser) {
-        await browser.close();
+    } catch (error) {
+        console.error(`âŒ v5.0: Extraction failed for ${dataType}:`, error.message);
+        return { records: 0, errors: 1 };
     }
 }
 
-    console.log('? COMPLETE 7-MENU TRAVERSAL SCRAPER FINISHED');
-}); 
+// ğŸ¯ ENHANCED RECORD TRANSFORMATION v5.0
+function transformRecordForSupabaseV5(rawData, dataType) {
+    try {
+        const baseRecord = {
+            id: `${dataType}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            data_type: dataType,
+            scraped_at: new Date().toISOString(),
+            raw_data: rawData,
+            metadata: {
+                version: 'DIVA_SCRAPER_V5.0_ENHANCED_PLAYWRIGHT',
+                extraction_method: 'enhanced_multi_strategy',
+                korean_text_support: true
+            }
+        };
+        
+        // Enhanced field mapping based on data type
+        const fieldMappings = {
+            violations: {
+                company_name: ['field_1', 'field_2', 'field_0'],
+                violation_type: ['field_3', 'field_4'],
+                violation_date: ['field_5', 'field_6'],
+                penalty_amount: ['field_7', 'field_8']
+            },
+            investment_performance: {
+                company_name: ['field_0', 'field_1'],
+                investment_amount: ['field_2', 'field_3'],
+                investment_date: ['field_4', 'field_5']
+            },
+            financial_statements: {
+                company_name: ['field_0', 'field_1'],
+                revenue: ['field_2', 'field_3'],
+                assets: ['field_4', 'field_5']
+            }
+        };
+        
+        if (fieldMappings[dataType]) {
+            Object.entries(fieldMappings[dataType]).forEach(([targetField, sourceFields]) => {
+                for (const sourceField of sourceFields) {
+                    if (rawData[sourceField] && rawData[sourceField].trim()) {
+                        baseRecord[targetField] = rawData[sourceField].trim();
+                        break;
+                    }
+                }
+            });
+        }
+        
+        return baseRecord;
+        
+    } catch (error) {
+        console.error(`âŒ v5.0: Record transformation failed:`, error.message);
+        return null;
+    }
+}
+
+// ğŸ¯ ENHANCED TABLE NAME MAPPING v5.0
+function getSupabaseTableNameV5(dataType) {
+    const tableMap = {
+        investment_performance: 'diva_investment_performance',
+        financial_statements: 'diva_financial_statements',
+        association_status: 'diva_association_status',
+        personnel_status: 'diva_personnel_status',
+        professional_personnel: 'diva_professional_personnel',
+        violations: 'diva_violations',
+        vc_map: 'diva_vc_map',
+        statistics: 'diva_statistics'
+    };
+    
+    return tableMap[dataType] || `diva_${dataType}`;
+}
+
+// ğŸ¯ ENHANCED SUPABASE INITIALIZATION v5.0
+async function initializeSupabaseClientV5(input) {
+    try {
+        const supabaseUrl = input.supabaseUrl || process.env.SUPABASE_URL;
+        const supabaseKey = input.supabaseServiceRoleKey || process.env.SUPABASE_SERVICE_ROLE_KEY;
+        
+        if (!supabaseUrl || !supabaseKey) {
+            console.error('âŒ v5.0: Missing Supabase credentials');
+            return null;
+        }
+        
+        console.log('ğŸ”§ v5.0: Initializing enhanced Supabase client...');
+        
+        const client = createClient(supabaseUrl, supabaseKey, {
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false
+            },
+            db: {
+                schema: 'public'
+            }
+        });
+        
+        // Test connection
+        const { data, error } = await client.from('diva_violations').select('count').limit(1);
+        
+        if (error) {
+            console.log('âš ï¸ v5.0: Supabase test query warning:', error.message);
+        } else {
+            console.log('âœ… v5.0: Supabase connection verified');
+        }
+        
+        return client;
+        
+    } catch (error) {
+        console.error('âŒ v5.0: Supabase initialization failed:', error.message);
+        return null;
+    }
+}
+
+// ğŸ¯ DATA SOURCE SELECTION HELPER
+function getDataSources(dataSource, urls) {
+    if (dataSource === 'violations') {
+        return [urls.violations];
+    } else if (dataSource === 'all') {
+        return Object.values(urls);
+    } else if (urls[dataSource]) {
+        return [urls[dataSource]];
+    } else {
+        return Object.values(urls);
+    }
+} 
