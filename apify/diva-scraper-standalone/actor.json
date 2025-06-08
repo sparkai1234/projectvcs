@@ -1,9 +1,9 @@
 {
     "actorSpecification": 1,
     "name": "korean-diva-scraper-standalone",
-    "title": "🇰🇷 Korean DIVA Financial Data Scraper v5.2 - 100% Accuracy Edition",
-    "description": "Production-ready Playwright scraper with 100% data accuracy across 7 menus. Features smart filtering for 재무제표 + 조합현황, achieving perfect 5,052 record control matching. Zero duplicates, complete field validation.",
-    "version": "5.2",
+    "title": "🇰🇷 Korean DIVA Financial Data Scraper v5.3.6 - Precision Benchmark Edition",
+    "description": "Production-ready Playwright scraper targeting 100% benchmark accuracy: 333, 500, 2231, 251, 1685, 92, 251 exact record matches. Features smart filtering, extended timeouts, violations priority, and precision data extraction.",
+    "version": "5.3.6",
     "meta": {
         "templateId": "javascript-node"
     },
@@ -26,7 +26,7 @@
             "input": {
                 "updateMode": "incremental",
                 "dataSource": "all",
-                "maxPages": 50,
+                "maxPages": 999,
                 "targetRecords": 92,
                 "enableScreenshots": true,
                 "waitStrategy": "networkidle",
