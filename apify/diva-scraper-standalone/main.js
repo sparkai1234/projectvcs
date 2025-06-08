@@ -1,6 +1,6 @@
 /**
- * DIVA SCRAPER v5.3.11 - SCALABLE & INTERFERENCE-PROTECTED EDITION
- * ================================================================
+ * DIVA SCRAPER v5.3.12 - KOREAN UI COMPREHENSIVE PROTECTION EDITION
+ * ==================================================================
  *
  * SCALABILITY IMPROVEMENTS:
  * 1. Financial Statements: REMOVED hard limits - natural count scaling
@@ -20,12 +20,12 @@
 import { Actor } from 'apify';
 import { PlaywrightCrawler } from 'crawlee';
 
-console.log('DIVA SCRAPER v5.3.11 - SCALABLE & INTERFERENCE-PROTECTED EDITION');
+console.log('DIVA SCRAPER v5.3.12 - KOREAN UI COMPREHENSIVE PROTECTION EDITION');
 console.log('IMPROVEMENTS: Removed hard limits + 상세 button interference protection');
 console.log('TARGET: Scalable production deployment for unknown dataset sizes');
 
 Actor.main(async () => {
-    console.log('Starting DIVA Scraper v5.3.11 - Scalable & Interference-Protected Edition...');
+    console.log('Starting DIVA Scraper v5.3.12 - Korean UI Comprehensive Protection Edition...');
     
     const input = await Actor.getInput();
     
@@ -51,7 +51,7 @@ Actor.main(async () => {
         }
     };
     
-    console.log('Scalable Configuration v5.3.11:');
+    console.log('Korean UI Protection Configuration v5.3.12:');
     console.log('CONTROL TARGETS: 333, 500, 2231, 251, 1685, 92, 251');
     console.log('IMPROVEMENT 1: Financial statements - NO hard limits (natural scaling)');
     console.log('IMPROVEMENT 2: Interference protection against 상세 buttons');
@@ -144,7 +144,7 @@ Actor.main(async () => {
                                 ...record,
                                 dataSource: dataType,
                                 extractedAt: new Date().toISOString(),
-                                version: 'v5.3.11-scalable-interference-protected'
+                                version: 'v5.3.12-korean-ui-comprehensive-protection'
                             });
                         }
                     } else {
@@ -246,7 +246,7 @@ Actor.main(async () => {
                             ...record,
                             dataSource: dataType,
                             extractedAt: new Date().toISOString(),
-                                version: 'v5.3.11-scalable-interference-protected'
+                                version: 'v5.3.12-korean-ui-comprehensive-protection'
                         });
                     }
                 } else {
@@ -286,7 +286,7 @@ Actor.main(async () => {
     const endTime = Date.now();
     const duration = (endTime - metrics.startTime) / 1000;
     
-            console.log(`\n=== DIVA SCRAPER v5.3.11 - SCALABLE & INTERFERENCE-PROTECTED REPORT ===`);
+            console.log(`\n=== DIVA SCRAPER v5.3.12 - KOREAN UI COMPREHENSIVE PROTECTION REPORT ===`);
     console.log(`Total Runtime: ${duration.toFixed(1)} seconds`);
     console.log(`Total Records: ${metrics.totalRecords}`);
     console.log(`Successful Records: ${metrics.successfulRecords}`);
@@ -421,37 +421,96 @@ async function enhancedScrollAndWait(page, dataType) {
 }
 
 async function detectPaginationElements(page) {
-    // Detect pagination elements for AVOIDANCE (not clicking)
-    const paginationSelectors = [
-        'text=/더보기|더 보기/i',
-        'text=/다음|Next/i',
-        'text=/이전|Previous/i', 
-        'text=/페이지|Page/i',
-        '[class*="pagination"]',
-        '[class*="pager"]',
-        '[class*="more"]',
-        '[class*="next"]',
-        '[class*="prev"]'
-    ];
+    console.log('🚫 COMPREHENSIVE KOREAN PAGINATION AVOIDANCE...');
     
-    const detectedElements = [];
+    // Take screenshot of pagination area
+    const paginationTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    await page.screenshot({ 
+        path: `debug-pagination-detection-${paginationTimestamp}.png`,
+        fullPage: true 
+    });
+    console.log(`📸 Pagination Screenshot: debug-pagination-detection-${paginationTimestamp}.png`);
     
-    for (const selector of paginationSelectors) {
-        try {
-            const elements = await page.$$(selector);
-            if (elements.length > 0) {
-                detectedElements.push({
-                    selector,
-                    count: elements.length
+    // Comprehensive pagination element detection and avoidance
+    const detectedAndMarked = await page.evaluate(() => {
+        const paginationSelectors = [
+            // Korean pagination text
+            'text=/더보기|더 보기/i', 'text=/다음|Next/i', 'text=/이전|Previous/i', 'text=/페이지|Page/i',
+            'text=/첫페이지/i', 'text=/마지막페이지/i', 'text=/처음/i', 'text=/끝/i',
+            
+            // Standard pagination classes
+            '[class*="pagination"]', '[class*="pager"]', '[class*="more"]', '[class*="next"]', '[class*="prev"]',
+            
+            // Numbered pagination (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+            'a:has-text("1")', 'a:has-text("2")', 'a:has-text("3")', 'a:has-text("4")', 'a:has-text("5")',
+            'a:has-text("6")', 'a:has-text("7")', 'a:has-text("8")', 'a:has-text("9")', 'a:has-text("10")',
+            'button:has-text("1")', 'button:has-text("2")', 'button:has-text("3")', 'button:has-text("4")', 'button:has-text("5")',
+            'button:has-text("6")', 'button:has-text("7")', 'button:has-text("8")', 'button:has-text("9")', 'button:has-text("10")',
+            
+            // Navigation arrows and symbols
+            'button:has-text("◀")', 'button:has-text("▶")', 'button:has-text("<<")', 'button:has-text(">>")',
+            'a:has-text("◀")', 'a:has-text("▶")', 'a:has-text("<<")', 'a:has-text(">>")',
+            
+            // Page-related onclick handlers
+            '[onclick*="page"]', '[href*="page"]', '[onclick*="Page"]', '[href*="Page"]',
+            '[onclick*="pageNo"]', '[href*="pageNo"]', '[onclick*="currentPage"]',
+            
+            // Form elements that might trigger pagination
+            'select[name*="page"]', 'input[name*="page"]', 'select[onchange*="page"]'
+        ];
+        
+        const markedElements = [];
+        const detectedInfo = [];
+        
+        paginationSelectors.forEach(selector => {
+            try {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(element => {
+                    // Mark for complete avoidance
+                    element.setAttribute('data-avoid-pagination', 'true');
+                    element.style.pointerEvents = 'none';
+                    element.style.backgroundColor = 'rgba(255, 165, 0, 0.3)'; // Orange warning
+                    element.style.border = '3px solid orange';
+                    element.style.cursor = 'not-allowed';
+                    
+                    const elementInfo = {
+                        tag: element.tagName,
+                        text: element.textContent?.trim() || '',
+                        className: element.className || '',
+                        onclick: element.onclick ? 'has onclick' : '',
+                        href: element.href || '',
+                        selector: selector
+                    };
+                    
+                    markedElements.push(element);
+                    detectedInfo.push(elementInfo);
                 });
-                console.log(`  🔍 Detected: ${selector} (${elements.length} elements) - WILL AVOID`);
+                
+                if (elements.length > 0) {
+                    console.log(`🚫 MARKED PAGINATION: ${selector} (${elements.length} elements)`);
+                }
+            } catch (e) {
+                // Ignore selector errors
             }
-        } catch (e) {
-            continue;
-        }
-    }
+        });
+        
+        console.log(`🛡️ TOTAL PAGINATION PROTECTION: ${markedElements.length} elements marked to avoid`);
+        
+        return {
+            count: detectedInfo.length,
+            elements: detectedInfo,
+            markedCount: markedElements.length
+        };
+    });
     
-    return detectedElements;
+    console.log(`🚫 PAGINATION COMPLETE AVOIDANCE: Found and marked ${detectedAndMarked.markedCount} elements`);
+    detectedAndMarked.elements.forEach((element, index) => {
+        if (index < 10) { // Show first 10
+            console.log(`  ${index + 1}. ${element.tag} - "${element.text}" (${element.className})`);
+        }
+    });
+    
+    return detectedAndMarked.elements;
 }
 
 async function handleFinancialStatementsDualTabs(page, config, metrics) {
@@ -544,34 +603,95 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
 }
 
 async function detectAndAvoidInterferenceElements(page) {
-    console.log('🚫 Detecting interference elements to AVOID...');
+    console.log('🚫 Detecting KOREAN UI interference elements to AVOID...');
     
     try {
-        // Detect 상세 (detail) buttons and other popup triggers
+        // Take screenshot before interference protection
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        await page.screenshot({ 
+            path: `debug-before-interference-${timestamp}.png`,
+            fullPage: true 
+        });
+        console.log(`📸 Screenshot taken: debug-before-interference-${timestamp}.png`);
+        
+        // Comprehensive Korean UI interference detection
         const interferenceElements = await page.evaluate(() => {
+            const interferenceSources = [];
+            
+            // 1. 기준연도 (Year dropdown) - AVOID
+            const yearDropdowns = document.querySelectorAll('select, .dropdown, [name*="년"], [name*="year"], [id*="year"], [class*="year"]');
+            const yearButtons = document.querySelectorAll('button:has-text("기준연도"), [onclick*="기준연도"], [title*="기준연도"]');
+            interferenceSources.push(...yearDropdowns, ...yearButtons);
+            
+            // 2. 재원구분 (Funding type dropdown) - AVOID
+            const fundingDropdowns = document.querySelectorAll('[name*="재원"], [id*="재원"], [class*="재원"], [title*="재원구분"]');
+            const fundingButtons = document.querySelectorAll('button:has-text("재원구분"), [onclick*="재원구분"]');
+            interferenceSources.push(...fundingDropdowns, ...fundingButtons);
+            
+            // 3. 검색 (Search button) - AVOID
+            const searchButtons = document.querySelectorAll('button:has-text("검색"), input[type="submit"][value*="검색"], [onclick*="search"], [class*="search"], [id*="search"]');
+            interferenceSources.push(...searchButtons);
+            
+            // 4. Pagination elements - AVOID
+            const paginationElements = document.querySelectorAll('.pagination, .paging, .page-nav, [class*="page"], [onclick*="page"], [href*="page"]');
+            const pageNumbers = document.querySelectorAll('a[href*="page"], button[onclick*="page"], span[onclick*="page"]');
+            const navArrows = document.querySelectorAll('[class*="prev"], [class*="next"], [onclick*="prev"], [onclick*="next"]');
+            interferenceSources.push(...paginationElements, ...pageNumbers, ...navArrows);
+            
+            // 5. 상세 (Detail) buttons - AVOID
             const detailButtons = document.querySelectorAll('button:has-text("상세"), [onclick*="상세"], [href*="상세"], .detail-btn, .상세');
+            interferenceSources.push(...detailButtons);
+            
+            // 6. Other popup triggers - AVOID
             const popupTriggers = document.querySelectorAll('[onclick*="popup"], [onclick*="window.open"], [onclick*="modal"]');
             const otherInterference = document.querySelectorAll('button:has-text("더보기"), button:has-text("자세히"), .more-btn');
+            interferenceSources.push(...popupTriggers, ...otherInterference);
             
-            const allInterference = [...detailButtons, ...popupTriggers, ...otherInterference];
+            // 7. Form submit elements - AVOID
+            const formSubmits = document.querySelectorAll('input[type="submit"], button[type="submit"], [onclick*="submit"]');
+            interferenceSources.push(...formSubmits);
             
-            console.log(`Found ${allInterference.length} interference elements to avoid`);
+            console.log(`Found ${interferenceSources.length} total interference elements to avoid`);
             
-            // Mark interference elements for avoidance
-            allInterference.forEach((element, index) => {
-                element.setAttribute('data-avoid-interference', 'true');
-                element.style.pointerEvents = 'none'; // Prevent accidental clicks
-                console.log(`Marked interference element ${index + 1}: ${element.textContent?.trim() || element.tagName}`);
+            // Mark ALL interference elements for avoidance
+            const markedElements = [];
+            interferenceSources.forEach((element, index) => {
+                if (element) {
+                    element.setAttribute('data-avoid-interference', 'true');
+                    element.style.pointerEvents = 'none'; // Prevent accidental clicks
+                    element.style.backgroundColor = 'rgba(255, 0, 0, 0.1)'; // Visual debug marker
+                    element.style.border = '2px solid red'; // Visual debug marker
+                    
+                    const elementInfo = {
+                        tag: element.tagName,
+                        text: element.textContent?.trim() || '',
+                        id: element.id || '',
+                        className: element.className || '',
+                        type: element.type || ''
+                    };
+                    
+                    console.log(`🚫 AVOIDED ${index + 1}: ${elementInfo.tag} - "${elementInfo.text}" (${elementInfo.className})`);
+                    markedElements.push(elementInfo);
+                }
             });
             
-            return allInterference.length;
+            return markedElements.length;
         });
         
-        console.log(`🛡️ Protected against ${interferenceElements} interference elements`);
+        // Take screenshot after interference protection
+        await page.screenshot({ 
+            path: `debug-after-interference-${timestamp}.png`,
+            fullPage: true 
+        });
+        console.log(`📸 Screenshot taken: debug-after-interference-${timestamp}.png`);
+        
+        console.log(`🛡️ KOREAN UI PROTECTION: ${interferenceElements} elements marked to avoid`);
+        console.log(`🚫 AVOIDED: 기준연도, 재원구분, 검색, pagination, 상세, popups`);
+        
         return interferenceElements;
         
     } catch (error) {
-        console.error('Error detecting interference elements:', error.message);
+        console.error('Error detecting Korean UI interference elements:', error.message);
         return 0;
     }
 }
@@ -582,6 +702,14 @@ async function extractFinancialTabData(page, tabType) {
     try {
         // CRITICAL: Detect and avoid interference elements
         await detectAndAvoidInterferenceElements(page);
+        
+        // Take screenshot during extraction for debugging
+        const extractTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        await page.screenshot({ 
+            path: `debug-extracting-${tabType}-${extractTimestamp}.png`,
+            fullPage: true 
+        });
+        console.log(`📸 Extraction Screenshot: debug-extracting-${tabType}-${extractTimestamp}.png`);
         
         const extractedData = await page.evaluate((tabType) => {
             const rows = document.querySelectorAll('table tbody tr, .data-row, tr');
