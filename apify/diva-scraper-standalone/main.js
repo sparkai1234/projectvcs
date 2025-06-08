@@ -26,7 +26,7 @@ console.log('IMPROVEMENTS: Block FAMILY SITE selector, TOP button + all navigati
 console.log('TARGET: Prevent external site navigation during financial statements extraction');
 
 Actor.main(async () => {
-        console.log('Starting DIVA Scraper v5.3.14.9 - Screenshot Filename Fix Edition...');
+        console.log('Starting DIVA Scraper v5.3.14.10 - NUCLEAR PART 2 TOTAL LOCKDOWN Edition...');
 
     const input = await Actor.getInput();
     
@@ -52,11 +52,11 @@ Actor.main(async () => {
         }
     };
     
-    console.log('Screenshot Filename Fix Configuration v5.3.14.9:');
+    console.log('NUCLEAR PART 2 TOTAL LOCKDOWN Configuration v5.3.14.10:');
     console.log('CONTROL TARGETS: 333, 500, 2231, 251, 1685, 92, 251');
     console.log('STEP 1: Immediate interference detection and blocking');
     console.log('STEP 2: Clean 전체보기 button detection and clicking');
-    console.log('STEP 3: ASCII screenshot filenames + NUCLEAR navigation defense');
+    console.log('STEP 3: NUCLEAR PART 2 - Total lockdown of ALL navigation and detail buttons');
     
     const metrics = {
         startTime: Date.now(),
@@ -803,6 +803,11 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
         const blockedElements1 = await detectAndBlockInterferenceElementsFirst(page, 'financial_statements', metrics);
         console.log(`🚫 NUCLEAR BLOCKED: ${blockedElements1} interference elements for Balance Sheet tab`);
         
+        // NUCLEAR PART 2: TOTAL LOCKDOWN 
+        console.log('🚨 NUCLEAR PART 2: TOTAL LOCKDOWN - Blocking ALL navigation and detail buttons...');
+        const nuclearBlocked = await nuclearPart2TotalLockdown(page);
+        console.log(`🚨 NUCLEAR PART 2 COMPLETE: ${nuclearBlocked} elements in total lockdown`);
+        
         // SCREENSHOT 2: After blocking interference
         const interferenceTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const interferenceScreenshot = await page.screenshot({ fullPage: true });
@@ -1411,6 +1416,94 @@ async function blockFamilySiteSelector(page) {
             console.log(`🚫 BLOCKED FAMILY SITE SELECTOR: ${el.tagName} - "${el.textContent?.trim()}"`);
         });
         
+        return blocked;
+    });
+}
+
+// NUCLEAR PART 2: TOTAL LOCKDOWN - ABSOLUTE NAVIGATION BLOCKING
+async function nuclearPart2TotalLockdown(page) {
+    console.log('🚨 NUCLEAR PART 2: TOTAL LOCKDOWN INITIATED');
+    
+    await page.evaluate(() => {
+        let blocked = 0;
+        
+        // 1. NUCLEAR OPTION: Block ALL top navigation menus
+        const topNavElements = document.querySelectorAll('.gnb, .gnbArea, .lnb, .lnbArea, .headerWrap, .header, nav, .navigation, .menu, .nav-menu');
+        topNavElements.forEach(el => {
+            el.style.pointerEvents = 'none !important';
+            el.style.userSelect = 'none !important';
+            el.style.opacity = '0.3';
+            el.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+            el.setAttribute('data-nuclear-blocked', 'true');
+            blocked++;
+            console.log(`🚨 NUCLEAR BLOCKED TOP NAV: ${el.tagName} - "${el.className}"`);
+        });
+        
+        // 2. NUCLEAR OPTION: Block ALL breadcrumb navigation  
+        const breadcrumbElements = document.querySelectorAll('.path, .breadcrumb, .location, .titArea');
+        breadcrumbElements.forEach(el => {
+            el.style.pointerEvents = 'none !important';
+            el.style.userSelect = 'none !important';
+            el.style.opacity = '0.3';
+            el.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+            el.setAttribute('data-nuclear-blocked', 'true');
+            blocked++;
+            console.log(`🚨 NUCLEAR BLOCKED BREADCRUMB: ${el.tagName} - "${el.className}"`);
+        });
+        
+        // 3. NUCLEAR OPTION: AGGRESSIVE 상세 BUTTON BLOCKING
+        const detailButtons = document.querySelectorAll('a, button, input, span, div');
+        detailButtons.forEach(el => {
+            const text = el.textContent?.trim() || el.value?.trim() || '';
+            if (text === '상세' || text.includes('상세')) {
+                // Multiple layers of blocking
+                el.style.pointerEvents = 'none !important';
+                el.style.cursor = 'not-allowed !important';
+                el.style.backgroundColor = 'rgba(255, 0, 0, 0.5) !important';
+                el.style.border = '2px solid red !important';
+                el.style.userSelect = 'none !important';
+                el.disabled = true;
+                el.setAttribute('data-nuclear-blocked', 'true');
+                el.setAttribute('onclick', 'return false;');
+                el.removeAttribute('href');
+                
+                // Remove all event listeners
+                const newEl = el.cloneNode(true);
+                el.parentNode.replaceChild(newEl, el);
+                
+                blocked++;
+                console.log(`🚨 NUCLEAR BLOCKED 상세 BUTTON: ${el.tagName} - "${text}"`);
+            }
+        });
+        
+        // 4. NUCLEAR OPTION: Block ALL links in header/navigation areas
+        const allLinks = document.querySelectorAll('header a, nav a, .header a, .nav a, .gnb a, .lnb a, .menu a');
+        allLinks.forEach(el => {
+            el.style.pointerEvents = 'none !important';
+            el.style.cursor = 'not-allowed !important';
+            el.style.textDecoration = 'line-through';
+            el.style.color = '#999 !important';
+            el.removeAttribute('href');
+            el.setAttribute('data-nuclear-blocked', 'true');
+            blocked++;
+            console.log(`🚨 NUCLEAR BLOCKED NAV LINK: "${el.textContent?.trim()}"`);
+        });
+        
+        // 5. NUCLEAR OPTION: Disable ALL JavaScript events on blocked elements
+        const allElements = document.querySelectorAll('[data-nuclear-blocked="true"]');
+        allElements.forEach(el => {
+            ['click', 'mousedown', 'mouseup', 'mouseover', 'focus', 'blur', 'change', 'submit'].forEach(eventType => {
+                el.addEventListener(eventType, function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    console.log(`🚨 NUCLEAR BLOCKED EVENT: ${eventType} on ${el.tagName}`);
+                    return false;
+                }, true);
+            });
+        });
+        
+        console.log(`🚨 NUCLEAR PART 2 COMPLETE: ${blocked} elements locked down`);
         return blocked;
     });
 } 
