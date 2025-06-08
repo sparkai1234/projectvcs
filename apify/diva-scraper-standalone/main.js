@@ -396,8 +396,85 @@ async function detectAndBlockInterferenceElementsFirst(page, dataType, metrics) 
                 });
             }
             
-            // 1. FINANCIAL STATEMENTS SPECIFIC INTERFERENCE (only on DivItmFsInq page)
+            // Helper function to block pagination elements consistently across all pages
+            function blockPaginationElementsConsistently() {
+                console.log(`CONSISTENT PAGINATION BLOCKING: Blocking pagination on ${dataType} page...`);
+                
+                // Block numbered pagination (1-10) - look for exact text matches
+                const pageNumbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+                pageNumbers.forEach(num => {
+                    const pageElements = document.querySelectorAll('a, button, span');
+                    pageElements.forEach(el => {
+                        const text = el.textContent?.trim() || '';
+                        // Only block if it's exactly a page number and likely pagination
+                        if (text === num && 
+                            (el.getAttribute('href') || el.getAttribute('onclick') || 
+                             el.closest('.pagination') || el.closest('.paging') || 
+                             el.closest('.page-nav') || 
+                             el.parentElement?.children.length > 5)) { // Multiple similar elements
+                            el.setAttribute('data-blocked-interference', 'true');
+                            el.style.pointerEvents = 'none';
+                            el.style.backgroundColor = 'rgba(255, 165, 0, 0.3)';
+                            el.style.border = '2px solid orange';
+                            el.style.cursor = 'not-allowed';
+                            blocked++;
+                            console.log(`BLOCKED PAGE NUMBER: ${el.tagName} - "${text}"`);
+                        }
+                    });
+                });
+                
+                // Block navigation arrows and text consistently
+                const navTexts = ['다음', '이전', 'Next', 'Previous', '첫', '마지막', '처음', '끝', '◀', '▶', '<<', '>>'];
+                navTexts.forEach(navText => {
+                    const navElements = document.querySelectorAll('a, button, span');
+                    navElements.forEach(el => {
+                        const text = el.textContent?.trim() || '';
+                        if (text === navText && 
+                            (el.getAttribute('href') || el.getAttribute('onclick'))) {
+                            el.setAttribute('data-blocked-interference', 'true');
+                            el.style.pointerEvents = 'none';
+                            el.style.backgroundColor = 'rgba(255, 165, 0, 0.3)';
+                            el.style.border = '2px solid orange';
+                            el.style.cursor = 'not-allowed';
+                            blocked++;
+                            console.log(`BLOCKED NAV ELEMENT: ${el.tagName} - "${text}"`);
+                        }
+                    });
+                });
+                
+                // Block elements with pagination-related attributes consistently
+                const paginationAttributeElements = document.querySelectorAll('[onclick*="page"], [href*="page"], [onclick*="Page"], [href*="Page"], [onclick*="pageNo"], [href*="pageNo"]');
+                paginationAttributeElements.forEach(el => {
+                    const text = el.textContent?.trim() || '';
+                    // Don't block legitimate navigation or 전체보기
+                    if (text !== '전체보기' && 
+                        !text.includes('투자실적') && 
+                        !text.includes('재무제표') && 
+                        !text.includes('조합현황') && 
+                        !text.includes('인력현황') && 
+                        !text.includes('전문인력현황') && 
+                        !text.includes('법규위반') && 
+                        !text.includes('VC MAP')) {
+                        el.setAttribute('data-blocked-interference', 'true');
+                        el.style.pointerEvents = 'none';
+                        el.style.backgroundColor = 'rgba(255, 165, 0, 0.3)';
+                        el.style.border = '2px solid orange';
+                        el.style.cursor = 'not-allowed';
+                        blocked++;
+                        console.log(`BLOCKED PAGINATION ATTRIBUTE: ${el.tagName} - "${text}"`);
+                    }
+                });
+                
+                console.log(`CONSISTENT PAGINATION BLOCKING: Completed for ${dataType}`);
+            }
+            
+            // 1. CONSISTENT PAGINATION BLOCKING - Apply to ALL target URLs
+            blockPaginationElementsConsistently();
+            
+            // 2. FINANCIAL STATEMENTS SPECIFIC INTERFERENCE (only on DivItmFsInq page)
             if (dataType === 'financial_statements') {
+                console.log(`FINANCIAL STATEMENTS SPECIFIC BLOCKING...`);
+                
                 // Block 기준연도 (Year dropdown) - only in form areas
                 const yearDropdowns = document.querySelectorAll('select, option');
                 yearDropdowns.forEach(el => {
@@ -444,39 +521,6 @@ async function detectAndBlockInterferenceElementsFirst(page, dataType, metrics) 
                 });
             }
             
-            // 2. TABLE PAGINATION ELEMENTS (only within table pagination areas)
-            const paginationArea = document.querySelector('.pagination, .paging, .page-nav');
-            if (paginationArea) {
-                // Block numbered pagination only within pagination areas
-                const pageNumbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
-                pageNumbers.forEach(num => {
-                    const pageLinks = paginationArea.querySelectorAll('a, button');
-                    pageLinks.forEach(el => {
-                        const text = el.textContent?.trim() || '';
-                        if (text === num) {
-                            el.setAttribute('data-blocked-interference', 'true');
-                            el.style.pointerEvents = 'none';
-                            el.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
-                            blocked++;
-                            console.log(`BLOCKED PAGE NUMBER: ${el.tagName} - "${text}"`);
-                        }
-                    });
-                });
-                
-                // Block navigation arrows only within pagination areas
-                const navElements = paginationArea.querySelectorAll('a, button');
-                navElements.forEach(el => {
-                    const text = el.textContent?.trim() || '';
-                    if (['다음', '이전', 'Next', 'Previous', '첫', '마지막', '◀', '▶', '<<', '>>'].includes(text)) {
-                        el.setAttribute('data-blocked-interference', 'true');
-                        el.style.pointerEvents = 'none';
-                        el.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
-                        blocked++;
-                        console.log(`BLOCKED NAV ELEMENT: ${el.tagName} - "${text}"`);
-                    }
-                });
-            }
-            
             // 3. FORM ELEMENTS THAT TRIGGER NAVIGATION (only within forms)
             const forms = document.querySelectorAll('form');
             forms.forEach(form => {
@@ -516,6 +560,7 @@ async function detectAndBlockInterferenceElementsFirst(page, dataType, metrics) 
             });
             
             console.log(`TARGETED INTERFERENCE: Blocked ${blocked} elements specifically for ${dataType}`);
+            console.log(`CONSISTENT PAGINATION: Applied to ALL URLs before 전체보기`);
             return blocked;
         }, dataType);
         
@@ -529,6 +574,7 @@ async function detectAndBlockInterferenceElementsFirst(page, dataType, metrics) 
         metrics.interferenceElementsBlocked += blockedCount;
         
         console.log(`TARGETED INTERFERENCE SUCCESS: ${blockedCount} specific elements blocked for ${dataType}`);
+        console.log(`CONSISTENT LOGIC: Pagination blocked on ALL URLs before 전체보기`);
         console.log(`AVOIDED: Header/footer elements, legitimate navigation, irrelevant page elements`);
         
         return blockedCount;
