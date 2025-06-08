@@ -21,12 +21,12 @@
 import { Actor } from 'apify';
 import { PlaywrightCrawler } from 'crawlee';
 
-console.log('DIVA SCRAPER v5.3.14 - INTERFERENCE-FIRST PROTECTION EDITION');
-console.log('IMPROVEMENTS: Interference-first detection + precise element targeting');
-console.log('TARGET: Bulletproof production deployment with 4GB memory optimization');
+console.log('DIVA SCRAPER v5.3.14.6 - FINANCIAL STATEMENTS COMPREHENSIVE DEBUG EDITION');
+console.log('IMPROVEMENTS: 17-screenshot financial debugging + URL navigation monitoring');
+console.log('TARGET: Complete visibility into financial statements dual-tab workflow');
 
 Actor.main(async () => {
-    console.log('Starting DIVA Scraper v5.3.14 - Interference-First Protection Edition...');
+    console.log('Starting DIVA Scraper v5.3.14.6 - Financial Statements Comprehensive Debug Edition...');
     
     const input = await Actor.getInput();
     
@@ -52,11 +52,11 @@ Actor.main(async () => {
         }
     };
     
-    console.log('Interference-First Protection Configuration v5.3.14:');
+    console.log('Financial Debug Configuration v5.3.14.6:');
     console.log('CONTROL TARGETS: 333, 500, 2231, 251, 1685, 92, 251');
     console.log('STEP 1: Immediate interference detection and blocking');
     console.log('STEP 2: Clean 전체보기 button detection and clicking');
-    console.log('STEP 3: Precise data extraction with 250 records per financial tab');
+    console.log('STEP 3: Complete data extraction with 17 debug screenshots for financial statements');
     
     const metrics = {
         startTime: Date.now(),
@@ -687,6 +687,16 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
         await page.waitForSelector('table, .content, .container, body', { timeout: 60000 });
         await page.waitForTimeout(5000);
         
+        // SCREENSHOT 1: Initial page load
+        const initialTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const initialScreenshot = await page.screenshot({ fullPage: true });
+        await Actor.setValue(`financial-01-initial-${initialTimestamp}.png`, initialScreenshot, { contentType: 'image/png' });
+        console.log(`📸 FINANCIAL SCREENSHOT 1: Initial page load saved`);
+        
+        // Monitor current URL
+        const initialUrl = page.url();
+        console.log(`🌐 INITIAL URL: ${initialUrl}`);
+        
         const allRecords = [];
         
         // STEP 1: 재무상태표 (Balance Sheet) Tab
@@ -696,23 +706,41 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
         const blockedElements1 = await detectAndBlockInterferenceElementsFirst(page, 'financial_statements', metrics);
         console.log(`Blocked ${blockedElements1} interference elements for Balance Sheet tab`);
         
+        // SCREENSHOT 2: After blocking interference
+        const interferenceTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const interferenceScreenshot = await page.screenshot({ fullPage: true });
+        await Actor.setValue(`financial-02-after-interference-${interferenceTimestamp}.png`, interferenceScreenshot, { contentType: 'image/png' });
+        console.log(`📸 FINANCIAL SCREENSHOT 2: After interference blocking saved`);
+        
+        // Check URL after interference blocking
+        const urlAfterInterference = page.url();
+        if (urlAfterInterference !== initialUrl) {
+            console.log(`⚠️ URL CHANGED after interference blocking: ${initialUrl} -> ${urlAfterInterference}`);
+        }
+        
         // Enhanced balance sheet tab detection and clicking
         try {
             console.log('🔍 FINANCIAL TABS DEBUG: Searching for 재무상태표 tab...');
             
             // Debug: List all potential tabs
             const allTabsDebug = await page.evaluate(() => {
-                const tabs = document.querySelectorAll('a, button, .tab, li, [role="tab"]');
+                const tabs = document.querySelectorAll('a, button, .tab, li, [role="tab"], span, div');
                 return Array.from(tabs).map((tab, i) => ({
                     index: i,
                     text: tab.textContent?.trim() || '',
                     tagName: tab.tagName,
                     className: tab.className || '',
-                    isBlocked: tab.hasAttribute('data-blocked-interference')
-                })).filter(tab => tab.text.length > 0);
+                    id: tab.id || '',
+                    isBlocked: tab.hasAttribute('data-blocked-interference'),
+                    isVisible: tab.offsetParent !== null,
+                    href: tab.href || ''
+                })).filter(tab => 
+                    tab.text.length > 0 && 
+                    (tab.text.includes('재무') || tab.text.includes('손익') || tab.text.includes('상태표') || tab.text.includes('계산서'))
+                );
             });
             
-            console.log('📋 All tabs found:', JSON.stringify(allTabsDebug, null, 2));
+            console.log('📋 Financial-related tabs found:', JSON.stringify(allTabsDebug, null, 2));
             
             // Try multiple selectors for balance sheet tab
             const balanceSheetSelectors = [
@@ -721,7 +749,9 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
                 'button:has-text("재무상태표")',
                 '[title*="재무상태표"]',
                 'li:has-text("재무상태표")',
-                '.tab:has-text("재무상태표")'
+                '.tab:has-text("재무상태표")',
+                'span:has-text("재무상태표")',
+                'div:has-text("재무상태표")'
             ];
             
             let tabClicked = false;
@@ -730,10 +760,30 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
                     const tab = await page.locator(selector).first();
                     if (await tab.isVisible()) {
                         console.log(`✅ Found 재무상태표 tab with selector: ${selector}`);
+                        
+                        // SCREENSHOT 3: Before clicking balance sheet tab
+                        const beforeTabTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                        const beforeTabScreenshot = await page.screenshot({ fullPage: true });
+                        await Actor.setValue(`financial-03-before-balance-tab-${beforeTabTimestamp}.png`, beforeTabScreenshot, { contentType: 'image/png' });
+                        console.log(`📸 FINANCIAL SCREENSHOT 3: Before clicking 재무상태표 tab`);
+                        
                         await tab.click();
                         console.log('✅ Successfully clicked 재무상태표 tab');
                         tabClicked = true;
                         await page.waitForTimeout(3000);
+                        
+                        // SCREENSHOT 4: After clicking balance sheet tab
+                        const afterTabTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                        const afterTabScreenshot = await page.screenshot({ fullPage: true });
+                        await Actor.setValue(`financial-04-after-balance-tab-${afterTabTimestamp}.png`, afterTabScreenshot, { contentType: 'image/png' });
+                        console.log(`📸 FINANCIAL SCREENSHOT 4: After clicking 재무상태표 tab`);
+                        
+                        // Check URL after tab click
+                        const urlAfterTab = page.url();
+                        if (urlAfterTab !== urlAfterInterference) {
+                            console.log(`⚠️ URL CHANGED after tab click: ${urlAfterInterference} -> ${urlAfterTab}`);
+                        }
+                        
                         break;
                     }
                 } catch (selectorError) {
@@ -743,6 +793,12 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
             
             if (!tabClicked) {
                 console.log('⚠️ Could not find or click 재무상태표 tab with any selector');
+                
+                // SCREENSHOT 5: Tab not found
+                const tabNotFoundTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const tabNotFoundScreenshot = await page.screenshot({ fullPage: true });
+                await Actor.setValue(`financial-05-balance-tab-not-found-${tabNotFoundTimestamp}.png`, tabNotFoundScreenshot, { contentType: 'image/png' });
+                console.log(`📸 FINANCIAL SCREENSHOT 5: 재무상태표 tab not found`);
             }
             
         } catch (e) {
@@ -754,8 +810,24 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
         if (showAllResult1.found && showAllResult1.clicked) {
             console.log('Successfully clicked 전체보기 for 재무상태표');
             
+            // SCREENSHOT 6: After clicking 전체보기 for balance sheet
+            const showAllBalanceTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const showAllBalanceScreenshot = await page.screenshot({ fullPage: true });
+            await Actor.setValue(`financial-06-after-showall-balance-${showAllBalanceTimestamp}.png`, showAllBalanceScreenshot, { contentType: 'image/png' });
+            console.log(`📸 FINANCIAL SCREENSHOT 6: After clicking 전체보기 for 재무상태표`);
+            
+            // Check URL after 전체보기
+            const urlAfterShowAll = page.url();
+            console.log(`🌐 URL after 전체보기 for 재무상태표: ${urlAfterShowAll}`);
+            
             // Enhanced DOM stability check
             await enhancedDOMStabilityCheck(page, 'financial_statements_balance');
+            
+            // SCREENSHOT 7: After DOM stability for balance sheet
+            const domStableBalanceTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const domStableBalanceScreenshot = await page.screenshot({ fullPage: true });
+            await Actor.setValue(`financial-07-dom-stable-balance-${domStableBalanceTimestamp}.png`, domStableBalanceScreenshot, { contentType: 'image/png' });
+            console.log(`📸 FINANCIAL SCREENSHOT 7: After DOM stability for 재무상태표`);
             
             // Extract balance sheet data with NO artificial limit
             const balanceSheetData = await extractFinancialTabDataComplete(page, '재무상태표');
@@ -765,6 +837,12 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
             console.log(`Balance Sheet Records: ${balanceSheetData.length} (no limit - complete extraction)`);
         } else {
             console.log('Could not click 전체보기 for 재무상태표');
+            
+            // SCREENSHOT 8: 전체보기 not found for balance sheet
+            const showAllNotFoundTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const showAllNotFoundScreenshot = await page.screenshot({ fullPage: true });
+            await Actor.setValue(`financial-08-showall-not-found-balance-${showAllNotFoundTimestamp}.png`, showAllNotFoundScreenshot, { contentType: 'image/png' });
+            console.log(`📸 FINANCIAL SCREENSHOT 8: 전체보기 not found for 재무상태표`);
         }
         
         // STEP 2: 손익계산서 (Income Statement) Tab  
@@ -781,7 +859,9 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
                 'button:has-text("손익계산서")',
                 '[title*="손익계산서"]',
                 'li:has-text("손익계산서")',
-                '.tab:has-text("손익계산서")'
+                '.tab:has-text("손익계산서")',
+                'span:has-text("손익계산서")',
+                'div:has-text("손익계산서")'
             ];
             
             let incomeTabClicked = false;
@@ -790,10 +870,28 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
                     const tab = await page.locator(selector).first();
                     if (await tab.isVisible()) {
                         console.log(`✅ Found 손익계산서 tab with selector: ${selector}`);
+                        
+                        // SCREENSHOT 9: Before clicking income statement tab
+                        const beforeIncomeTabTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                        const beforeIncomeTabScreenshot = await page.screenshot({ fullPage: true });
+                        await Actor.setValue(`financial-09-before-income-tab-${beforeIncomeTabTimestamp}.png`, beforeIncomeTabScreenshot, { contentType: 'image/png' });
+                        console.log(`📸 FINANCIAL SCREENSHOT 9: Before clicking 손익계산서 tab`);
+                        
                         await tab.click();
                         console.log('✅ Successfully clicked 손익계산서 tab');
                         incomeTabClicked = true;
                         await page.waitForTimeout(5000);
+                        
+                        // SCREENSHOT 10: After clicking income statement tab
+                        const afterIncomeTabTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                        const afterIncomeTabScreenshot = await page.screenshot({ fullPage: true });
+                        await Actor.setValue(`financial-10-after-income-tab-${afterIncomeTabTimestamp}.png`, afterIncomeTabScreenshot, { contentType: 'image/png' });
+                        console.log(`📸 FINANCIAL SCREENSHOT 10: After clicking 손익계산서 tab`);
+                        
+                        // Check URL after income tab click
+                        const urlAfterIncomeTab = page.url();
+                        console.log(`🌐 URL after clicking 손익계산서 tab: ${urlAfterIncomeTab}`);
+                        
                         break;
                     }
                 } catch (selectorError) {
@@ -806,13 +904,35 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
                 const blockedElements2 = await detectAndBlockInterferenceElementsFirst(page, 'financial_statements', metrics);
                 console.log(`Blocked ${blockedElements2} interference elements for Income Statement tab`);
                 
+                // SCREENSHOT 11: After blocking interference for income statement
+                const interferenceIncomeTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const interferenceIncomeScreenshot = await page.screenshot({ fullPage: true });
+                await Actor.setValue(`financial-11-after-interference-income-${interferenceIncomeTimestamp}.png`, interferenceIncomeScreenshot, { contentType: 'image/png' });
+                console.log(`📸 FINANCIAL SCREENSHOT 11: After interference blocking for 손익계산서`);
+                
                 // Click 전체보기 for income statement
                 const showAllResult2 = await findAndClickShowAllClean(page, metrics);
                 if (showAllResult2.found && showAllResult2.clicked) {
                     console.log('Successfully clicked 전체보기 for 손익계산서');
                     
+                    // SCREENSHOT 12: After clicking 전체보기 for income statement
+                    const showAllIncomeTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                    const showAllIncomeScreenshot = await page.screenshot({ fullPage: true });
+                    await Actor.setValue(`financial-12-after-showall-income-${showAllIncomeTimestamp}.png`, showAllIncomeScreenshot, { contentType: 'image/png' });
+                    console.log(`📸 FINANCIAL SCREENSHOT 12: After clicking 전체보기 for 손익계산서`);
+                    
+                    // Check URL after 전체보기 for income statement
+                    const urlAfterShowAllIncome = page.url();
+                    console.log(`🌐 URL after 전체보기 for 손익계산서: ${urlAfterShowAllIncome}`);
+                    
                     // Enhanced DOM stability check
                     await enhancedDOMStabilityCheck(page, 'financial_statements_income');
+                    
+                    // SCREENSHOT 13: After DOM stability for income statement
+                    const domStableIncomeTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                    const domStableIncomeScreenshot = await page.screenshot({ fullPage: true });
+                    await Actor.setValue(`financial-13-dom-stable-income-${domStableIncomeTimestamp}.png`, domStableIncomeScreenshot, { contentType: 'image/png' });
+                    console.log(`📸 FINANCIAL SCREENSHOT 13: After DOM stability for 손익계산서`);
                     
                     // Extract income statement data with NO artificial limit
                     const incomeStatementData = await extractFinancialTabDataComplete(page, '손익계산서');
@@ -822,22 +942,52 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
                     console.log(`Income Statement Records: ${incomeStatementData.length} (no limit - complete extraction)`);
                 } else {
                     console.log('Could not click 전체보기 for 손익계산서');
+                    
+                    // SCREENSHOT 14: 전체보기 not found for income statement
+                    const showAllNotFoundIncomeTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                    const showAllNotFoundIncomeScreenshot = await page.screenshot({ fullPage: true });
+                    await Actor.setValue(`financial-14-showall-not-found-income-${showAllNotFoundIncomeTimestamp}.png`, showAllNotFoundIncomeScreenshot, { contentType: 'image/png' });
+                    console.log(`📸 FINANCIAL SCREENSHOT 14: 전체보기 not found for 손익계산서`);
                 }
             } else {
                 console.log('⚠️ Could not find or click 손익계산서 tab with any selector');
+                
+                // SCREENSHOT 15: Income statement tab not found
+                const incomeTabNotFoundTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const incomeTabNotFoundScreenshot = await page.screenshot({ fullPage: true });
+                await Actor.setValue(`financial-15-income-tab-not-found-${incomeTabNotFoundTimestamp}.png`, incomeTabNotFoundScreenshot, { contentType: 'image/png' });
+                console.log(`📸 FINANCIAL SCREENSHOT 15: 손익계산서 tab not found`);
             }
         } catch (e) {
             console.log('Error accessing 손익계산서 tab:', e.message);
         }
         
+        // SCREENSHOT 16: Final state
+        const finalTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const finalScreenshot = await page.screenshot({ fullPage: true });
+        await Actor.setValue(`financial-16-final-state-${finalTimestamp}.png`, finalScreenshot, { contentType: 'image/png' });
+        console.log(`📸 FINANCIAL SCREENSHOT 16: Final state after dual-tab workflow`);
+        
         console.log(`\nDual-tab workflow complete: ${allRecords.length} total records`);
         console.log(`NO ARTIFICIAL LIMITS - Complete extraction from both tabs`);
         console.log(`Interference-first protection applied`);
+        console.log(`📸 COMPREHENSIVE SCREENSHOTS: 16 debug images saved to key-value store`);
         
         return allRecords;
         
     } catch (error) {
         console.error('Financial statements dual-tab workflow failed:', error.message);
+        
+        // SCREENSHOT 17: Error state
+        const errorTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        try {
+            const errorScreenshot = await page.screenshot({ fullPage: true });
+            await Actor.setValue(`financial-17-error-state-${errorTimestamp}.png`, errorScreenshot, { contentType: 'image/png' });
+            console.log(`📸 FINANCIAL SCREENSHOT 17: Error state saved`);
+        } catch (screenshotError) {
+            console.log('Could not take error screenshot');
+        }
+        
         return [];
     }
 }
