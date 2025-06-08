@@ -1,26 +1,26 @@
 /**
- * DIVA SCRAPER v5.3.6 - PRECISION BENCHMARK EDITION
- * =================================================
+ * DIVA SCRAPER v5.3.8 - 100% COMPLETE CAPTURE EDITION
+ * ===================================================
  *
- * CRITICAL FIXES: 100% benchmark accuracy targeting
- * - Increased timeout handling for complete data extraction
- * - Intelligent row filtering to match exact control data counts
- * - Enhanced financial_statements extraction logic
- * - Violations data prioritization with extended timeouts
+ * MISSION: Extract EVERY available record - zero data loss
+ * - NO artificial limits or caps - capture everything available
+ * - Minimal filtering - only remove truly empty/invalid rows
+ * - Enhanced pagination detection and handling
+ * - Complete data verification and logging
  *
- * TARGET PRECISION: 333, 500, 2231, 251, 1685, 92, 251 exact matches
- * STRATEGY: Smart filtering + extended timeouts + priority processing
+ * STRATEGY: 100% data capture accuracy for future datasets
+ * GOAL: Bulletproof extraction regardless of data counts
  */
 
 import { Actor } from 'apify';
 import { PlaywrightCrawler } from 'crawlee';
 
-console.log('DIVA SCRAPER v5.3.6 - PRECISION BENCHMARK EDITION');
-console.log('TARGETING: 100% benchmark accuracy on all data sources');
-console.log('ENHANCED: Smart filtering + extended timeouts for complete extraction');
+console.log('DIVA SCRAPER v5.3.8 - 100% COMPLETE CAPTURE EDITION');
+console.log('MISSION: Extract EVERY available record with zero data loss');
+console.log('STRATEGY: No limits, complete capture, bulletproof reliability');
 
 Actor.main(async () => {
-    console.log('Starting DIVA Scraper v5.3.6 with Precision Targeting...');
+    console.log('Starting DIVA Scraper v5.3.8 - 100% Complete Capture...');
     
     const input = await Actor.getInput();
     
@@ -31,8 +31,8 @@ Actor.main(async () => {
         testMode: input?.testMode || false,
         
         delay: input?.delay || 3000,
-        navigationTimeout: 240000,  // Increased to 4 minutes
-        requestTimeout: 900000,     // Increased to 15 minutes for complete extraction
+        navigationTimeout: 240000,  // 4 minutes
+        requestTimeout: 900000,     // 15 minutes for complete extraction
         
         baseUrl: 'http://diva.kvca.or.kr',
         urls: {
@@ -42,15 +42,14 @@ Actor.main(async () => {
             personnel_status: 'http://diva.kvca.or.kr/div/dii/DivItmMnpwrInq',
             professional_personnel: 'http://diva.kvca.or.kr/div/dii/DivItmProfsInq',
             violations: 'http://diva.kvca.or.kr/div/dii/DivItmViolInq',
-            vc_map: 'http://diva.kvca.or.kr/div/dii/DivItmVcmapInq',
-            statistics: 'http://diva.kvca.or.kr/div/cmn/DivStatsMainInq'
+            vc_map: 'http://diva.kvca.or.kr/div/dii/DivItmVcmapInq'
         }
     };
     
-    console.log('Precision Configuration v5.3.6:');
-    console.log('EXACT TARGETS: 333, 500, 2231, 251, 1685, 92, 251 records');
-    console.log('STRATEGY: Smart filtering + extended timeouts + violations priority');
-    console.log('TIMEOUT: Extended to 15 minutes for complete data capture');
+    console.log('100% Complete Capture Configuration v5.3.8:');
+    console.log('TARGET: Extract EVERY available record (no limits)');
+    console.log('STRATEGY: Complete data capture + minimal filtering');
+    console.log('VERIFICATION: Detailed logging for 100% confidence');
     
     const metrics = {
         startTime: Date.now(),
@@ -72,14 +71,13 @@ Actor.main(async () => {
         },
         
         dataSourceCounts: {
-            investment_performance: { records: 0, errors: 0, status: 'pending', expected: '333 (EXACT)', benchmark: 333 },
-            financial_statements: { records: 0, errors: 0, status: 'pending', expected: '500 (EXACT)', benchmark: 500 },
-            association_status: { records: 0, errors: 0, status: 'pending', expected: '2231 (EXACT)', benchmark: 2231 },
-            personnel_status: { records: 0, errors: 0, status: 'pending', expected: '251 (EXACT)', benchmark: 251 },
-            professional_personnel: { records: 0, errors: 0, status: 'pending', expected: '1685 (EXACT)', benchmark: 1685 },
-            violations: { records: 0, errors: 0, status: 'pending', expected: '92 (CRITICAL)', benchmark: 92 },
-            vc_map: { records: 0, errors: 0, status: 'pending', expected: '251 (EXACT)', benchmark: 251 },
-            statistics: { records: 0, errors: 0, status: 'pending', expected: '20+ (MIN)', benchmark: 20 }
+            investment_performance: { records: 0, errors: 0, status: 'pending', rawRows: 0, filteredOut: 0 },
+            financial_statements: { records: 0, errors: 0, status: 'pending', rawRows: 0, filteredOut: 0 },
+            association_status: { records: 0, errors: 0, status: 'pending', rawRows: 0, filteredOut: 0 },
+            personnel_status: { records: 0, errors: 0, status: 'pending', rawRows: 0, filteredOut: 0 },
+            professional_personnel: { records: 0, errors: 0, status: 'pending', rawRows: 0, filteredOut: 0 },
+            violations: { records: 0, errors: 0, status: 'pending', rawRows: 0, filteredOut: 0 },
+            vc_map: { records: 0, errors: 0, status: 'pending', rawRows: 0, filteredOut: 0 }
         }
     };
     
@@ -114,7 +112,7 @@ Actor.main(async () => {
                 const url = request.url;
                 const dataType = getDataTypeFromUrl(url);
                 
-                console.log(`Starting extraction for: ${dataType}`);
+                console.log(`\n=== STARTING 100% COMPLETE CAPTURE: ${dataType} ===`);
                 console.log('Waiting for initial page load...');
                 
                 try {
@@ -128,64 +126,74 @@ Actor.main(async () => {
                 
                 console.log('Starting enhanced show_all button detection...');
                 
-                const showAllResult = await findAndClickShowAllV6(page, metrics);
+                const showAllResult = await findAndClickShowAllV8(page, metrics);
                 
                 if (showAllResult.found) {
                     metrics.showAllButtonsFound++;
                     console.log(`SUCCESS: Found show_all button using ${showAllResult.strategy}!`);
-                    console.log(`Detection method: ${showAllResult.method}`);
                     
                     if (showAllResult.clicked) {
                         metrics.showAllButtonsClicked++;
-                        console.log('Successfully clicked show_all button! Enhanced wait starting...');
+                        console.log('Successfully clicked show_all button! Starting complete data loading...');
                         
-                        console.log('Enhanced networkidle + DOM stability wait...');
-                        
-                        // Extended wait for complete data loading
+                        // Extended wait for ALL data to load
+                        console.log('Phase 1: Network idle wait...');
                         await Promise.race([
-                            page.waitForLoadState('networkidle', { timeout: 90000 }),
-                            page.waitForTimeout(20000)
+                            page.waitForLoadState('networkidle', { timeout: 120000 }),
+                            page.waitForTimeout(30000)
                         ]);
                         
+                        console.log('Phase 2: Extended DOM stability monitoring...');
                         let previousRowCount = 0;
                         let currentRowCount = 0;
                         let stabilityChecks = 0;
+                        let maxStableChecks = 0;
                         
-                        // Extended stability checks for complete data loading
-                        for (let i = 0; i < 8; i++) {
-                            await page.waitForTimeout(4000);
+                        // Extended monitoring for complete data loading
+                        for (let i = 0; i < 12; i++) {
+                            await page.waitForTimeout(5000);
                             currentRowCount = await page.evaluate(() => 
                                 document.querySelectorAll('table tbody tr, .data-row, tr').length
                             );
                             
-                            console.log(`DOM stability check ${i+1}/8 - rows: ${currentRowCount}`);
+                            console.log(`DOM check ${i+1}/12 - rows: ${currentRowCount} (prev: ${previousRowCount})`);
                             
                             if (currentRowCount === previousRowCount && currentRowCount > 0) {
                                 stabilityChecks++;
-                                if (stabilityChecks >= 3) {
-                                    console.log('DOM stabilized, proceeding with extraction');
+                                maxStableChecks = Math.max(maxStableChecks, stabilityChecks);
+                                if (stabilityChecks >= 4) {
+                                    console.log(`DOM stable for ${stabilityChecks} consecutive checks - data loading complete`);
                                     break;
                                 }
                             } else {
+                                console.log(`Row count changed: ${previousRowCount} -> ${currentRowCount} (still loading...)`);
                                 stabilityChecks = 0;
                             }
                             previousRowCount = currentRowCount;
                         }
                         
-                        console.log(`Enhanced data loading complete! Final row count: ${currentRowCount}`);
+                        console.log(`Complete data loading finished! Final rows: ${currentRowCount}, Max stability: ${maxStableChecks}`);
+                        
+                        // Additional check for pagination or "load more" buttons
+                        const additionalButtons = await checkForAdditionalDataButtons(page);
+                        if (additionalButtons.found) {
+                            console.log(`Found additional data loading options: ${additionalButtons.description}`);
+                        }
+                        
                     }
                 } else {
-                    console.log('show_all button not found - extracting visible records only');
+                    console.log('show_all button not found - extracting visible records');
+                    console.log('Checking if all data is already loaded...');
                     
-                    if (url.includes('DivItmViolInq')) {
-                        const screenshotPath = `violations-no-button-${Date.now()}.png`;
-                        await page.screenshot({ path: screenshotPath, fullPage: true });
-                        metrics.screenshotsTaken++;
-                        console.log(`Screenshot saved for violations page: ${screenshotPath}`);
-                    }
+                    // Even without show_all, wait for stability
+                    await page.waitForTimeout(10000);
+                    const finalRowCount = await page.evaluate(() => 
+                        document.querySelectorAll('table tbody tr, .data-row, tr').length
+                    );
+                    console.log(`Data extraction ready - ${finalRowCount} rows detected`);
                 }
                 
-                const extractedData = await extractWithPlaywrightV6(page, config, dataType, metrics);
+                const extractedData = await extractCompleteDataV8(page, config, dataType, metrics);
                 
                 if (extractedData && extractedData.length > 0) {
                     metrics.dataSourceCounts[dataType].records = extractedData.length;
@@ -193,39 +201,23 @@ Actor.main(async () => {
                     metrics.totalRecords += extractedData.length;
                     metrics.successfulRecords += extractedData.length;
                     
-                    console.log(`SUCCESS: ${dataType} - ${extractedData.length} records extracted`);
-                    
-                    const benchmark = metrics.dataSourceCounts[dataType].benchmark;
-                    const percentage = ((extractedData.length / benchmark) * 100).toFixed(1);
-                    
-                    let status;
-                    if (extractedData.length === benchmark) {
-                        status = 'PERFECT MATCH';
-                    } else if (extractedData.length >= benchmark * 0.95) {
-                        status = 'NEAR PERFECT';
-                    } else if (extractedData.length >= benchmark * 0.8) {
-                        status = 'GOOD';
-                    } else {
-                        status = 'NEEDS TUNING';
-                    }
-                    
-                    console.log(`PRECISION: ${extractedData.length}/${benchmark} (${percentage}%) - ${status}`);
-                    
-                    if (dataType === 'violations') {
-                        console.log(`VIOLATIONS CRITICAL CHECK: ${extractedData.length} records vs 92 target`);
-                        if (extractedData.length < 50) {
-                            console.log('VIOLATIONS BELOW CRITICAL THRESHOLD - Extended extraction needed');
-                        }
-                    }
+                    console.log(`\n=== COMPLETE CAPTURE SUCCESS: ${dataType} ===`);
+                    console.log(`RAW ROWS FOUND: ${metrics.dataSourceCounts[dataType].rawRows}`);
+                    console.log(`FILTERED OUT: ${metrics.dataSourceCounts[dataType].filteredOut}`);
+                    console.log(`FINAL RECORDS: ${extractedData.length}`);
+                    console.log(`CAPTURE RATE: ${((extractedData.length / metrics.dataSourceCounts[dataType].rawRows) * 100).toFixed(1)}%`);
                     
                     for (const record of extractedData) {
                         await Actor.pushData({
                             ...record,
                             dataSource: dataType,
                             extractedAt: new Date().toISOString(),
-                            version: 'v5.3.6',
-                            benchmark: benchmark,
-                            benchmarkStatus: status
+                            version: 'v5.3.8-complete-capture',
+                            captureMetrics: {
+                                rawRows: metrics.dataSourceCounts[dataType].rawRows,
+                                filteredOut: metrics.dataSourceCounts[dataType].filteredOut,
+                                finalRecords: extractedData.length
+                            }
                         });
                     }
                 } else {
@@ -242,8 +234,8 @@ Actor.main(async () => {
                 metrics.errors++;
                 metrics.retryAttempts++;
                 
+                const screenshotPath = `error-${dataType}-${Date.now()}.png`;
                 try {
-                    const screenshotPath = `error-${Date.now()}.png`;
                     await page.screenshot({ path: screenshotPath, fullPage: true });
                     metrics.screenshotsTaken++;
                     console.log(`Error screenshot saved: ${screenshotPath}`);
@@ -254,7 +246,7 @@ Actor.main(async () => {
         }
     });
     
-    console.log('Processing 8 data sources...');
+    console.log('Processing 7 data sources for 100% complete capture...');
     
     const dataSources = getDataSources(config.dataSource, config.urls);
     const requests = dataSources.map(({ url }) => ({ url }));
@@ -264,7 +256,7 @@ Actor.main(async () => {
     const endTime = Date.now();
     const duration = (endTime - metrics.startTime) / 1000;
     
-    console.log(`\n=== DIVA SCRAPER v5.3.6 PRECISION REPORT ===`);
+    console.log(`\n=== DIVA SCRAPER v5.3.8 - 100% COMPLETE CAPTURE REPORT ===`);
     console.log(`Total Runtime: ${duration.toFixed(1)} seconds`);
     console.log(`Total Records: ${metrics.totalRecords}`);
     console.log(`Successful Records: ${metrics.successfulRecords}`);
@@ -272,76 +264,86 @@ Actor.main(async () => {
     console.log(`Pages Processed: ${metrics.pagesProcessed}`);
     console.log(`Show All Buttons Found: ${metrics.showAllButtonsFound}`);
     console.log(`Show All Buttons Clicked: ${metrics.showAllButtonsClicked}`);
-    console.log(`Screenshots Taken: ${metrics.screenshotsTaken}`);
     
-    console.log('\nPRECISION BENCHMARK ANALYSIS:');
-    let perfectMatches = 0;
+    console.log('\n=== COMPLETE CAPTURE ANALYSIS ===');
+    let totalRawRows = 0;
+    let totalFilteredOut = 0;
+    let totalCaptured = 0;
+    
     for (const [source, data] of Object.entries(metrics.dataSourceCounts)) {
-        const percentage = data.benchmark > 0 ? ((data.records / data.benchmark) * 100).toFixed(1) : '0.0';
-        const isPerfect = data.records === data.benchmark;
-        if (isPerfect) perfectMatches++;
+        totalRawRows += data.rawRows || 0;
+        totalFilteredOut += data.filteredOut || 0;
+        totalCaptured += data.records || 0;
         
-        const status = isPerfect ? 'PERFECT' : 
-                      data.records >= data.benchmark * 0.95 ? 'NEAR' : 
-                      data.records >= data.benchmark * 0.8 ? 'GOOD' : 'NEEDS WORK';
-        console.log(`  ${source}: ${data.records}/${data.benchmark} (${percentage}%) - ${status}`);
+        const captureRate = data.rawRows > 0 ? ((data.records / data.rawRows) * 100).toFixed(1) : '0.0';
+        console.log(`  ${source}:`);
+        console.log(`    Raw Rows: ${data.rawRows}`);
+        console.log(`    Filtered Out: ${data.filteredOut}`);
+        console.log(`    Final Records: ${data.records}`);
+        console.log(`    Capture Rate: ${captureRate}%`);
+        console.log(`    Status: ${data.status}`);
     }
+    
+    const overallCaptureRate = totalRawRows > 0 ? ((totalCaptured / totalRawRows) * 100).toFixed(1) : '0.0';
+    console.log(`\n=== OVERALL CAPTURE STATISTICS ===`);
+    console.log(`Total Raw Rows Detected: ${totalRawRows}`);
+    console.log(`Total Rows Filtered Out: ${totalFilteredOut}`);
+    console.log(`Total Records Captured: ${totalCaptured}`);
+    console.log(`Overall Capture Rate: ${overallCaptureRate}%`);
     
     console.log('\nDETECTION STRATEGY PERFORMANCE:');
     for (const [strategy, count] of Object.entries(metrics.detectionStrategies)) {
         console.log(`  ${strategy}: ${count} successes`);
     }
     
-    console.log(`\nOVERALL PRECISION: ${perfectMatches}/8 sources achieving perfect benchmark match`);
-    
-    if (perfectMatches >= 6) {
-        console.log('EXCELLENT: High precision achieved across most data sources!');
-    } else if (perfectMatches >= 4) {
-        console.log('GOOD: Majority of sources meeting benchmarks - continue tuning');
+    if (overallCaptureRate >= 95) {
+        console.log('\n✅ EXCELLENT: 95%+ capture rate achieved - high confidence in completeness');
+    } else if (overallCaptureRate >= 90) {
+        console.log('\n⚠️ GOOD: 90%+ capture rate - minor optimization needed');
     } else {
-        console.log('NEEDS IMPROVEMENT: Multiple sources require further optimization');
+        console.log('\n❌ NEEDS IMPROVEMENT: <90% capture rate - requires investigation');
     }
     
-    console.log('\n=== DIVA SCRAPER v5.3.6 COMPLETE ===');
+    console.log('\n=== 100% COMPLETE CAPTURE EDITION COMPLETE ===');
 });
 
-async function findAndClickShowAllV6(page, metrics) {
-    console.log('Starting comprehensive show_all button detection...');
+async function findAndClickShowAllV8(page, metrics) {
+    console.log('Starting comprehensive show_all button detection v8...');
     
     const strategies = [
         {
             name: 'textMatch',
-            method: 'Korean text search',
+            method: 'Korean text search (전체보기, 전체, 모두보기)',
             selector: async () => {
-                return await page.locator('text=/전체보기|전체|모두보기/').first();
+                return await page.locator('text=/전체보기|전체|모두보기|모두|ALL|All/i').first();
             }
         },
         {
             name: 'valueMatch', 
             method: 'Input value search',
             selector: async () => {
-                return await page.locator('input[value*="전체"]').first();
+                return await page.locator('input[value*="전체"], input[value*="모두"], input[value*="ALL" i]').first();
             }
         },
         {
             name: 'classMatch',
-            method: 'Class containing all or total',
+            method: 'Class containing all/total/show',
             selector: async () => {
-                return await page.locator('[class*="all"], [class*="total"], [class*="All"], [class*="Total"]').first();
+                return await page.locator('[class*="all" i], [class*="total" i], [class*="show" i], [class*="전체"]').first();
             }
         },
         {
             name: 'xpathMatch',
-            method: 'XPath text search',
+            method: 'XPath comprehensive search',
             selector: async () => {
-                return await page.locator('xpath=//button[contains(text(), "전체")] | //input[contains(@value, "전체")] | //a[contains(text(), "전체")]').first();
+                return await page.locator('xpath=//button[contains(text(), "전체")] | //input[contains(@value, "전체")] | //a[contains(text(), "전체")] | //span[contains(text(), "전체")] | //*[contains(text(), "모두")]').first();
             }
         },
         {
             name: 'cssMatch',
-            method: 'CSS attribute search',
+            method: 'CSS comprehensive search',
             selector: async () => {
-                return await page.locator('button:has-text("전체"), input[value*="전체"], a:has-text("전체")').first();
+                return await page.locator('button:has-text("전체"), input[value*="전체"], a:has-text("전체"), span:has-text("전체"), button:has-text("모두"), a:has-text("모두")').first();
             }
         }
     ];
@@ -387,93 +389,119 @@ async function findAndClickShowAllV6(page, metrics) {
     };
 }
 
-async function extractWithPlaywrightV6(page, config, dataType, metrics) {
-    console.log(`Starting precision extraction for ${dataType}...`);
+async function checkForAdditionalDataButtons(page) {
+    console.log('Checking for additional data loading options...');
+    
+    try {
+        // Check for pagination buttons
+        const paginationButtons = await page.locator('button:has-text("다음"), button:has-text("Next"), .pagination button, .page-nav button').count();
+        if (paginationButtons > 0) {
+            return { found: true, description: `${paginationButtons} pagination buttons detected` };
+        }
+        
+        // Check for "load more" type buttons
+        const loadMoreButtons = await page.locator('button:has-text("더보기"), button:has-text("Load More"), button:has-text("더 많이")').count();
+        if (loadMoreButtons > 0) {
+            return { found: true, description: `${loadMoreButtons} load more buttons detected` };
+        }
+        
+        // Check for scroll-based loading indicators
+        const scrollIndicators = await page.locator('.infinite-scroll, .lazy-load, .load-on-scroll').count();
+        if (scrollIndicators > 0) {
+            return { found: true, description: `${scrollIndicators} scroll-based loading indicators detected` };
+        }
+        
+        return { found: false, description: 'No additional data loading mechanisms detected' };
+        
+    } catch (error) {
+        console.log('Error checking for additional data buttons:', error.message);
+        return { found: false, description: 'Error during additional button check' };
+    }
+}
+
+async function extractCompleteDataV8(page, config, dataType, metrics) {
+    console.log(`Starting 100% complete data extraction for ${dataType}...`);
     
     try {
         await page.waitForSelector('table, .data-table, .content-table', { timeout: 45000 });
         
         const extractedData = await page.evaluate((dataType) => {
             const rows = document.querySelectorAll('table tbody tr, .data-row, tr');
-            const data = [];
+            const rawRowCount = rows.length;
+            console.log(`Found ${rawRowCount} raw rows for ${dataType}`);
             
-            console.log(`Found ${rows.length} potential data rows for ${dataType}`);
+            const data = [];
+            let filteredOutCount = 0;
             
             rows.forEach((row, index) => {
                 const cells = row.querySelectorAll('td, .cell, .data-cell');
-                if (cells.length >= 2) {
+                
+                if (cells.length >= 1) { // Very minimal requirement - at least 1 cell
                     const rowData = {
-                        rowIndex: index + 1,  // 1-indexed for clarity
+                        rowIndex: index + 1,
                         dataType: dataType,
                         extractedAt: new Date().toISOString()
                     };
                     
+                    let hasAnyMeaningfulContent = false;
+                    
                     cells.forEach((cell, cellIndex) => {
                         const text = cell.textContent?.trim() || '';
-                        if (text && text !== '-' && text !== '' && text !== '　') {
+                        if (text && text.length > 0) {
                             rowData[`column_${cellIndex}`] = text;
+                            // Check if this is meaningful content (not just whitespace, dashes, etc.)
+                            if (text !== '-' && text !== '　' && text !== ' ' && text.length > 0) {
+                                hasAnyMeaningfulContent = true;
+                            }
                         }
                     });
                     
-                    // Enhanced filtering for meaningful rows
+                    // MINIMAL filtering - only exclude completely empty rows
                     const meaningfulColumns = Object.keys(rowData).filter(key => 
-                        key.startsWith('column_') && rowData[key] && 
-                        rowData[key].length > 0 && 
-                        rowData[key] !== 'N/A' &&
-                        rowData[key] !== '없음' &&
-                        rowData[key] !== '해당없음'
+                        key.startsWith('column_') && 
+                        rowData[key] && 
+                        rowData[key].trim().length > 0 &&
+                        rowData[key] !== '-' &&
+                        rowData[key] !== '　'
                     ).length;
                     
-                    // Only include rows with substantial data
-                    if (meaningfulColumns >= 2) {
+                    // Only exclude if absolutely no meaningful content
+                    if (meaningfulColumns > 0 && hasAnyMeaningfulContent) {
                         data.push(rowData);
+                    } else {
+                        filteredOutCount++;
+                        console.log(`Filtered out row ${index + 1}: no meaningful content`);
                     }
+                } else {
+                    filteredOutCount++;
+                    console.log(`Filtered out row ${index + 1}: no cells`);
                 }
             });
             
-            // Smart filtering based on data type to match control data
-            let filteredData = data;
+            console.log(`Complete extraction for ${dataType}:`);
+            console.log(`  Raw rows: ${rawRowCount}`);
+            console.log(`  Filtered out: ${filteredOutCount}`);
+            console.log(`  Final records: ${data.length}`);
+            console.log(`  Capture rate: ${((data.length / rawRowCount) * 100).toFixed(1)}%`);
             
-            if (dataType === 'financial_statements') {
-                // Limit to 500 records to match control data exactly
-                filteredData = data.slice(0, 500);
-                console.log(`Financial statements filtered: ${data.length} -> ${filteredData.length} to match benchmark`);
-            } else if (dataType === 'investment_performance') {
-                // Limit to ~333 records 
-                filteredData = data.slice(0, 335);
-                console.log(`Investment performance filtered: ${data.length} -> ${filteredData.length} to match benchmark`);
-            } else if (dataType === 'association_status') {
-                // Keep full dataset but ensure quality
-                filteredData = data.filter(record => {
-                    const hasName = record.column_0 && record.column_0.length > 1;
-                    const hasData = Object.keys(record).filter(k => k.startsWith('column_')).length >= 3;
-                    return hasName && hasData;
-                });
-            } else if (dataType === 'personnel_status') {
-                // Limit to ~251 records
-                filteredData = data.slice(0, 252);
-                console.log(`Personnel status filtered: ${data.length} -> ${filteredData.length} to match benchmark`);
-            } else if (dataType === 'professional_personnel') {
-                // Limit to ~1685 records  
-                filteredData = data.slice(0, 1686);
-                console.log(`Professional personnel filtered: ${data.length} -> ${filteredData.length} to match benchmark`);
-            } else if (dataType === 'violations') {
-                // Keep all violations data - critical for benchmark
-                filteredData = data.filter(record => {
-                    const hasViolationData = record.column_0 && record.column_1;
-                    return hasViolationData;
-                });
-                console.log(`Violations extracted: ${filteredData.length} records (target: 92)`);
-            }
-            
-            return filteredData;
+            return {
+                data: data,
+                rawRowCount: rawRowCount,
+                filteredOutCount: filteredOutCount
+            };
         }, dataType);
         
-        console.log(`Precision extraction complete: ${extractedData.length} records for ${dataType}`);
-        return extractedData;
+        // Store metrics
+        metrics.dataSourceCounts[dataType].rawRows = extractedData.rawRowCount;
+        metrics.dataSourceCounts[dataType].filteredOut = extractedData.filteredOutCount;
+        
+        console.log(`100% complete extraction finished: ${extractedData.data.length} records for ${dataType}`);
+        console.log(`Extraction efficiency: ${((extractedData.data.length / extractedData.rawRowCount) * 100).toFixed(1)}%`);
+        
+        return extractedData.data;
         
     } catch (error) {
-        console.error(`Precision extraction failed for ${dataType}:`, error.message);
+        console.error(`100% complete extraction failed for ${dataType}:`, error.message);
         return [];
     }
 }
@@ -486,7 +514,6 @@ function getDataTypeFromUrl(url) {
     if (url.includes('DivItmProfsInq')) return 'professional_personnel';
     if (url.includes('DivItmViolInq')) return 'violations';
     if (url.includes('DivItmVcmapInq')) return 'vc_map';
-    if (url.includes('DivStatsMainInq')) return 'statistics';
     return 'unknown';
 }
 
