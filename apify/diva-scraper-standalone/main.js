@@ -332,13 +332,12 @@ async function detectAndBlockInterferenceElementsFirst(page, dataType, metrics) 
     console.log(`TARGETED INTERFERENCE DETECTION: Blocking specific elements for ${dataType}...`);
     
     try {
-        // Take screenshot before interference protection
+        // Take screenshot before interference protection and save to key-value store
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        await page.screenshot({ 
-            path: `debug-before-interference-${dataType}-${timestamp}.png`,
-            fullPage: true 
-        });
-        console.log(`Screenshot: debug-before-interference-${dataType}-${timestamp}.png`);
+        const beforeScreenshot = await page.screenshot({ fullPage: true });
+        const beforeFilename = `debug-before-interference-${dataType}-${timestamp}.png`;
+        await Actor.setValue(beforeFilename, beforeScreenshot, { contentType: 'image/png' });
+        console.log(`✅ Screenshot saved to key-value store: ${beforeFilename}`);
         
         // TARGETED interference detection - block all interference elements except specific legitimate ones
         const blockedCount = await page.evaluate((dataType) => {
@@ -348,10 +347,11 @@ async function detectAndBlockInterferenceElementsFirst(page, dataType, metrics) 
             function isLegitimateNavigation(element) {
                 const text = element.textContent?.trim() || '';
                 
-                // ONLY these specific main navigation menu items are legitimate
+                // ONLY these specific main navigation menu items AND financial tabs are legitimate
                 const legitimateNavItems = [
                     '투자실적', '재무제표', '조합현황', '인력현황', 
-                    '전문인력현황', '법규위반형환', 'VC MAP', '전체보기'
+                    '전문인력현황', '법규위반형환', 'VC MAP', '전체보기',
+                    '재무상태표', '손익계산서'  // CRITICAL: Protect financial statement tabs
                 ];
                 
                 return legitimateNavItems.some(navItem => text.includes(navItem));
@@ -606,12 +606,11 @@ async function detectAndBlockInterferenceElementsFirst(page, dataType, metrics) 
             return blocked;
         }, dataType);
         
-        // Take screenshot after interference protection
-        await page.screenshot({ 
-            path: `debug-after-interference-${dataType}-${timestamp}.png`,
-            fullPage: true 
-        });
-        console.log(`Screenshot: debug-after-interference-${dataType}-${timestamp}.png`);
+        // Take screenshot after interference protection and save to key-value store
+        const afterScreenshot = await page.screenshot({ fullPage: true });
+        const afterFilename = `debug-after-interference-${dataType}-${timestamp}.png`;
+        await Actor.setValue(afterFilename, afterScreenshot, { contentType: 'image/png' });
+        console.log(`✅ Screenshot saved to key-value store: ${afterFilename}`);
         
         metrics.interferenceElementsBlocked += blockedCount;
         
@@ -697,16 +696,57 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
         const blockedElements1 = await detectAndBlockInterferenceElementsFirst(page, 'financial_statements', metrics);
         console.log(`Blocked ${blockedElements1} interference elements for Balance Sheet tab`);
         
-        // Ensure we're on the balance sheet tab (usually default)
+        // Enhanced balance sheet tab detection and clicking
         try {
-            const balanceSheetTab = await page.locator('text=/재무상태표/').first();
-            if (await balanceSheetTab.isVisible()) {
-                await balanceSheetTab.click();
-                console.log('Clicked 재무상태표 tab');
-                await page.waitForTimeout(3000);
+            console.log('🔍 FINANCIAL TABS DEBUG: Searching for 재무상태표 tab...');
+            
+            // Debug: List all potential tabs
+            const allTabsDebug = await page.evaluate(() => {
+                const tabs = document.querySelectorAll('a, button, .tab, li, [role="tab"]');
+                return Array.from(tabs).map((tab, i) => ({
+                    index: i,
+                    text: tab.textContent?.trim() || '',
+                    tagName: tab.tagName,
+                    className: tab.className || '',
+                    isBlocked: tab.hasAttribute('data-blocked-interference')
+                })).filter(tab => tab.text.length > 0);
+            });
+            
+            console.log('📋 All tabs found:', JSON.stringify(allTabsDebug, null, 2));
+            
+            // Try multiple selectors for balance sheet tab
+            const balanceSheetSelectors = [
+                'text=/재무상태표/',
+                'a:has-text("재무상태표")',
+                'button:has-text("재무상태표")',
+                '[title*="재무상태표"]',
+                'li:has-text("재무상태표")',
+                '.tab:has-text("재무상태표")'
+            ];
+            
+            let tabClicked = false;
+            for (const selector of balanceSheetSelectors) {
+                try {
+                    const tab = await page.locator(selector).first();
+                    if (await tab.isVisible()) {
+                        console.log(`✅ Found 재무상태표 tab with selector: ${selector}`);
+                        await tab.click();
+                        console.log('✅ Successfully clicked 재무상태표 tab');
+                        tabClicked = true;
+                        await page.waitForTimeout(3000);
+                        break;
+                    }
+                } catch (selectorError) {
+                    console.log(`❌ Failed with selector ${selector}:`, selectorError.message);
+                }
             }
+            
+            if (!tabClicked) {
+                console.log('⚠️ Could not find or click 재무상태표 tab with any selector');
+            }
+            
         } catch (e) {
-            console.log('재무상태표 tab already active or not found');
+            console.log('❌ Error in balance sheet tab detection:', e.message);
         }
         
         // Click 전체보기 for balance sheet
@@ -730,14 +770,38 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
         // STEP 2: 손익계산서 (Income Statement) Tab  
         console.log('\nSTEP 2: Processing 손익계산서 (Income Statement) tab...');
         
-        // Navigate to income statement tab
+        // Enhanced income statement tab detection and clicking
         try {
-            const incomeStatementTab = await page.locator('text=/손익계산서/').first();
-            if (await incomeStatementTab.isVisible()) {
-                await incomeStatementTab.click();
-                console.log('Clicked 손익계산서 tab');
-                await page.waitForTimeout(5000);
-                
+            console.log('🔍 FINANCIAL TABS DEBUG: Searching for 손익계산서 tab...');
+            
+            // Try multiple selectors for income statement tab
+            const incomeStatementSelectors = [
+                'text=/손익계산서/',
+                'a:has-text("손익계산서")',
+                'button:has-text("손익계산서")',
+                '[title*="손익계산서"]',
+                'li:has-text("손익계산서")',
+                '.tab:has-text("손익계산서")'
+            ];
+            
+            let incomeTabClicked = false;
+            for (const selector of incomeStatementSelectors) {
+                try {
+                    const tab = await page.locator(selector).first();
+                    if (await tab.isVisible()) {
+                        console.log(`✅ Found 손익계산서 tab with selector: ${selector}`);
+                        await tab.click();
+                        console.log('✅ Successfully clicked 손익계산서 tab');
+                        incomeTabClicked = true;
+                        await page.waitForTimeout(5000);
+                        break;
+                    }
+                } catch (selectorError) {
+                    console.log(`❌ Failed with selector ${selector}:`, selectorError.message);
+                }
+            }
+            
+            if (incomeTabClicked) {
                 // Block interference elements again for income statement tab
                 const blockedElements2 = await detectAndBlockInterferenceElementsFirst(page, 'financial_statements', metrics);
                 console.log(`Blocked ${blockedElements2} interference elements for Income Statement tab`);
@@ -760,7 +824,7 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
                     console.log('Could not click 전체보기 for 손익계산서');
                 }
             } else {
-                console.log('손익계산서 tab not found');
+                console.log('⚠️ Could not find or click 손익계산서 tab with any selector');
             }
         } catch (e) {
             console.log('Error accessing 손익계산서 tab:', e.message);
@@ -782,13 +846,12 @@ async function extractFinancialTabDataComplete(page, tabType) {
     console.log(`Extracting ALL data from ${tabType} tab (NO artificial limits)...`);
     
     try {
-        // Take screenshot during extraction for debugging
+        // Take screenshot during extraction for debugging and save to key-value store
         const extractTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        await page.screenshot({ 
-            path: `debug-extracting-${tabType}-${extractTimestamp}.png`,
-            fullPage: true 
-        });
-        console.log(`Screenshot: debug-extracting-${tabType}-${extractTimestamp}.png`);
+        const extractScreenshot = await page.screenshot({ fullPage: true });
+        const extractFilename = `debug-extracting-${tabType}-${extractTimestamp}.png`;
+        await Actor.setValue(extractFilename, extractScreenshot, { contentType: 'image/png' });
+        console.log(`✅ Screenshot saved to key-value store: ${extractFilename}`);
         
         const extractedData = await page.evaluate((tabType) => {
             const rows = document.querySelectorAll('table tbody tr, .data-row, tr');
