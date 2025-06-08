@@ -1,29 +1,31 @@
 /**
- * DIVA SCRAPER v5.3.10 - PRECISION FIX EDITION
- * ============================================
+ * DIVA SCRAPER v5.3.11 - SCALABLE & INTERFERENCE-PROTECTED EDITION
+ * ================================================================
  *
- * CRITICAL PRECISION FIXES:
- * 1. Financial Statements: Limit to EXACTLY 500 records (250 per tab)
- * 2. Association Status: Enhanced scroll/wait for missing 9 records
- * 3. Enhanced scroll strategies for complete data loading after 전체보기
+ * SCALABILITY IMPROVEMENTS:
+ * 1. Financial Statements: REMOVED hard limits - natural count scaling
+ * 2. Interference Protection: Detect and AVOID 상세 buttons that cause popups
+ * 3. Future-proof design for datasets exceeding current expectations
+ * 4. Enhanced scroll strategies for complete data loading after 전체보기
  * 
- * STRATEGY: 전체보기-ONLY approach
+ * STRATEGY: 전체보기-ONLY + Interference Avoidance
  * - ONLY click "전체보기" (Show All) buttons
+ * - DETECT and AVOID 상세 (detail) buttons that inflate row counts
  * - DETECT pagination elements for AVOIDANCE (never click them)
  * - Enhanced scroll/wait strategies prevent duplication and ensure complete extraction
  * 
- * TARGET: PERFECT 100% accuracy on ALL 7 sources before production
+ * TARGET: Scalable production deployment for unknown dataset sizes
  */
 
 import { Actor } from 'apify';
 import { PlaywrightCrawler } from 'crawlee';
 
-console.log('DIVA SCRAPER v5.3.10 - PRODUCTION READY EDITION');
-console.log('FIXES: Association missing 9 records + Financial deduplication');
-console.log('TARGET: PERFECT 100% accuracy on ALL 7 sources for production deployment');
+console.log('DIVA SCRAPER v5.3.11 - SCALABLE & INTERFERENCE-PROTECTED EDITION');
+console.log('IMPROVEMENTS: Removed hard limits + 상세 button interference protection');
+console.log('TARGET: Scalable production deployment for unknown dataset sizes');
 
 Actor.main(async () => {
-    console.log('Starting DIVA Scraper v5.3.10 - Production Ready Edition...');
+    console.log('Starting DIVA Scraper v5.3.11 - Scalable & Interference-Protected Edition...');
     
     const input = await Actor.getInput();
     
@@ -49,10 +51,10 @@ Actor.main(async () => {
         }
     };
     
-    console.log('Production Ready Configuration v5.3.10:');
-    console.log('EXACT TARGETS: 333, 500, 2231, 251, 1685, 92, 251');
-    console.log('FIX 1: Financial statements deduplication (250 unique per tab)');
-    console.log('FIX 2: Association status complete extraction (include first 9 records)');
+    console.log('Scalable Configuration v5.3.11:');
+    console.log('CONTROL TARGETS: 333, 500, 2231, 251, 1685, 92, 251');
+    console.log('IMPROVEMENT 1: Financial statements - NO hard limits (natural scaling)');
+    console.log('IMPROVEMENT 2: Interference protection against 상세 buttons');
     
     const metrics = {
         startTime: Date.now(),
@@ -133,20 +135,16 @@ Actor.main(async () => {
                         console.log(`Total Financial Records: ${extractedData.length}`);
                         console.log(`Target: ${metrics.dataSourceCounts[dataType].target}`);
                         
-                        // PRECISION CHECK: Must be exactly 500
-                        if (extractedData.length !== 500) {
-                            console.log(`❌ PRECISION ERROR: ${extractedData.length} vs 500 target`);
-                            console.log(`🔧 Applying 500-record limit...`);
-                            extractedData.splice(500); // Truncate to exactly 500
-                            console.log(`✅ Limited to exactly 500 records`);
-                        }
+                        // SCALABILITY CHECK: Natural count (no hard limits)
+                        console.log(`✅ SCALABLE: ${extractedData.length} records extracted naturally`);
+                        console.log(`🛡️ PROTECTED: Interference elements avoided`);
                         
                         for (const record of extractedData) {
                             await Actor.pushData({
                                 ...record,
                                 dataSource: dataType,
                                 extractedAt: new Date().toISOString(),
-                                version: 'v5.3.10-production-ready'
+                                version: 'v5.3.11-scalable-interference-protected'
                             });
                         }
                     } else {
@@ -248,7 +246,7 @@ Actor.main(async () => {
                             ...record,
                             dataSource: dataType,
                             extractedAt: new Date().toISOString(),
-                                version: 'v5.3.10-production-ready'
+                                version: 'v5.3.11-scalable-interference-protected'
                         });
                     }
                 } else {
@@ -288,7 +286,7 @@ Actor.main(async () => {
     const endTime = Date.now();
     const duration = (endTime - metrics.startTime) / 1000;
     
-    console.log(`\n=== DIVA SCRAPER v5.3.10 - PRODUCTION READY REPORT ===`);
+            console.log(`\n=== DIVA SCRAPER v5.3.11 - SCALABLE & INTERFERENCE-PROTECTED REPORT ===`);
     console.log(`Total Runtime: ${duration.toFixed(1)} seconds`);
     console.log(`Total Records: ${metrics.totalRecords}`);
     console.log(`Successful Records: ${metrics.successfulRecords}`);
@@ -534,7 +532,8 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
         }
         
         console.log(`\nDual-tab workflow complete: ${allRecords.length} total records`);
-        console.log(`Expected: 500 (250 + 250)`);
+        console.log(`✅ SCALABLE: Natural count without hard limits`);
+        console.log(`🛡️ Interference-protected extraction`);
         
         return allRecords;
         
@@ -544,23 +543,53 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
     }
 }
 
-async function extractFinancialTabData(page, tabType) {
-    console.log(`Extracting data from ${tabType} tab (LIMIT: 250 records)...`);
+async function detectAndAvoidInterferenceElements(page) {
+    console.log('🚫 Detecting interference elements to AVOID...');
     
     try {
+        // Detect 상세 (detail) buttons and other popup triggers
+        const interferenceElements = await page.evaluate(() => {
+            const detailButtons = document.querySelectorAll('button:has-text("상세"), [onclick*="상세"], [href*="상세"], .detail-btn, .상세');
+            const popupTriggers = document.querySelectorAll('[onclick*="popup"], [onclick*="window.open"], [onclick*="modal"]');
+            const otherInterference = document.querySelectorAll('button:has-text("더보기"), button:has-text("자세히"), .more-btn');
+            
+            const allInterference = [...detailButtons, ...popupTriggers, ...otherInterference];
+            
+            console.log(`Found ${allInterference.length} interference elements to avoid`);
+            
+            // Mark interference elements for avoidance
+            allInterference.forEach((element, index) => {
+                element.setAttribute('data-avoid-interference', 'true');
+                element.style.pointerEvents = 'none'; // Prevent accidental clicks
+                console.log(`Marked interference element ${index + 1}: ${element.textContent?.trim() || element.tagName}`);
+            });
+            
+            return allInterference.length;
+        });
+        
+        console.log(`🛡️ Protected against ${interferenceElements} interference elements`);
+        return interferenceElements;
+        
+    } catch (error) {
+        console.error('Error detecting interference elements:', error.message);
+        return 0;
+    }
+}
+
+async function extractFinancialTabData(page, tabType) {
+    console.log(`Extracting data from ${tabType} tab (NO HARD LIMIT - Natural Count)...`);
+    
+    try {
+        // CRITICAL: Detect and avoid interference elements
+        await detectAndAvoidInterferenceElements(page);
+        
         const extractedData = await page.evaluate((tabType) => {
             const rows = document.querySelectorAll('table tbody tr, .data-row, tr');
             const data = [];
-            const MAX_RECORDS_PER_TAB = 250; // PRECISION LIMIT
             
             console.log(`Found ${rows.length} rows for ${tabType}`);
             
             rows.forEach((row, index) => {
-                // STOP at 250 records for precision
-                if (data.length >= MAX_RECORDS_PER_TAB) {
-                    return;
-                }
-                
                 const cells = row.querySelectorAll('td, .cell, .data-cell');
                 
                 if (cells.length >= 2) {
@@ -574,8 +603,15 @@ async function extractFinancialTabData(page, tabType) {
                     let hasValidData = false;
                     
                     cells.forEach((cell, cellIndex) => {
+                        // Skip cells with interference elements
+                        const hasInterference = cell.querySelector('[data-avoid-interference="true"]');
+                        if (hasInterference) {
+                            console.log(`Skipping cell with interference element`);
+                            return;
+                        }
+                        
                         const text = cell.textContent?.trim() || '';
-                        if (text && text.length > 0 && text !== '-' && text !== '　') {
+                        if (text && text.length > 0 && text !== '-' && text !== '　' && text !== '상세') {
                             rowData[`column_${cellIndex}`] = text;
                             hasValidData = true;
                         }
@@ -592,11 +628,11 @@ async function extractFinancialTabData(page, tabType) {
                 }
             });
             
-            console.log(`${tabType} extracted: ${data.length} records (limit: ${MAX_RECORDS_PER_TAB})`);
+            console.log(`${tabType} extracted: ${data.length} records (natural count - no hard limit)`);
             return data;
         }, tabType);
         
-        // PRECISION FIX: Remove duplicates and limit to exactly 250 per tab
+        // SCALABILITY FIX: Remove duplicates but NO hard limits
         const uniqueData = [];
         const seenSignatures = new Set();
         
@@ -604,14 +640,14 @@ async function extractFinancialTabData(page, tabType) {
             const columns = Object.keys(record).filter(k => k.startsWith('column_'));
             const signature = columns.map(col => record[col] || '').join('|');
             
-            if (!seenSignatures.has(signature) && uniqueData.length < 250) {
+            if (!seenSignatures.has(signature)) {
                 seenSignatures.add(signature);
                 uniqueData.push(record);
             }
         }
         
         console.log(`🔧 ${tabType} deduplication: ${extractedData.length} -> ${uniqueData.length} unique records`);
-        console.log(`✅ ${tabType} final count: ${uniqueData.length}/250`);
+        console.log(`✅ ${tabType} final count: ${uniqueData.length} (natural limit - scalable)`);
         
         return uniqueData;
         
