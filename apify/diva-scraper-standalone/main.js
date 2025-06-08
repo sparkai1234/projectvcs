@@ -21,13 +21,13 @@
 import { Actor } from 'apify';
 import { PlaywrightCrawler } from 'crawlee';
 
-console.log('DIVA SCRAPER v5.3.14.6 - FINANCIAL STATEMENTS COMPREHENSIVE DEBUG EDITION');
-console.log('IMPROVEMENTS: 17-screenshot financial debugging + URL navigation monitoring');
-console.log('TARGET: Complete visibility into financial statements dual-tab workflow');
+console.log('DIVA SCRAPER v5.3.14.7 - AGGRESSIVE NAVIGATION BLOCKING EDITION');
+console.log('IMPROVEMENTS: Block FAMILY SITE selector, TOP button + all navigation hazards');
+console.log('TARGET: Prevent external site navigation during financial statements extraction');
 
 Actor.main(async () => {
-    console.log('Starting DIVA Scraper v5.3.14.6 - Financial Statements Comprehensive Debug Edition...');
-    
+        console.log('Starting DIVA Scraper v5.3.14.7 - Aggressive Navigation Blocking Edition...');
+
     const input = await Actor.getInput();
     
     const config = {
@@ -52,7 +52,7 @@ Actor.main(async () => {
         }
     };
     
-    console.log('Financial Debug Configuration v5.3.14.6:');
+    console.log('Aggressive Navigation Blocking Configuration v5.3.14.7:');
     console.log('CONTROL TARGETS: 333, 500, 2231, 251, 1685, 92, 251');
     console.log('STEP 1: Immediate interference detection and blocking');
     console.log('STEP 2: Clean 전체보기 button detection and clicking');
@@ -599,6 +599,94 @@ async function detectAndBlockInterferenceElementsFirst(page, dataType, metrics) 
                 console.log(`BLOCKED HEADER/FOOTER ELEMENT: ${el.tagName} - "${el.textContent?.trim()}"`);
             });
             
+            // 6. AGGRESSIVE NAVIGATION BLOCKERS - FAMILY SITE AND DYNAMIC ELEMENTS
+            const navigationHazards = document.querySelectorAll([
+                '[class*="family"]', '[id*="family"]', '[class*="FAMILY"]', '[id*="FAMILY"]',
+                '[class*="site"]', '[id*="site"]', '[class*="SITE"]', '[id*="SITE"]',
+                '[class*="top"]', '[id*="top"]', '[class*="TOP"]', '[id*="TOP"]',
+                '[class*="floating"]', '[id*="floating"]', '[class*="FLOATING"]', '[id*="FLOATING"]',
+                'select[onchange]', 'select[onclick]',
+                '.quick-menu', '#quick-menu', '.quick_menu', '#quick_menu',
+                '.floating-menu', '#floating-menu', '.floating_menu', '#floating_menu',
+                '.site-map', '#site-map', '.site_map', '#site_map',
+                '.family-site', '#family-site', '.family_site', '#family_site'
+            ].join(','));
+            
+            navigationHazards.forEach(el => {
+                // Skip if it's a legitimate navigation element
+                if (isLegitimateNavigation(el)) {
+                    console.log(`PROTECTED LEGITIMATE NAVIGATION: ${el.tagName} - "${el.textContent?.trim()}"`);
+                    return;
+                }
+                
+                const text = el.textContent?.trim() || el.value?.trim() || el.title || '';
+                
+                // Block family site selectors, TOP buttons, and other navigation hazards
+                el.setAttribute('data-blocked-interference', 'true');
+                el.style.pointerEvents = 'none';
+                el.style.backgroundColor = 'rgba(255, 165, 0, 0.3)';
+                el.style.border = '3px solid orange';
+                el.style.cursor = 'not-allowed';
+                el.style.position = 'static'; // Prevent floating behavior
+                blocked++;
+                console.log(`BLOCKED NAVIGATION HAZARD: ${el.tagName} - "${text}" - CLASS: "${el.className}" - ID: "${el.id}"`);
+            });
+            
+            // 7. SPECIFIC TEXT-BASED NAVIGATION BLOCKERS
+            const specificNavigationTexts = ['FAMILY SITE', 'family site', '패밀리사이트', '사이트맵', 'TOP', 'top', '맨위로', '위로', '구주 유통망'];
+            specificNavigationTexts.forEach(searchText => {
+                const elements = document.querySelectorAll('*');
+                elements.forEach(el => {
+                    if (isLegitimateNavigation(el)) return;
+                    
+                    const text = el.textContent?.trim() || '';
+                    if (text === searchText || text.includes(searchText)) {
+                        el.setAttribute('data-blocked-interference', 'true');
+                        el.style.pointerEvents = 'none';
+                        el.style.backgroundColor = 'rgba(255, 0, 0, 0.4)';
+                        el.style.border = '3px solid red';
+                        el.style.cursor = 'not-allowed';
+                        blocked++;
+                        console.log(`BLOCKED SPECIFIC NAVIGATION TEXT: ${el.tagName} - "${text}"`);
+                    }
+                });
+            });
+            
+            // 8. AGGRESSIVE DROPDOWN AND SELECT BLOCKING
+            const dropdowns = document.querySelectorAll('select, .dropdown, .select-box, [role="combobox"], [role="listbox"]');
+            dropdowns.forEach(el => {
+                if (isLegitimateNavigation(el)) return;
+                
+                // Skip dropdowns that are clearly for data filtering (기준연도, 재원구분)
+                const text = el.textContent?.trim() || el.value?.trim() || '';
+                const isDataFilter = text.includes('2024') || text.includes('기준연도') || text.includes('재원구분') || text.includes('벤처투자회사');
+                
+                if (!isDataFilter) {
+                    el.setAttribute('data-blocked-interference', 'true');
+                    el.style.pointerEvents = 'none';
+                    el.style.backgroundColor = 'rgba(255, 255, 0, 0.3)';
+                    el.style.border = '2px solid yellow';
+                    el.style.cursor = 'not-allowed';
+                    blocked++;
+                    console.log(`BLOCKED DROPDOWN: ${el.tagName} - "${text}"`);
+                }
+            });
+            
+            // 9. DISABLE ALL ONCHANGE/ONCLICK HANDLERS ON NON-LEGITIMATE ELEMENTS
+            const elementsWithHandlers = document.querySelectorAll('[onchange], [onclick], [onselect]');
+            elementsWithHandlers.forEach(el => {
+                if (isLegitimateNavigation(el)) return;
+                
+                // Remove event handlers that could cause navigation
+                el.removeAttribute('onchange');
+                el.removeAttribute('onclick');
+                el.removeAttribute('onselect');
+                el.setAttribute('data-blocked-interference', 'true');
+                el.style.pointerEvents = 'none';
+                blocked++;
+                console.log(`BLOCKED EVENT HANDLER: ${el.tagName} - "${el.textContent?.trim()}"`);
+            });
+            
             console.log(`TARGETED INTERFERENCE: Blocked ${blocked} elements specifically for ${dataType}`);
             console.log(`CONSISTENT PAGINATION: Applied to ALL URLs before 전체보기`);
             console.log(`PROTECTED ONLY: Main navigation menu items and 전체보기 button`);
@@ -715,7 +803,10 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
         // Check URL after interference blocking
         const urlAfterInterference = page.url();
         if (urlAfterInterference !== initialUrl) {
-            console.log(`⚠️ URL CHANGED after interference blocking: ${initialUrl} -> ${urlAfterInterference}`);
+            console.log(`🚨 CRITICAL: URL CHANGED after interference blocking: ${initialUrl} -> ${urlAfterInterference}`);
+            console.log(`🚨 This indicates navigation to external site - likely FAMILY SITE selector or other navigation element`);
+        } else {
+            console.log(`✅ URL STABLE after interference blocking: ${urlAfterInterference}`);
         }
         
         // Enhanced balance sheet tab detection and clicking
@@ -781,7 +872,10 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
                         // Check URL after tab click
                         const urlAfterTab = page.url();
                         if (urlAfterTab !== urlAfterInterference) {
-                            console.log(`⚠️ URL CHANGED after tab click: ${urlAfterInterference} -> ${urlAfterTab}`);
+                            console.log(`🚨 CRITICAL: URL CHANGED after 재무상태표 tab click: ${urlAfterInterference} -> ${urlAfterTab}`);
+                            console.log(`🚨 Navigation detected during tab switching - checking if we're still on financial statements page`);
+                        } else {
+                            console.log(`✅ URL STABLE after 재무상태표 tab click: ${urlAfterTab}`);
                         }
                         
                         break;
@@ -819,6 +913,10 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
             // Check URL after 전체보기
             const urlAfterShowAll = page.url();
             console.log(`🌐 URL after 전체보기 for 재무상태표: ${urlAfterShowAll}`);
+            if (!urlAfterShowAll.includes('DivItmFsInq')) {
+                console.log(`🚨 CRITICAL: No longer on financial statements page after 전체보기! Expected DivItmFsInq in URL`);
+                console.log(`🚨 Current URL: ${urlAfterShowAll}`);
+            }
             
             // Enhanced DOM stability check
             await enhancedDOMStabilityCheck(page, 'financial_statements_balance');
