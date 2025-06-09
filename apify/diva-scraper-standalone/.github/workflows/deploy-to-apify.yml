@@ -2,7 +2,7 @@ name: Deploy DIVA Scraper to Apify
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ master, main ]
     paths: 
       - 'apify/diva-scraper-standalone/**'
   workflow_dispatch:
