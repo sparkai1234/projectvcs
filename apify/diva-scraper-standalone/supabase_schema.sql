@@ -9,7 +9,7 @@
 -- =================================================================
 
 -- 1. INVESTMENT PERFORMANCE TABLE (투자성과)
--- Real fields: 회사명, 고유재정 업체수/금액, 조합 업체수/금액, 합계 업체수/금액
+-- Real fields: 회사명, 고유재정 업체수/금액, 조합 업체수/금액, 합계 업체수/금액 + Year
 DROP TABLE IF EXISTS diva_investment_performance CASCADE;
 CREATE TABLE diva_investment_performance (
     id BIGSERIAL PRIMARY KEY,
@@ -20,13 +20,14 @@ CREATE TABLE diva_investment_performance (
     fund_amount BIGINT,                           -- 조합 금액(원)
     total_companies INTEGER,                       -- 합계 업체수
     total_amount BIGINT,                          -- 합계 금액(원)
+    data_year INTEGER NOT NULL DEFAULT 2024,      -- 데이터 연도 (2024, 2023, etc.)
     source_url TEXT,
     extracted_at TIMESTAMPTZ DEFAULT NOW(),
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- 2. VIOLATIONS TABLE (위반사항)
--- Real fields: 번호, 회사명, 조치일, 조치예정일, 시정완료일, 점검구분, 위반유형, 조치구분
+-- Real fields: 번호, 회사명, 조치일, 조치예정일, 시정완료일, 점검구분, 위반유형, 조치구분 + Year
 DROP TABLE IF EXISTS diva_violations CASCADE;
 CREATE TABLE diva_violations (
     id BIGSERIAL PRIMARY KEY,
@@ -38,13 +39,14 @@ CREATE TABLE diva_violations (
     inspection_category TEXT,                     -- 점검구분
     violation_type TEXT,                          -- 위반유형
     action_category TEXT,                         -- 조치구분
+    data_year INTEGER NOT NULL DEFAULT 2024,      -- 데이터 연도 (2024, 2023, etc.)
     source_url TEXT,
     extracted_at TIMESTAMPTZ DEFAULT NOW(),
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- 3. VC MAP TABLE (벤처캐피탈 현황)
--- Real fields: 순위, 회사명, 인원총수, 전문인력수
+-- Real fields: 순위, 회사명, 인원총수, 전문인력수 + Year
 DROP TABLE IF EXISTS diva_vc_map CASCADE;
 CREATE TABLE diva_vc_map (
     id BIGSERIAL PRIMARY KEY,
@@ -52,13 +54,14 @@ CREATE TABLE diva_vc_map (
     company_name TEXT NOT NULL,                   -- 회사명
     total_employees INTEGER,                      -- 인원총수
     professional_employees INTEGER,               -- 전문인력수
+    data_year INTEGER NOT NULL DEFAULT 2024,      -- 데이터 연도 (2024, 2023, etc.)
     source_url TEXT,
     extracted_at TIMESTAMPTZ DEFAULT NOW(),
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- 4. FINANCIAL STATEMENTS TABLE (재무현황) 
--- Real fields: 회사명, 재원, 결산월, 회계기준, 재무구분, + tab-specific fields
+-- Real fields: 회사명, 재원, 결산월, 회계기준, 재무구분, + tab-specific fields + Year
 DROP TABLE IF EXISTS diva_financial_statements CASCADE;
 CREATE TABLE diva_financial_statements (
     id BIGSERIAL PRIMARY KEY,
@@ -82,7 +85,7 @@ CREATE TABLE diva_financial_statements (
     net_income_before_taxes BIGINT,              -- 법인세비용차감전이익
     net_profit BIGINT,                           -- 당기순이익
     
-    details TEXT,                                -- 상세
+    data_year INTEGER NOT NULL DEFAULT 2024,     -- 데이터 연도 (2024, 2023, etc.)
     tab_type TEXT,                               -- 'balance_sheet' or 'income_statement'
     source_url TEXT,
     extracted_at TIMESTAMPTZ DEFAULT NOW(),
@@ -90,7 +93,7 @@ CREATE TABLE diva_financial_statements (
 );
 
 -- 5. ASSOCIATION STATUS TABLE (조합현황)
--- Real fields: 번호, 회사명, 조합명, 등록일, 결성총액(원), 만기일, 투자분야, 목적구분, 지원구분
+-- Real fields: 번호, 회사명, 조합명, 등록일, 결성총액(원), 만기일, 투자분야, 목적구분, 지원구분 + Year
 DROP TABLE IF EXISTS diva_association_status CASCADE;
 CREATE TABLE diva_association_status (
     id BIGSERIAL PRIMARY KEY,
@@ -103,13 +106,14 @@ CREATE TABLE diva_association_status (
     investment_fields TEXT,                       -- 투자분야
     purpose_classification TEXT,                  -- 목적구분
     support_category TEXT,                        -- 지원구분
+    data_year INTEGER NOT NULL DEFAULT 2024,      -- 데이터 연도 (2024, 2023, etc.)
     source_url TEXT,
     extracted_at TIMESTAMPTZ DEFAULT NOW(),
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- 6. PERSONNEL STATUS TABLE (인력현황)
--- Real fields: 회사명, 총인원, 전문인력, 투자심사, 경영관리
+-- Real fields: 회사명, 총인원, 전문인력, 투자심사, 경영관리 + Year
 DROP TABLE IF EXISTS diva_personnel_status CASCADE;
 CREATE TABLE diva_personnel_status (
     id BIGSERIAL PRIMARY KEY,
@@ -118,13 +122,14 @@ CREATE TABLE diva_personnel_status (
     professionals INTEGER,                        -- 전문인력
     investment_officers INTEGER,                  -- 투자심사
     business_support INTEGER,                     -- 경영관리
+    data_year INTEGER NOT NULL DEFAULT 2024,      -- 데이터 연도 (2024, 2023, etc.)
     source_url TEXT,
     extracted_at TIMESTAMPTZ DEFAULT NOW(),
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- 7. PROFESSIONAL PERSONNEL TABLE (전문인력)
--- Real fields: 회사명, 성명, 경력, 전문경력, 벤처투자경력, 벤처투자전문경력
+-- Real fields: 회사명, 성명, 경력, 전문경력, 벤처투자경력, 벤처투자전문경력 + Year
 DROP TABLE IF EXISTS diva_professional_personnel CASCADE;
 CREATE TABLE diva_professional_personnel (
     id BIGSERIAL PRIMARY KEY,
@@ -134,6 +139,7 @@ CREATE TABLE diva_professional_personnel (
     professional_experience TEXT,                -- 전문경력
     vc_work_experience TEXT,                     -- 벤처투자경력
     vc_professional_experience TEXT,             -- 벤처투자전문경력
+    data_year INTEGER NOT NULL DEFAULT 2024,      -- 데이터 연도 (2024, 2023, etc.)
     source_url TEXT,
     extracted_at TIMESTAMPTZ DEFAULT NOW(),
     created_at TIMESTAMPTZ DEFAULT NOW()

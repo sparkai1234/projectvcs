@@ -1012,7 +1012,8 @@ function transformDataForSupabase(dataType, rawData) {
     return rawData.map(record => {
         const transformedRecord = {
             extracted_at: new Date().toISOString(),
-            source_url: `http://diva.kvca.or.kr/div/dii/${getUrlSuffix(dataType)}`
+            source_url: `http://diva.kvca.or.kr/div/dii/${getUrlSuffix(dataType)}`,
+            data_year: 2024  // Current scraping year - update manually for 2023/other years
         };
         
         // Add tab_type for financial statements to distinguish Balance Sheet vs Income Statement
