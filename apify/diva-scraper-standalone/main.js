@@ -906,81 +906,81 @@ function getDataSources(dataSource, urls) {
 
 // Supabase table mapping for DIVA data (using VCS patterns)
 const SUPABASE_TABLE_MAPPING = {
-    investment_performance: 'diva_investment_performance_raw',
-    financial_statements: 'diva_financial_raw', 
-    association_status: 'diva_association_raw',
-    personnel_status: 'diva_personnel_raw',
-    professional_personnel: 'diva_professional_raw',
-    violations: 'diva_violation_raw',
-    vc_map: 'diva_vcmap_raw'
+    investment_performance: 'diva_investment_performance',
+    financial_statements: 'diva_financial_statements', 
+    association_status: 'diva_association_status',
+    personnel_status: 'diva_personnel_status',
+    professional_personnel: 'diva_professional_personnel',
+    violations: 'diva_violations',
+    vc_map: 'diva_vc_map'
 };
 
 // Column mapping for each data type to match Supabase schema
 const COLUMN_MAPPINGS = {
     investment_performance: {
-        column_0: 'company_name',
-        column_1: 'individual_avoidance_count',
-        column_2: 'individual_amount',
-        column_3: 'partnership_avoidance_count', 
-        column_4: 'partnership_amount',
-        column_5: 'total_avoidance_count',
-        column_6: 'total_amount'
+        column_0: 'company_name',           // 회사명
+        column_1: 'govt_finance_companies', // 고유재정 업체수
+        column_2: 'govt_finance_amount',    // 고유재정 금액(원)
+        column_3: 'fund_companies',         // 조합 업체수
+        column_4: 'fund_amount',           // 조합 금액(원)
+        column_5: 'total_companies',       // 합계 업체수
+        column_6: 'total_amount'           // 합계 금액(원)
     },
     financial_statements: {
-        column_0: 'company_name',
-        column_1: 'fiscal_year',
-        column_2: 'accounting_standard',
-        column_3: 'total_assets',
-        column_4: 'total_liabilities',
-        column_5: 'total_equity',
-        column_6: 'operating_revenue',
-        column_7: 'operating_profit',
-        column_8: 'net_income',
-        column_9: 'startup_investment_assets'
+        // Financial Status Tab (재무상태표)
+        column_0: 'company_name',              // 회사명
+        column_1: 'financial_resources',      // 재원
+        column_2: 'settlement_month',          // 결산월
+        column_3: 'accounting_standards',      // 회계기준
+        column_4: 'financial_classification', // 재무구분
+        column_5: 'assets',                   // 자산 OR 영업수익
+        column_6: 'startup_investment_assets', // 창업투자자산 OR 영업비용
+        column_7: 'liabilities',              // 부채 OR 영업이익
+        column_8: 'paid_in_capital',          // 자본금 OR 법인세비용차감전이익
+        column_9: 'capital',                  // 자본 OR 당기순이익
+        column_10: 'details'                  // 상세
     },
     association_status: {
-        column_0: 'company_name',
-        column_1: 'fund_name',
-        column_2: 'fund_number',
-        column_3: 'total_investment',
-        column_4: 'formation_investment_krw',
-        column_5: 'maturity_date',
-        column_6: 'investment_purpose',
-        column_7: 'development_type',
-        column_8: 'support_type'
+        column_0: 'fund_number',              // 번호
+        column_1: 'company_name',             // 회사명
+        column_2: 'fund_name',                // 조합명
+        column_3: 'registration_date',        // 등록일
+        column_4: 'total_amount_krw',         // 결성총액(원)
+        column_5: 'expiry_date',              // 만기일
+        column_6: 'investment_fields',        // 투자분야
+        column_7: 'purpose_classification',   // 목적구분
+        column_8: 'support_category'          // 지원구분
     },
     personnel_status: {
-        column_0: 'company_name',
-        column_1: 'total_personnel',
-        column_2: 'professional_staff',
-        column_3: 'investment_review_staff',
-        column_4: 'management_staff',
-        column_5: 'reference_year_month'
+        column_0: 'company_name',          // 회사명
+        column_1: 'total_employees',       // 총인원
+        column_2: 'professionals',         // 전문인력
+        column_3: 'investment_officers',   // 투자심사
+        column_4: 'business_support'       // 경영관리
     },
     professional_personnel: {
-        column_0: 'company_name',
-        column_1: 'person_name',
-        column_2: 'position',
-        column_3: 'department',
-        column_4: 'experience_years',
-        column_5: 'education',
-        column_6: 'specialization'
+        column_0: 'company_name',              // 회사명
+        column_1: 'person_name',               // 성명
+        column_2: 'work_experience',           // 경력
+        column_3: 'professional_experience',   // 전문경력
+        column_4: 'vc_work_experience',        // 벤처투자경력
+        column_5: 'vc_professional_experience' // 벤처투자전문경력
     },
     violations: {
-        column_0: 'company_name',
-        column_1: 'violation_date',
-        column_2: 'violation_type',
-        column_3: 'violation_category',
-        column_4: 'violation_details',
-        column_5: 'penalty_amount'
+        column_0: 'violation_number',           // 번호
+        column_1: 'company_name',              // 회사명
+        column_2: 'action_date',               // 조치일
+        column_3: 'expected_action_date',      // 조치예정일
+        column_4: 'correction_completion_date', // 시정완료일
+        column_5: 'inspection_category',       // 점검구분
+        column_6: 'violation_type',            // 위반유형
+        column_7: 'action_category'            // 조치구분
     },
     vc_map: {
-        column_0: 'company_name',
-        column_1: 'ranking',
-        column_2: 'total_personnel',
-        column_3: 'professional_personnel',
-        column_4: 'total_investment_amount',
-        column_5: 'fund_count'
+        column_0: 'ranking',                   // 순위
+        column_1: 'company_name',              // 회사명
+        column_2: 'total_employees',           // 인원총수
+        column_3: 'professional_employees'     // 전문인력수
     }
 };
 
