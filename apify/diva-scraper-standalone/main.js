@@ -1,30 +1,38 @@
 ﻿/**
- * DIVA SCRAPER v5.3.10 - ENGLISH CLEAN EDITION
- * ============================================
+ * DIVA SCRAPER v5.3.20 - SUPABASE SCHEMA FIX EDITION
+ * ==================================================
  *
- * CRITICAL PRECISION FIXES:
+ * CRITICAL SUPABASE INTEGRATION FIXES:
+ * 1. Added comprehensive column mapping for all 7 data sources
+ * 2. Proper data transformation from column_X to schema column names  
+ * 3. Korean number format conversion (억, 만) to integers
+ * 4. Date format conversion to SQL-compatible format
+ * 5. Type-aware data conversion for numeric/date fields
+ * 
+ * PRECISION FIXES (from v5.3.10):
  * 1. Financial Statements: Limit to EXACTLY 500 records (250 per tab)
  * 2. Association Status: Enhanced scroll/wait for missing 9 records
  * 3. Enhanced scroll strategies for complete data loading after Show All
  * 
- * STRATEGY: Show All ONLY approach
+ * STRATEGY: Show All + Supabase Export
  * - ONLY click "Show All" buttons
  * - DETECT pagination elements for AVOIDANCE (never click them)
- * - Enhanced scroll/wait strategies prevent duplication and ensure complete extraction
+ * - Transform scraped data to match Supabase schema exactly
+ * - Dual save: Apify dataset + Supabase database
  * 
- * TARGET: PERFECT 100% accuracy on ALL 7 sources before production
+ * TARGET: PERFECT 100% accuracy + successful Supabase integration
  */
 
 import { Actor } from 'apify';
 import { PlaywrightCrawler } from 'crawlee';
 import { createClient } from '@supabase/supabase-js';
 
-console.log('DIVA SCRAPER v5.3.10 - ENGLISH CLEAN + SUPABASE EDITION');
-console.log('FIXES: Association missing 9 records + Financial deduplication');
-console.log('TARGET: PERFECT 100% accuracy on ALL 7 sources + Supabase export');
+console.log('DIVA SCRAPER v5.3.20 - SUPABASE SCHEMA FIX EDITION');
+console.log('CRITICAL FIX: Column mapping schema mismatch resolved');
+console.log('TARGET: PERFECT 100% accuracy + successful Supabase integration');
 
 Actor.main(async () => {
-    console.log('Starting DIVA Scraper v5.3.10 - English Clean + Supabase Integration...');
+    console.log('Starting DIVA Scraper v5.3.20 - Supabase Schema Fix Edition...');
     
     const input = await Actor.getInput();
     
@@ -93,7 +101,7 @@ Actor.main(async () => {
         }
     };
     
-    console.log('Production Ready Configuration v5.3.10:');
+    console.log('Production Ready Configuration v5.3.20:');
     console.log('EXACT TARGETS: 333, 500, 2231, 251, 1685, 92, 251');
     console.log('FIX 1: Financial statements deduplication (250 unique per tab)');
     console.log('FIX 2: Association status complete extraction (include first 9 records)');
@@ -190,7 +198,7 @@ Actor.main(async () => {
                                 ...record,
                                 dataSource: dataType,
                                 extractedAt: new Date().toISOString(),
-                                version: 'v5.3.10-english-clean-supabase'
+                                version: 'v5.3.20-supabase-schema-fix'
                             });
                         }
                         
@@ -297,7 +305,7 @@ Actor.main(async () => {
                                 ...record,
                                 dataSource: dataType,
                                 extractedAt: new Date().toISOString(),
-                                version: 'v5.3.10-english-clean-supabase'
+                                version: 'v5.3.20-supabase-schema-fix'
                             });
                         }
                         
@@ -342,7 +350,7 @@ Actor.main(async () => {
     const endTime = Date.now();
     const duration = (endTime - metrics.startTime) / 1000;
     
-    console.log(`\n=== DIVA SCRAPER v5.3.10 - ENGLISH CLEAN + SUPABASE REPORT ===`);
+    console.log(`\n=== DIVA SCRAPER v5.3.20 - SUPABASE SCHEMA FIX REPORT ===`);
     console.log(`Total Runtime: ${duration.toFixed(1)} seconds`);
     console.log(`Total Records: ${metrics.totalRecords}`);
     console.log(`Successful Records: ${metrics.successfulRecords}`);
@@ -900,6 +908,178 @@ const SUPABASE_TABLE_MAPPING = {
     vc_map: 'diva_vcmap_raw'
 };
 
+// Column mapping for each data type to match Supabase schema
+const COLUMN_MAPPINGS = {
+    investment_performance: {
+        column_0: 'company_name',
+        column_1: 'individual_avoidance_count',
+        column_2: 'individual_amount',
+        column_3: 'partnership_avoidance_count', 
+        column_4: 'partnership_amount',
+        column_5: 'total_avoidance_count',
+        column_6: 'total_amount'
+    },
+    financial_statements: {
+        column_0: 'company_name',
+        column_1: 'fiscal_year',
+        column_2: 'accounting_standard',
+        column_3: 'total_assets',
+        column_4: 'total_liabilities',
+        column_5: 'total_equity',
+        column_6: 'operating_revenue',
+        column_7: 'operating_profit',
+        column_8: 'net_income',
+        column_9: 'startup_investment_assets'
+    },
+    association_status: {
+        column_0: 'company_name',
+        column_1: 'fund_name',
+        column_2: 'fund_number',
+        column_3: 'total_investment',
+        column_4: 'formation_investment_krw',
+        column_5: 'maturity_date',
+        column_6: 'investment_purpose',
+        column_7: 'development_type',
+        column_8: 'support_type'
+    },
+    personnel_status: {
+        column_0: 'company_name',
+        column_1: 'total_personnel',
+        column_2: 'professional_staff',
+        column_3: 'investment_review_staff',
+        column_4: 'management_staff',
+        column_5: 'reference_year_month'
+    },
+    professional_personnel: {
+        column_0: 'company_name',
+        column_1: 'person_name',
+        column_2: 'position',
+        column_3: 'department',
+        column_4: 'experience_years',
+        column_5: 'education',
+        column_6: 'specialization'
+    },
+    violations: {
+        column_0: 'company_name',
+        column_1: 'violation_number',
+        column_2: 'violation_date',
+        column_3: 'violation_type',
+        column_4: 'violation_category',
+        column_5: 'violation_details',
+        column_6: 'penalty_amount'
+    },
+    vc_map: {
+        column_0: 'company_name',
+        column_1: 'ranking',
+        column_2: 'map_type',
+        column_3: 'total_personnel',
+        column_4: 'professional_personnel',
+        column_5: 'total_investment_amount'
+    }
+};
+
+/**
+ * Transform scraped data to match Supabase schema
+ */
+function transformDataForSupabase(dataType, rawData) {
+    const columnMapping = COLUMN_MAPPINGS[dataType];
+    if (!columnMapping) {
+        console.log(`⚠️ No column mapping defined for ${dataType}`);
+        return rawData;
+    }
+    
+    return rawData.map(record => {
+        const transformedRecord = {
+            extracted_at: new Date().toISOString(),
+            source_url: `http://diva.kvca.or.kr/div/dii/${getUrlSuffix(dataType)}`
+        };
+        
+        // Transform column_X to proper column names
+        Object.keys(columnMapping).forEach(sourceCol => {
+            const targetCol = columnMapping[sourceCol];
+            if (record[sourceCol] !== undefined) {
+                let value = record[sourceCol];
+                
+                // Type conversion for numeric columns
+                if (targetCol.includes('amount') || targetCol.includes('count') || 
+                    targetCol.includes('personnel') || targetCol.includes('assets') || 
+                    targetCol.includes('liabilities') || targetCol.includes('equity') ||
+                    targetCol.includes('revenue') || targetCol.includes('profit') ||
+                    targetCol.includes('income') || targetCol.includes('investment') ||
+                    targetCol.includes('years') || targetCol.includes('ranking')) {
+                    
+                    // Convert numeric strings to numbers, handle Korean number formats
+                    value = convertToNumber(value);
+                }
+                
+                // Date conversion
+                if (targetCol.includes('date')) {
+                    value = convertToDate(value);
+                }
+                
+                transformedRecord[targetCol] = value;
+            }
+        });
+        
+        return transformedRecord;
+    });
+}
+
+/**
+ * Convert Korean formatted numbers to integers
+ */
+function convertToNumber(value) {
+    if (typeof value !== 'string') return value;
+    
+    // Remove commas, spaces, and convert Korean numbers
+    let numStr = value.replace(/[,\s]/g, '');
+    
+    // Handle Korean number suffixes (억, 만, etc.)
+    if (numStr.includes('억')) {
+        const num = parseFloat(numStr.replace('억', ''));
+        return Math.round(num * 100000000); // 1억 = 100,000,000
+    }
+    if (numStr.includes('만')) {
+        const num = parseFloat(numStr.replace('만', ''));
+        return Math.round(num * 10000); // 1만 = 10,000
+    }
+    
+    const parsed = parseInt(numStr);
+    return isNaN(parsed) ? null : parsed;
+}
+
+/**
+ * Convert date strings to SQL date format
+ */
+function convertToDate(value) {
+    if (typeof value !== 'string') return null;
+    
+    // Handle Korean date formats (YYYY.MM.DD, YYYY-MM-DD, etc.)
+    const dateMatch = value.match(/(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})/);
+    if (dateMatch) {
+        const [, year, month, day] = dateMatch;
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+    
+    return null;
+}
+
+/**
+ * Get URL suffix for source_url
+ */
+function getUrlSuffix(dataType) {
+    const suffixes = {
+        investment_performance: 'DivItmInvstPrfmInq',
+        financial_statements: 'DivItmFsInq',
+        association_status: 'DivItmAssoInq',
+        personnel_status: 'DivItmMnpwrInq',
+        professional_personnel: 'DivItmProfsInq',
+        violations: 'DivItmViolInq',
+        vc_map: 'DivItmVcmapInq'
+    };
+    return suffixes[dataType] || '';
+}
+
 /**
  * Save data to Supabase table using proven VCS patterns
  */
@@ -920,10 +1100,15 @@ async function saveToSupabase(supabaseClient, dataType, data) {
     }
     
     try {
+        // Transform data to match Supabase schema
+        console.log('🔄 Transforming data to match Supabase schema...');
+        const transformedData = transformDataForSupabase(dataType, data);
+        console.log(`✅ Transformed ${data.length} records with proper column mapping`);
+        
         // Use VCS pattern: direct insert with error handling
         const { data: result, error } = await supabaseClient
             .from(tableName)
-            .insert(data);
+            .insert(transformedData);
             
         if (error) {
             console.log(`❌ Supabase insert error for ${tableName}:`, error.message);
@@ -934,16 +1119,16 @@ async function saveToSupabase(supabaseClient, dataType, data) {
                 
                 const { data: upsertResult, error: upsertError } = await supabaseClient
                     .from(tableName)
-                    .upsert(data, { onConflict: 'extracted_at,data_type' });
+                    .upsert(transformedData, { onConflict: 'extracted_at,company_name' });
                     
                 if (upsertError) {
                     console.log(`❌ Supabase upsert failed for ${tableName}:`, upsertError.message);
                 } else {
-                    console.log(`✅ Successfully upserted ${data.length} records to ${tableName}`);
+                    console.log(`✅ Successfully upserted ${transformedData.length} records to ${tableName}`);
                 }
             }
         } else {
-            console.log(`✅ Successfully inserted ${data.length} records to ${tableName}`);
+            console.log(`✅ Successfully inserted ${transformedData.length} records to ${tableName}`);
         }
         
     } catch (error) {
