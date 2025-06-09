@@ -11,7 +11,7 @@ import { Actor } from 'apify';
 import { PlaywrightCrawler } from 'crawlee';
 import { createClient } from '@supabase/supabase-js';
 
-console.log('DIVA SCRAPER v5.3.16 - SUPABASE INTEGRATION EDITION');
+console.log('DIVA SCRAPER v5.3.17 - DUAL-TAB FINANCIAL STATEMENTS FIX');
 
 Actor.main(async () => {
     console.log('Starting DIVA Scraper v5.3.16 - Supabase Integration Edition...');
@@ -257,44 +257,102 @@ function getDataSources(dataSource, urls) {
 }
 
 async function handleFinancialStatements(page, metrics) {
-    console.log('\n=== ENHANCED FINANCIAL STATEMENTS EXTRACTION ===');
-    console.log('🎯 Target: 500 records for perfect accuracy');
+    console.log('\n=== DUAL-TAB FINANCIAL STATEMENTS EXTRACTION ===');
+    console.log('🎯 Target: 500 records (250 per tab) for perfect accuracy');
     
     try {
-        // Wait for page load
+        let allFinancialData = [];
+        
+        // Wait for initial page load
         await page.waitForSelector('table, .content, .container, body', { timeout: 60000 });
         await page.waitForTimeout(5000);
         
+        // PHASE 1: Extract from 재무상태표 (Balance Sheet) tab
+        console.log('📊 PHASE 1: Processing 재무상태표 (Balance Sheet) tab...');
+        
         // Block interference elements first
-        const blockedElements = await blockInterferenceElements(page);
-        console.log(`Blocked ${blockedElements} interference elements`);
+        const blockedElements1 = await blockInterferenceElements(page);
+        console.log(`Blocked ${blockedElements1} interference elements for balance sheet`);
         
-        // Try to click 전체보기 for maximum data
-        const showAllResult = await findAndClickShowAll(page);
-        if (showAllResult.clicked) {
-            console.log('✅ Successfully clicked 전체보기 for financial statements');
-            await page.waitForTimeout(8000); // Wait longer for financial data
-        } else {
-            console.log('⚠️ 전체보기 not found - proceeding with available data');
+        // Ensure we're on 재무상태표 tab (should be default)
+        try {
+            const balanceSheetTab = await page.locator('text=/재무상태표/').first();
+            const isBalanceSheetVisible = await balanceSheetTab.isVisible().catch(() => false);
+            if (isBalanceSheetVisible) {
+                await balanceSheetTab.click();
+                console.log('✅ Clicked 재무상태표 tab');
+                await page.waitForTimeout(3000);
+            }
+        } catch (error) {
+            console.log('⚠️ 재무상태표 tab not found or already active');
         }
         
-        // Enhanced data extraction with quality validation
-        const extractedData = await extractEnhancedFinancialData(page);
-        
-        if (extractedData && extractedData.length > 0) {
-            // Apply validation
-            const validatedData = validateFinancialRecords(extractedData);
-            
-            console.log(`📊 Financial Data Results:`);
-            console.log(`  Raw Extracted: ${extractedData.length}`);
-            console.log(`  After Validation: ${validatedData.length}`);
-            console.log(`  Target: 500 records`);
-            
-            return validatedData;
-        } else {
-            console.log('❌ No financial data extracted');
-            return [];
+        // Click 전체보기 for balance sheet data
+        const showAllResult1 = await findAndClickShowAll(page);
+        if (showAllResult1.clicked) {
+            console.log('✅ Successfully clicked 전체보기 for 재무상태표');
+            await page.waitForTimeout(8000);
         }
+        
+        // Extract balance sheet data
+        const balanceSheetData = await extractEnhancedFinancialData(page);
+        const validatedBalanceSheet = validateFinancialRecords(balanceSheetData);
+        console.log(`📊 재무상태표 extracted: ${validatedBalanceSheet.length} records`);
+        
+        // Add tab identifier to records
+        validatedBalanceSheet.forEach(record => {
+            record.tabType = '재무상태표';
+        });
+        allFinancialData.push(...validatedBalanceSheet);
+        
+        // PHASE 2: Switch to and extract from 손익계산서 (Income Statement) tab
+        console.log('📊 PHASE 2: Processing 손익계산서 (Income Statement) tab...');
+        
+        try {
+            const incomeStatementTab = await page.locator('text=/손익계산서/').first();
+            const isIncomeStatementVisible = await incomeStatementTab.isVisible().catch(() => false);
+            
+            if (isIncomeStatementVisible) {
+                await incomeStatementTab.click();
+                console.log('✅ Successfully clicked 손익계산서 tab');
+                await page.waitForTimeout(5000);
+                
+                // Block interference elements for income statement tab
+                const blockedElements2 = await blockInterferenceElements(page);
+                console.log(`Blocked ${blockedElements2} interference elements for income statement`);
+                
+                // Click 전체보기 for income statement data
+                const showAllResult2 = await findAndClickShowAll(page);
+                if (showAllResult2.clicked) {
+                    console.log('✅ Successfully clicked 전체보기 for 손익계산서');
+                    await page.waitForTimeout(8000);
+                }
+                
+                // Extract income statement data
+                const incomeStatementData = await extractEnhancedFinancialData(page);
+                const validatedIncomeStatement = validateFinancialRecords(incomeStatementData);
+                console.log(`📊 손익계산서 extracted: ${validatedIncomeStatement.length} records`);
+                
+                // Add tab identifier to records
+                validatedIncomeStatement.forEach(record => {
+                    record.tabType = '손익계산서';
+                });
+                allFinancialData.push(...validatedIncomeStatement);
+                
+            } else {
+                console.log('⚠️ 손익계산서 tab not found - single tab structure');
+            }
+        } catch (error) {
+            console.log('⚠️ Error processing 손익계산서 tab:', error.message);
+        }
+        
+        console.log(`📊 DUAL-TAB EXTRACTION COMPLETE:`);
+        console.log(`  재무상태표: ${validatedBalanceSheet.length} records`);
+        console.log(`  손익계산서: ${allFinancialData.length - validatedBalanceSheet.length} records`);
+        console.log(`  Total: ${allFinancialData.length} records`);
+        console.log(`  Target: 500 records`);
+        
+        return allFinancialData;
         
     } catch (error) {
         console.error('Error in handleFinancialStatements:', error.message);
@@ -378,29 +436,30 @@ function validateFinancialRecords(records) {
     console.log('🔍 Applying enhanced validation criteria...');
     
     const validatedRecords = records.filter(record => {
-        // Company name validation (3-50 characters)
-        if (!record.company_name || record.company_name.length < 3 || record.company_name.length > 50) {
+        // Company name validation (2-100 characters - more flexible)
+        if (!record.company_name || record.company_name.length < 2 || record.company_name.length > 100) {
             return false;
         }
         
-        // Source must include '계정'
-        if (!record.source || !record.source.includes('계정')) {
+        // Source validation - more flexible (just needs to exist and not be empty)
+        if (!record.source || record.source.trim().length === 0) {
             return false;
         }
         
-        // Accounting period must be '12'
-        if (!record.accounting_period || !record.accounting_period.includes('12')) {
+        // Accounting period - more flexible (accepts 12, 12월, or contains 12)
+        if (!record.accounting_period || !record.accounting_period.toString().includes('12')) {
             return false;
         }
         
-        // Accounting standard must be valid
-        if (!record.accounting_standard || 
-            (record.accounting_standard !== '일반' && record.accounting_standard !== 'K-IFRS')) {
+        // Accounting standard - more flexible (accepts variations)
+        if (!record.accounting_standard || record.accounting_standard.trim().length === 0) {
             return false;
         }
         
-        // Must have financial data
-        if (!record.assets && !record.capital) {
+        // Financial data validation - more flexible (needs ANY financial data)
+        if (!record.assets && !record.capital && 
+            !Object.keys(record).some(key => key.startsWith('column_') && 
+                record[key] && /^\d{1,3}(,\d{3})*$/.test(record[key].toString().replace(/[^\d,]/g, '')))) {
             return false;
         }
         
