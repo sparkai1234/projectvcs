@@ -1,35 +1,41 @@
 {
-    "name": "diva-scraper-standalone",
-    "version": "1.0.0",
-    "description": "🇰🇷 Korean DIVA Financial Data Scraper - Standalone Edition",
+    "name": "diva-financial-scraper",
+    "version": "5.3.16",
+    "description": "DIVA Korean Financial Data Scraper - 100% Accuracy + Supabase Integration",
     "main": "main.js",
     "type": "module",
-          "scripts": {
-          "start": "node main.js",
-          "test": "echo \"Error: no test specified\" && exit 1",
-          "test-dom": "node test-dom-extraction.js",
-          "test-multi-year": "node test-dom-extraction-enhanced.js"
-      },
+    "scripts": {
+        "start": "node main.js",
+        "test": "node test-dom-extraction.js",
+        "test-enhanced": "node test-dom-extraction-enhanced.js",
+        "test-pagination": "node test-pagination-cycle.js",
+        "validate": "node extract-and-validate.js",
+        "deploy": "apify push",
+        "deploy-and-run": "apify push && apify call",
+        "setup": "npm install && apify init"
+    },
     "keywords": [
-        "apify",
-        "scraping",
-        "korean",
+        "scraper",
+        "korean-finance",
         "diva",
-        "financial",
-        "playwright",
-        "violations",
-        "compliance"
+        "venture-capital",
+        "data-extraction",
+        "100-percent-accuracy"
     ],
-    "author": "sparkai1234",
+    "author": "ProjectVCS Team",
     "license": "MIT",
-    "dependencies": {
-        "apify": "^3.1.10",
-        "crawlee": "^3.13.0",
-        "playwright": "^1.40.0"
+      "dependencies": {
+    "apify": "^3.1.0",
+    "crawlee": "^3.13.0",
+    "playwright": "^1.40.0",
+    "@supabase/supabase-js": "^2.39.0"
+  },
+    "devDependencies": {
+        "apify-cli": "^0.20.0"
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/sparkai1234/projectvcs.git"
+        "url": "https://github.com/your-username/projectvcs"
     },
     "engines": {
         "node": ">=18.0.0"

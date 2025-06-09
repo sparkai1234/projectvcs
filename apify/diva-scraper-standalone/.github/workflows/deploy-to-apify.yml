@@ -1,0 +1,44 @@
+name: Deploy DIVA Scraper to Apify
+
+on:
+  push:
+    branches: [ main, master ]
+    paths: 
+      - 'apify/diva-scraper-standalone/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install Apify CLI
+      run: npm install -g apify-cli
+      
+    - name: Deploy to Apify
+      working-directory: ./apify/diva-scraper-standalone
+      env:
+        APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+      run: |
+        echo "🚀 Deploying DIVA Scraper v5.3.10 to Apify..."
+        apify login --token $APIFY_TOKEN
+        apify push
+        echo "✅ Deployment completed successfully!"
+        
+    - name: Trigger Test Run
+      working-directory: ./apify/diva-scraper-standalone
+      env:
+        APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+      run: |
+        echo "🧪 Starting test run..."
+        ACTOR_ID=$(cat .actor/actor.json | grep '"id"' | cut -d'"' -f4)
+        apify call $ACTOR_ID --build=latest
+        echo "✅ Test run initiated!" 
