@@ -1,14 +1,14 @@
 ﻿/**
- * DIVA SCRAPER v5.3.10 - PRECISION FIX EDITION
+ * DIVA SCRAPER v5.3.10 - ENGLISH CLEAN EDITION
  * ============================================
  *
  * CRITICAL PRECISION FIXES:
  * 1. Financial Statements: Limit to EXACTLY 500 records (250 per tab)
  * 2. Association Status: Enhanced scroll/wait for missing 9 records
- * 3. Enhanced scroll strategies for complete data loading after ?꾩껜蹂닿린
+ * 3. Enhanced scroll strategies for complete data loading after Show All
  * 
- * STRATEGY: ?꾩껜蹂닿린-ONLY approach
- * - ONLY click "?꾩껜蹂닿린" (Show All) buttons
+ * STRATEGY: Show All ONLY approach
+ * - ONLY click "Show All" buttons
  * - DETECT pagination elements for AVOIDANCE (never click them)
  * - Enhanced scroll/wait strategies prevent duplication and ensure complete extraction
  * 
@@ -18,12 +18,12 @@
 import { Actor } from 'apify';
 import { PlaywrightCrawler } from 'crawlee';
 
-console.log('DIVA SCRAPER v5.3.10 - PRODUCTION READY EDITION');
+console.log('DIVA SCRAPER v5.3.10 - ENGLISH CLEAN EDITION');
 console.log('FIXES: Association missing 9 records + Financial deduplication');
 console.log('TARGET: PERFECT 100% accuracy on ALL 7 sources for production deployment');
 
 Actor.main(async () => {
-    console.log('Starting DIVA Scraper v5.3.10 - Production Ready Edition...');
+    console.log('Starting DIVA Scraper v5.3.10 - English Clean Edition...');
     
     const input = await Actor.getInput();
     
@@ -135,10 +135,10 @@ Actor.main(async () => {
                         
                         // PRECISION CHECK: Must be exactly 500
                         if (extractedData.length !== 500) {
-                            console.log(`??PRECISION ERROR: ${extractedData.length} vs 500 target`);
-                            console.log(`?뵩 Applying 500-record limit...`);
+                            console.log(`PRECISION ERROR: ${extractedData.length} vs 500 target`);
+                            console.log(`Applying 500-record limit...`);
                             extractedData.splice(500); // Truncate to exactly 500
-                            console.log(`??Limited to exactly 500 records`);
+                            console.log(`Limited to exactly 500 records`);
                         }
                         
                         for (const record of extractedData) {
@@ -146,7 +146,7 @@ Actor.main(async () => {
                                 ...record,
                                 dataSource: dataType,
                                 extractedAt: new Date().toISOString(),
-                                version: 'v5.3.10-production-ready'
+                                version: 'v5.3.10-english-clean'
                             });
                         }
                     } else {
@@ -161,20 +161,20 @@ Actor.main(async () => {
                     
                     try {
                         await page.waitForSelector('table, .content, .container, body', { timeout: 60000 });
-                } catch (e) {
-                    console.log('Table selector timeout, trying alternatives...');
+                    } catch (e) {
+                        console.log('Table selector timeout, trying alternatives...');
                         await page.waitForSelector('div, span, td', { timeout: 45000 });
-                }
-                
-                await page.waitForTimeout(5000);
-                
-                // SPECIAL HANDLING for association_status to find missing 9 records
-                if (dataType === 'association_status') {
-                    console.log('?렞 ASSOCIATION STATUS PRECISION MODE - Finding missing 9 records');
-                }
-                
-                console.log('Starting enhanced show_all button detection...');
-                
+                    }
+                    
+                    await page.waitForTimeout(5000);
+                    
+                    // SPECIAL HANDLING for association_status to find missing 9 records
+                    if (dataType === 'association_status') {
+                        console.log('ASSOCIATION STATUS PRECISION MODE - Finding missing 9 records');
+                    }
+                    
+                    console.log('Starting enhanced show_all button detection...');
+                    
                     const showAllResult = await findAndClickShowAllV9(page, metrics);
                     
                     if (showAllResult.found && showAllResult.clicked) {
@@ -221,20 +221,20 @@ Actor.main(async () => {
                         await page.waitForTimeout(10000);
                     }
                     
-                    // ENHANCED SCROLL & WAIT STRATEGIES (?꾩껜蹂닿린-only approach)
-                    console.log('?봽 Applying enhanced scroll/wait strategies for complete data loading...');
+                    // ENHANCED SCROLL & WAIT STRATEGIES (Show All-only approach)
+                    console.log('Applying enhanced scroll/wait strategies for complete data loading...');
                     
-                    // Enhanced scroll strategy for complete data loading after ?꾩껜蹂닿린
+                    // Enhanced scroll strategy for complete data loading after Show All
                     await enhancedScrollAndWait(page, dataType);
                     
                     const extractedData = await extractPrecisionDataV9(page, config, dataType, metrics);
-                
-                if (extractedData && extractedData.length > 0) {
-                    metrics.dataSourceCounts[dataType].records = extractedData.length;
-                    metrics.dataSourceCounts[dataType].status = 'success';
-                    metrics.totalRecords += extractedData.length;
-                    metrics.successfulRecords += extractedData.length;
                     
+                    if (extractedData && extractedData.length > 0) {
+                        metrics.dataSourceCounts[dataType].records = extractedData.length;
+                        metrics.dataSourceCounts[dataType].status = 'success';
+                        metrics.totalRecords += extractedData.length;
+                        metrics.successfulRecords += extractedData.length;
+                        
                         const target = metrics.dataSourceCounts[dataType].target;
                         const percentage = ((extractedData.length / target) * 100).toFixed(1);
                         
@@ -242,20 +242,20 @@ Actor.main(async () => {
                         console.log(`Records Captured: ${extractedData.length}`);
                         console.log(`Target: ${target}`);
                         console.log(`Accuracy: ${percentage}%`);
-                    
-                    for (const record of extractedData) {
-                        await Actor.pushData({
-                            ...record,
-                            dataSource: dataType,
-                            extractedAt: new Date().toISOString(),
-                                version: 'v5.3.10-production-ready'
-                        });
-                    }
-                } else {
-                    metrics.dataSourceCounts[dataType].status = 'failed';
-                    metrics.dataSourceCounts[dataType].errors++;
-                    metrics.errors++;
-                    console.log(`FAILED: ${dataType} - No data extracted`);
+                        
+                        for (const record of extractedData) {
+                            await Actor.pushData({
+                                ...record,
+                                dataSource: dataType,
+                                extractedAt: new Date().toISOString(),
+                                version: 'v5.3.10-english-clean'
+                            });
+                        }
+                    } else {
+                        metrics.dataSourceCounts[dataType].status = 'failed';
+                        metrics.dataSourceCounts[dataType].errors++;
+                        metrics.errors++;
+                        console.log(`FAILED: ${dataType} - No data extracted`);
                     }
                 }
                 
@@ -288,7 +288,7 @@ Actor.main(async () => {
     const endTime = Date.now();
     const duration = (endTime - metrics.startTime) / 1000;
     
-    console.log(`\n=== DIVA SCRAPER v5.3.10 - PRODUCTION READY REPORT ===`);
+    console.log(`\n=== DIVA SCRAPER v5.3.10 - ENGLISH CLEAN REPORT ===`);
     console.log(`Total Runtime: ${duration.toFixed(1)} seconds`);
     console.log(`Total Records: ${metrics.totalRecords}`);
     console.log(`Successful Records: ${metrics.successfulRecords}`);
@@ -314,21 +314,21 @@ Actor.main(async () => {
             
             let status;
             if (captured === target) {
-                status = '?렞 PERFECT';
+                status = 'PERFECT';
                 perfectMatches++;
             } else if (Math.abs(diff) <= 2) {
-                status = '??NEAR PERFECT';
+                status = 'NEAR PERFECT';
             } else if (percentage >= 95) {
-                status = '?좑툘 GOOD';
+                status = 'GOOD';
             } else {
-                status = '??NEEDS WORK';
+                status = 'NEEDS WORK';
             }
             
             console.log(`  ${source}: ${captured}/${target} (${percentage}%) ${diff >= 0 ? '+' : ''}${diff} - ${status}`);
             
             if (source === 'financial_statements' && data.subTabs) {
-                console.log(`    ?쒋? Balance Sheet: ${data.subTabs.balance_sheet}`);
-                console.log(`    ?붴? Income Statement: ${data.subTabs.income_statement}`);
+                console.log(`    Balance Sheet: ${data.subTabs.balance_sheet}`);
+                console.log(`    Income Statement: ${data.subTabs.income_statement}`);
             }
         }
     }
@@ -342,20 +342,20 @@ Actor.main(async () => {
     console.log(`Overall Accuracy: ${overallPercentage}%`);
     
     if (perfectMatches === 7) {
-        console.log('\n?럦 PERFECTION ACHIEVED! All 7 data sources match control data exactly!');
+        console.log('\nPERFECTION ACHIEVED! All 7 data sources match control data exactly!');    
     } else if (perfectMatches >= 5) {
-        console.log('\n??EXCELLENT! High precision achieved with minimal fine-tuning needed');
+        console.log('\nEXCELLENT! High precision achieved with minimal fine-tuning needed');
     } else if (overallPercentage >= 95) {
-        console.log('\n?좑툘 GOOD! Solid performance, minor adjustments required');
+        console.log('\nGOOD! Solid performance, minor adjustments required');
     } else {
-        console.log('\n??NEEDS IMPROVEMENT! Significant optimization required');
+        console.log('\nNEEDS IMPROVEMENT! Significant optimization required');
     }
     
-    console.log('\n=== PRODUCTION READY EDITION COMPLETE ===');
+    console.log('\n=== ENGLISH CLEAN EDITION COMPLETE ===');
 });
 
 async function enhancedScrollAndWait(page, dataType) {
-    console.log(`?봽 Enhanced scroll/wait strategy for ${dataType}...`);
+    console.log(`Enhanced scroll/wait strategy for ${dataType}...`);
     
     // 1. Reset scroll position to top
     await page.evaluate(() => window.scrollTo(0, 0));
@@ -363,6 +363,7 @@ async function enhancedScrollAndWait(page, dataType) {
     
     // 2. Progressive scroll strategy for complete data loading
     const scrollSteps = dataType === 'association_status' ? 8 : 5; // More steps for association
+    
     const viewportHeight = await page.evaluate(() => window.innerHeight);
     
     for (let i = 0; i < scrollSteps; i++) {
@@ -376,7 +377,7 @@ async function enhancedScrollAndWait(page, dataType) {
         await page.waitForTimeout(2000); // Wait for data to load at each scroll
         
         // Check for new content loading
-        const rowCount = await page.evaluate(() => 
+        const rowCount = await page.evaluate(() =>
             document.querySelectorAll('table tbody tr, .data-row, tr').length
         );
         console.log(`    Rows visible: ${rowCount}`);
@@ -389,7 +390,7 @@ async function enhancedScrollAndWait(page, dataType) {
     // 4. Detect and avoid pagination elements (identification only)
     const paginationElements = await detectPaginationElements(page);
     if (paginationElements.length > 0) {
-        console.log(`?좑툘 Detected ${paginationElements.length} pagination elements - AVOIDING them`);
+        console.log(`Detected ${paginationElements.length} pagination elements - AVOIDING them`);
     }
     
     // 5. Final scroll back to top for complete extraction
@@ -401,14 +402,14 @@ async function enhancedScrollAndWait(page, dataType) {
     let previousRowCount = 0;
     
     for (let i = 0; i < 10; i++) {
-        const currentRowCount = await page.evaluate(() => 
+        const currentRowCount = await page.evaluate(() =>
             document.querySelectorAll('table tbody tr, .data-row, tr').length
         );
         
         if (currentRowCount === previousRowCount && currentRowCount > 0) {
             stableChecks++;
             if (stableChecks >= 3) {
-                console.log(`??DOM stable: ${currentRowCount} rows ready for extraction`);
+                console.log(`DOM stable: ${currentRowCount} rows ready for extraction`);
                 break;
             }
         } else {
@@ -419,16 +420,16 @@ async function enhancedScrollAndWait(page, dataType) {
         await page.waitForTimeout(1500);
     }
     
-    console.log(`?렞 Enhanced scroll/wait complete for ${dataType}`);
+    console.log(`Enhanced scroll/wait complete for ${dataType}`);
 }
 
 async function detectPaginationElements(page) {
     // Detect pagination elements for AVOIDANCE (not clicking)
     const paginationSelectors = [
-        'text=/?붾낫湲???蹂닿린/i',
-        'text=/?ㅼ쓬|Next/i',
-        'text=/?댁쟾|Previous/i', 
-        'text=/?섏씠吏|Page/i',
+        'text=/더보기|Show.*More/i',
+        'text=/다음|Next/i',
+        'text=/이전|Previous/i',
+        'text=/페이지|Page/i',
         '[class*="pagination"]',
         '[class*="pager"]',
         '[class*="more"]',
@@ -446,7 +447,7 @@ async function detectPaginationElements(page) {
                     selector,
                     count: elements.length
                 });
-                console.log(`  ?뵇 Detected: ${selector} (${elements.length} elements) - WILL AVOID`);
+                console.log(`  Detected: ${selector} (${elements.length} elements) - WILL AVOID`);
             }
         } catch (e) {
             continue;
@@ -465,72 +466,72 @@ async function handleFinancialStatementsDualTabs(page, config, metrics) {
         
         const allRecords = [];
         
-        // STEP 1: ?щТ?곹깭??(Balance Sheet) Tab
-        console.log('STEP 1: Processing ?щТ?곹깭??(Balance Sheet) tab...');
+        // STEP 1: Balance Sheet Tab
+        console.log('STEP 1: Processing Balance Sheet tab...');
         
         // Ensure we're on the balance sheet tab (usually default)
         try {
-            const balanceSheetTab = await page.locator('text=/?щТ?곹깭??').first();
+            const balanceSheetTab = await page.locator('text=/재무상태표|balance.*sheet/i').first();
             if (await balanceSheetTab.isVisible()) {
                 await balanceSheetTab.click();
-                console.log('Clicked ?щТ?곹깭??tab');
+                console.log('Clicked balance sheet tab');
                 await page.waitForTimeout(3000);
             }
         } catch (e) {
-            console.log('?щТ?곹깭??tab already active or not found');
+            console.log('Balance sheet tab already active or not found');
         }
         
-        // Click ?꾩껜蹂닿린 for balance sheet
+        // Click Show All for balance sheet
         const showAllResult1 = await findAndClickShowAllV9(page, metrics);
         if (showAllResult1.found && showAllResult1.clicked) {
-            console.log('Successfully clicked ?꾩껜蹂닿린 for ?щТ?곹깭??);
+            console.log('Successfully clicked Show All for Balance Sheet');
             
             // Enhanced scroll/wait for complete balance sheet data loading
             await enhancedScrollAndWait(page, 'financial_statements');
             
             // Extract balance sheet data
-            const balanceSheetData = await extractFinancialTabData(page, '?щТ?곹깭??);
+            const balanceSheetData = await extractFinancialTabData(page, 'Balance_Sheet');
             allRecords.push(...balanceSheetData);
             metrics.dataSourceCounts.financial_statements.subTabs.balance_sheet = balanceSheetData.length;
             
             console.log(`Balance Sheet Records: ${balanceSheetData.length}`);
         } else {
-            console.log('Could not click ?꾩껜蹂닿린 for ?щТ?곹깭??);
+            console.log('Could not click Show All for Balance Sheet');
         }
         
-        // STEP 2: ?먯씡怨꾩궛??(Income Statement) Tab  
-        console.log('\nSTEP 2: Processing ?먯씡怨꾩궛??(Income Statement) tab...');
+        // STEP 2: Income Statement Tab  
+        console.log('\nSTEP 2: Processing Income Statement tab...');
         
         // Navigate to income statement tab
         try {
-            const incomeStatementTab = await page.locator('text=/?먯씡怨꾩궛??').first();
+            const incomeStatementTab = await page.locator('text=/손익계산서|income.*statement/i').first();
             if (await incomeStatementTab.isVisible()) {
                 await incomeStatementTab.click();
-                console.log('Clicked ?먯씡怨꾩궛??tab');
+                console.log('Clicked income statement tab');
                 await page.waitForTimeout(5000);
                 
-                // Click ?꾩껜蹂닿린 for income statement
+                // Click Show All for income statement
                 const showAllResult2 = await findAndClickShowAllV9(page, metrics);
                 if (showAllResult2.found && showAllResult2.clicked) {
-                    console.log('Successfully clicked ?꾩껜蹂닿린 for ?먯씡怨꾩궛??);
+                    console.log('Successfully clicked Show All for Income Statement');
                     
                     // Enhanced scroll/wait for complete income statement data loading
                     await enhancedScrollAndWait(page, 'financial_statements');
                     
                     // Extract income statement data
-                    const incomeStatementData = await extractFinancialTabData(page, '?먯씡怨꾩궛??);
+                    const incomeStatementData = await extractFinancialTabData(page, 'Income_Statement');
                     allRecords.push(...incomeStatementData);
                     metrics.dataSourceCounts.financial_statements.subTabs.income_statement = incomeStatementData.length;
                     
                     console.log(`Income Statement Records: ${incomeStatementData.length}`);
                 } else {
-                    console.log('Could not click ?꾩껜蹂닿린 for ?먯씡怨꾩궛??);
+                    console.log('Could not click Show All for Income Statement');
                 }
             } else {
-                console.log('?먯씡怨꾩궛??tab not found');
+                console.log('Income statement tab not found');
             }
         } catch (e) {
-            console.log('Error accessing ?먯씡怨꾩궛??tab:', e.message);
+            console.log('Error accessing income statement tab:', e.message);
         }
         
         console.log(`\nDual-tab workflow complete: ${allRecords.length} total records`);
@@ -575,7 +576,7 @@ async function extractFinancialTabData(page, tabType) {
                     
                     cells.forEach((cell, cellIndex) => {
                         const text = cell.textContent?.trim() || '';
-                        if (text && text.length > 0 && text !== '-' && text !== '?') {
+                        if (text && text.length > 0 && text !== '-' && text !== '?') {
                             rowData[`column_${cellIndex}`] = text;
                             hasValidData = true;
                         }
@@ -610,8 +611,8 @@ async function extractFinancialTabData(page, tabType) {
             }
         }
         
-        console.log(`?뵩 ${tabType} deduplication: ${extractedData.length} -> ${uniqueData.length} unique records`);
-        console.log(`??${tabType} final count: ${uniqueData.length}/250`);
+        console.log(`${tabType} deduplication: ${extractedData.length} -> ${uniqueData.length} unique records`);
+        console.log(`${tabType} final count: ${uniqueData.length}/250`);
         
         return uniqueData;
         
@@ -627,37 +628,37 @@ async function findAndClickShowAllV9(page, metrics) {
     const strategies = [
         {
             name: 'textMatch',
-            method: 'Korean text search',
+            method: 'Text search',
             selector: async () => {
-                return await page.locator('text=/?꾩껜蹂닿린|?꾩껜|紐⑤몢蹂닿린|紐⑤몢|ALL|All/i').first();
+                return await page.locator('text=/전체보기|전체|모두보기|모두|ALL|All|Show.*All/i').first();
             }
         },
         {
             name: 'valueMatch', 
             method: 'Input value search',
             selector: async () => {
-                return await page.locator('input[value*="?꾩껜"], input[value*="紐⑤몢"], input[value*="ALL" i]').first();
+                return await page.locator('input[value*="전체"], input[value*="모두"], input[value*="ALL" i]').first();
             }
         },
         {
             name: 'classMatch',
             method: 'Class search',
             selector: async () => {
-                return await page.locator('[class*="all" i], [class*="total" i], [class*="show" i], [class*="?꾩껜"]').first();
+                return await page.locator('[class*="all" i], [class*="total" i], [class*="show" i], [class*="전체"]').first();
             }
         },
         {
             name: 'xpathMatch',
             method: 'XPath search',
             selector: async () => {
-                return await page.locator('xpath=//button[contains(text(), "?꾩껜")] | //input[contains(@value, "?꾩껜")] | //a[contains(text(), "?꾩껜")] | //span[contains(text(), "?꾩껜")]').first();
+                return await page.locator('xpath=//button[contains(text(), "전체")] | //input[contains(@value, "전체")] | //a[contains(text(), "전체")] | //span[contains(text(), "전체")]').first();
             }
         },
         {
             name: 'cssMatch',
             method: 'CSS search',
             selector: async () => {
-                return await page.locator('button:has-text("?꾩껜"), input[value*="?꾩껜"], a:has-text("?꾩껜"), span:has-text("?꾩껜")').first();
+                return await page.locator('button:has-text("전체"), input[value*="전체"], a:has-text("전체"), span:has-text("전체")').first();
             }
         }
     ];
@@ -729,7 +730,7 @@ async function extractPrecisionDataV9(page, config, dataType, metrics) {
                     
                     cells.forEach((cell, cellIndex) => {
                         const text = cell.textContent?.trim() || '';
-                        if (text && text.length > 0 && text !== '-' && text !== '?') {
+                        if (text && text.length > 0 && text !== '-' && text !== '?') {
                             rowData[`column_${cellIndex}`] = text;
                             hasValidData = true;
                         }
@@ -737,8 +738,8 @@ async function extractPrecisionDataV9(page, config, dataType, metrics) {
                     
                     // Quality filtering for meaningful rows
                     const meaningfulColumns = Object.keys(rowData).filter(key => 
-                        key.startsWith('column_') && 
-                        rowData[key] && 
+                        key.startsWith('column_') &&
+                        rowData[key] &&
                         rowData[key].length > 0
                     ).length;
                     
@@ -769,7 +770,7 @@ async function extractPrecisionDataV9(page, config, dataType, metrics) {
                 
                 // Ensure we capture from the very beginning of the table
                 if (finalData.length < 2231) {
-                    console.log(`?좑툘 Association status: Found ${finalData.length}, expected 2231`);
+                    console.log(`Association status: Found ${finalData.length}, expected 2231`);
                 }
             } else if (dataType === 'personnel_status') {
                 // Exact limit: 251 records
