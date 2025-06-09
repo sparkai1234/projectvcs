@@ -907,7 +907,8 @@ function getDataSources(dataSource, urls) {
 // Supabase table mapping for DIVA data (using VCS patterns)
 const SUPABASE_TABLE_MAPPING = {
     investment_performance: 'diva_investment_performance',
-    financial_statements: 'diva_financial_statements', 
+    financial_statements_balance: 'diva_financial_statements',
+    financial_statements_income: 'diva_financial_statements', 
     association_status: 'diva_association_status',
     personnel_status: 'diva_personnel_status',
     professional_personnel: 'diva_professional_personnel',
@@ -926,19 +927,33 @@ const COLUMN_MAPPINGS = {
         column_5: 'total_companies',       // 합계 업체수
         column_6: 'total_amount'           // 합계 금액(원)
     },
-    financial_statements: {
-        // Financial Status Tab (재무상태표)
+    // Financial Statements - Balance Sheet Tab (재무상태표)
+    financial_statements_balance: {
         column_0: 'company_name',              // 회사명
         column_1: 'financial_resources',      // 재원
         column_2: 'settlement_month',          // 결산월
         column_3: 'accounting_standards',      // 회계기준
         column_4: 'financial_classification', // 재무구분
-        column_5: 'assets',                   // 자산 OR 영업수익
-        column_6: 'startup_investment_assets', // 창업투자자산 OR 영업비용
-        column_7: 'liabilities',              // 부채 OR 영업이익
-        column_8: 'paid_in_capital',          // 자본금 OR 법인세비용차감전이익
-        column_9: 'capital',                  // 자본 OR 당기순이익
-        column_10: 'details'                  // 상세
+        column_5: 'assets',                   // 자산
+        column_6: 'startup_investment_assets', // 창업투자자산
+        column_7: 'liabilities',              // 부채
+        column_8: 'paid_in_capital',          // 자본금
+        column_9: 'capital'                   // 자본
+        // Note: column_10 (상세/Details) omitted - it's just a link, not data
+    },
+    // Financial Statements - Income Statement Tab (손익계산서)  
+    financial_statements_income: {
+        column_0: 'company_name',              // 회사명
+        column_1: 'financial_resources',      // 재원
+        column_2: 'settlement_month',          // 결산월
+        column_3: 'accounting_standards',      // 회계기준
+        column_4: 'financial_classification', // 재무구분
+        column_5: 'operating_revenue',        // 영업수익
+        column_6: 'operating_expenses',       // 영업비용
+        column_7: 'operating_profit',         // 영업이익
+        column_8: 'net_income_before_taxes',  // 법인세비용차감전이익
+        column_9: 'net_profit'                // 당기순이익
+        // Note: column_10 (상세/Details) omitted - it's just a link, not data
     },
     association_status: {
         column_0: 'fund_number',              // 번호
@@ -1000,6 +1015,13 @@ function transformDataForSupabase(dataType, rawData) {
             source_url: `http://diva.kvca.or.kr/div/dii/${getUrlSuffix(dataType)}`
         };
         
+        // Add tab_type for financial statements to distinguish Balance Sheet vs Income Statement
+        if (dataType === 'financial_statements_balance') {
+            transformedRecord.tab_type = 'balance_sheet';
+        } else if (dataType === 'financial_statements_income') {
+            transformedRecord.tab_type = 'income_statement';
+        }
+        
         // Add required fields with defaults for specific tables
         if (dataType === 'violations') {
             // Add required fields for violations table
@@ -1033,7 +1055,10 @@ function transformDataForSupabase(dataType, rawData) {
                     targetCol.includes('liabilities') || targetCol.includes('equity') ||
                     targetCol.includes('revenue') || targetCol.includes('profit') ||
                     targetCol.includes('income') || targetCol.includes('investment') ||
-                    targetCol.includes('years') || targetCol.includes('ranking')) {
+                    targetCol.includes('years') || targetCol.includes('ranking') ||
+                    targetCol.includes('employees') || targetCol.includes('officers') ||
+                    targetCol.includes('support') || targetCol.includes('capital') ||
+                    targetCol.includes('expenses')) {
                     
                     // Convert numeric strings to numbers, handle Korean number formats
                     value = convertToNumber(value);
@@ -1097,7 +1122,8 @@ function convertToDate(value) {
 function getUrlSuffix(dataType) {
     const suffixes = {
         investment_performance: 'DivItmInvstPrfmInq',
-        financial_statements: 'DivItmFsInq',
+        financial_statements_balance: 'DivItmFsInq',
+        financial_statements_income: 'DivItmFsInq',
         association_status: 'DivItmAssoInq',
         personnel_status: 'DivItmMnpwrInq',
         professional_personnel: 'DivItmProfsInq',
