@@ -11,7 +11,7 @@ import { Actor } from 'apify';
 import { PlaywrightCrawler } from 'crawlee';
 import { createClient } from '@supabase/supabase-js';
 
-console.log('DIVA SCRAPER v5.3.17 - DUAL-TAB FINANCIAL STATEMENTS FIX');
+console.log('DIVA SCRAPER v5.3.18 - COMPREHENSIVE VALIDATION & DUAL-TAB DEBUG FIX');
 
 Actor.main(async () => {
     console.log('Starting DIVA Scraper v5.3.16 - Supabase Integration Edition...');
@@ -275,16 +275,19 @@ async function handleFinancialStatements(page, metrics) {
         console.log(`Blocked ${blockedElements1} interference elements for balance sheet`);
         
         // Ensure we're on 재무상태표 tab (should be default)
+        console.log('🔍 Looking for 재무상태표 tab...');
         try {
             const balanceSheetTab = await page.locator('text=/재무상태표/').first();
             const isBalanceSheetVisible = await balanceSheetTab.isVisible().catch(() => false);
             if (isBalanceSheetVisible) {
                 await balanceSheetTab.click();
-                console.log('✅ Clicked 재무상태표 tab');
-                await page.waitForTimeout(3000);
+                console.log('✅ Successfully clicked 재무상태표 tab');
+                await page.waitForTimeout(5000); // Increased wait time
+            } else {
+                console.log('ℹ️ 재무상태표 tab not visible - assuming already active');
             }
         } catch (error) {
-            console.log('⚠️ 재무상태표 tab not found or already active');
+            console.log('⚠️ 재무상태표 tab interaction failed:', error.message);
         }
         
         // Click 전체보기 for balance sheet data
@@ -309,13 +312,38 @@ async function handleFinancialStatements(page, metrics) {
         console.log('📊 PHASE 2: Processing 손익계산서 (Income Statement) tab...');
         
         try {
-            const incomeStatementTab = await page.locator('text=/손익계산서/').first();
-            const isIncomeStatementVisible = await incomeStatementTab.isVisible().catch(() => false);
+            console.log('🔍 Looking for 손익계산서 tab...');
             
-            if (isIncomeStatementVisible) {
-                await incomeStatementTab.click();
-                console.log('✅ Successfully clicked 손익계산서 tab');
-                await page.waitForTimeout(5000);
+            // Try multiple selectors for 손익계산서 tab
+            const incomeTabSelectors = [
+                'text=/손익계산서/',
+                'a:has-text("손익계산서")',
+                'button:has-text("손익계산서")',
+                '[href*="손익계산서"]',
+                '.tab:has-text("손익계산서")'
+            ];
+            
+            let incomeTabClicked = false;
+            
+            for (const selector of incomeTabSelectors) {
+                try {
+                    const incomeTab = await page.locator(selector).first();
+                    const isVisible = await incomeTab.isVisible().catch(() => false);
+                    
+                    if (isVisible) {
+                        await incomeTab.click();
+                        console.log(`✅ Successfully clicked 손익계산서 tab using selector: ${selector}`);
+                        await page.waitForTimeout(5000);
+                        incomeTabClicked = true;
+                        break;
+                    }
+                } catch (selectorError) {
+                    // Continue to next selector
+                    continue;
+                }
+            }
+            
+            if (incomeTabClicked) {
                 
                 // Block interference elements for income statement tab
                 const blockedElements2 = await blockInterferenceElements(page);
@@ -351,6 +379,16 @@ async function handleFinancialStatements(page, metrics) {
         console.log(`  손익계산서: ${allFinancialData.length - validatedBalanceSheet.length} records`);
         console.log(`  Total: ${allFinancialData.length} records`);
         console.log(`  Target: 500 records`);
+        
+        // Enhanced validation summary
+        if (allFinancialData.length < 500) {
+            console.log(`⚠️ UNDER TARGET: Missing ${500 - allFinancialData.length} records`);
+            console.log(`🔍 Debug Info: Check if dual-tab navigation is working correctly`);
+        } else if (allFinancialData.length > 500) {
+            console.log(`⚠️ OVER TARGET: ${allFinancialData.length - 500} extra records detected`);
+        } else {
+            console.log(`✅ PERFECT: Exact target achieved!`);
+        }
         
         return allFinancialData;
         
@@ -616,7 +654,10 @@ async function extractData(page, dataType) {
                     ).length;
                     
                     if (hasValidData && meaningfulColumns >= 2) {
-                        data.push(rowData);
+                        // Apply data-type-specific validation
+                        if (isValidDataRow(rowData, dataType)) {
+                            data.push(rowData);
+                        }
                     }
                 }
             });
@@ -630,6 +671,94 @@ async function extractData(page, dataType) {
         console.error(`Error extracting ${dataType} data:`, error.message);
         return [];
     }
+}
+
+// Data-type-specific validation function
+function isValidDataRow(rowData, dataType) {
+    if (dataType === 'investment_performance') {
+        // Investment performance specific validation
+        const companyName = rowData.column_0 || '';
+        
+        // Skip header rows
+        if (companyName.includes('회사명') || companyName.includes('업체명') || 
+            companyName.includes('기업명') || companyName.includes('번호') ||
+            companyName === '순번' || companyName === 'No.' || companyName === '순위') {
+            return false;
+        }
+        
+        // Skip footer/summary rows
+        if (companyName.includes('총계') || companyName.includes('합계') || 
+            companyName.includes('전체') || companyName.includes('소계') ||
+            companyName === '계' || companyName === 'Total') {
+            return false;
+        }
+        
+        // Skip pagination buttons and navigation elements
+        if (companyName === 'Prev' || companyName === 'Next' || companyName === '이전' || 
+            companyName === '다음' || companyName === '처음' || companyName === '마지막' ||
+            companyName.match(/^\d+$/) || companyName === '>' || companyName === '<' ||
+            companyName === '>>' || companyName === '<<') {
+            return false;
+        }
+        
+        // Skip empty or very short company names
+        if (!companyName || companyName.length < 3) {
+            return false;
+        }
+        
+        // Must have at least 3 meaningful columns for investment data
+        const meaningfulColumns = Object.keys(rowData).filter(key => 
+            key.startsWith('column_') && rowData[key] && rowData[key].length > 1
+        ).length;
+        
+        if (meaningfulColumns < 3) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    if (dataType === 'financial_statements') {
+        // Financial statements specific validation
+        const companyName = rowData.column_0 || '';
+        
+        // Skip empty or very short company names
+        if (!companyName || companyName.length < 3 || companyName.trim() === '') {
+            return false;
+        }
+        
+        // Skip header rows
+        if (companyName.includes('회사명') || companyName.includes('재원') || 
+            companyName.includes('결산월') || companyName.includes('회계기준') ||
+            companyName.includes('구분') || companyName.includes('자산') ||
+            companyName.includes('자본') || companyName.includes('상세')) {
+            return false;
+        }
+        
+        // Skip pagination and navigation
+        if (companyName === 'Prev' || companyName === 'Next' || companyName === '이전' || 
+            companyName === '다음' || companyName.match(/^\d+$/)) {
+            return false;
+        }
+        
+        // Must have financial data in subsequent columns
+        const hasFinancialData = Object.keys(rowData).some(key => {
+            if (key.startsWith('column_') && key !== 'column_0') {
+                const value = rowData[key] || '';
+                return value.length > 0 && value !== '-' && value !== '상세';
+            }
+            return false;
+        });
+        
+        if (!hasFinancialData) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // For other data types, use generic validation (no change in behavior)
+    return true;
 }
 
 /**
