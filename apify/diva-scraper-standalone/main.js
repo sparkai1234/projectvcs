@@ -416,22 +416,37 @@ async function blockInterferenceElements(page) {
         const blockedCount = await page.evaluate(() => {
             let blocked = 0;
             
+            // Use only vanilla JavaScript compatible selectors
             const selectors = [
                 'a[href*="main"]',
                 'a[href*="home"]',
-                'button:has-text("메인")',
                 '.family-site',
                 '#familySite',
-                'select[name*="family"]',
-                'a:has-text("다음")',
-                'a:has-text("이전")',
-                'a:has-text("상세")',
-                'button:has-text("상세")'
+                'select[name*="family"]'
             ];
             
             selectors.forEach(selector => {
-                const elements = document.querySelectorAll(selector);
-                elements.forEach(el => {
+                try {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach(el => {
+                        if (!el.hasAttribute('data-blocked-interference')) {
+                            el.setAttribute('data-blocked-interference', 'true');
+                            el.style.display = 'none';
+                            el.style.visibility = 'hidden';
+                            el.style.pointerEvents = 'none';
+                            blocked++;
+                        }
+                    });
+                } catch (e) {
+                    // Skip invalid selectors silently
+                }
+            });
+            
+            // Block elements by text content (safer approach)
+            const allButtons = document.querySelectorAll('button, a');
+            allButtons.forEach(el => {
+                const text = el.textContent?.trim() || '';
+                if (text.includes('메인') || text.includes('상세') || text.includes('다음') || text.includes('이전')) {
                     if (!el.hasAttribute('data-blocked-interference')) {
                         el.setAttribute('data-blocked-interference', 'true');
                         el.style.display = 'none';
@@ -439,7 +454,7 @@ async function blockInterferenceElements(page) {
                         el.style.pointerEvents = 'none';
                         blocked++;
                     }
-                });
+                }
             });
             
             return blocked;
@@ -460,11 +475,19 @@ async function findAndClickShowAll(page) {
         },
         {
             name: 'valueMatch', 
-            selector: async () => page.locator('input[value*="전체"], input[value*="ALL" i]').first()
+            selector: async () => page.locator('input[value*="전체"]').first()
         },
         {
             name: 'classMatch',
-            selector: async () => page.locator('[class*="all" i], [class*="전체"]').first()
+            selector: async () => page.locator('[class*="전체"]').first()
+        },
+        {
+            name: 'buttonText',
+            selector: async () => page.locator('button:has-text("전체보기")').first()
+        },
+        {
+            name: 'linkText',
+            selector: async () => page.locator('a:has-text("전체보기")').first()
         }
     ];
     
@@ -476,18 +499,21 @@ async function findAndClickShowAll(page) {
             if (isVisible) {
                 const isBlocked = await element.evaluate(el => 
                     el.getAttribute('data-blocked-interference') === 'true'
-                );
+                ).catch(() => false);
                 
                 if (!isBlocked) {
                     await element.click();
+                    console.log(`✅ Successfully clicked 전체보기 using strategy: ${strategy.name}`);
                     return { found: true, clicked: true, strategy: strategy.name };
                 }
             }
         } catch (error) {
+            // Continue to next strategy
             continue;
         }
     }
     
+    console.log('⚠️ 전체보기 button not found - proceeding with available data');
     return { found: false, clicked: false, strategy: null };
 }
 
