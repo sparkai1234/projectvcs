@@ -146,7 +146,7 @@ Actor.main(async () => {
     const crawler = new PlaywrightCrawler({
         launchContext: {
             launchOptions: {
-                headless: input.headless !== false,
+                headless: input?.headless !== false,
                 timeout: config.navigationTimeout,
                 args: [
                     '--no-sandbox',
@@ -205,13 +205,25 @@ Actor.main(async () => {
                                 ...record,
                                 dataSource: dataType,
                                 extractedAt: new Date().toISOString(),
-                                version: 'v5.3.21-final-supabase-fix'
+                                version: 'v5.3.21-production-sealed'
                             });
                         }
                         
-                        // Save to Supabase using VCS patterns
+                        // Save to Supabase using VCS patterns - handle financial statements separately  
                         if (supabaseClient) {
-                            await saveToSupabase(supabaseClient, dataType, extractedData);
+                            // Group by dataType for financial statements
+                            const balanceSheetData = extractedData.filter(record => record.dataType === 'financial_statements_balance');
+                            const incomeStatementData = extractedData.filter(record => record.dataType === 'financial_statements_income');
+                            
+                            console.log(`💾 Balance Sheet Records: ${balanceSheetData.length}`);
+                            console.log(`💾 Income Statement Records: ${incomeStatementData.length}`);
+                            
+                            if (balanceSheetData.length > 0) {
+                                await saveToSupabase(supabaseClient, 'financial_statements_balance', balanceSheetData);
+                            }
+                            if (incomeStatementData.length > 0) {
+                                await saveToSupabase(supabaseClient, 'financial_statements_income', incomeStatementData);
+                            }
                         }
                     } else {
                         metrics.dataSourceCounts[dataType].status = 'failed';
@@ -312,7 +324,7 @@ Actor.main(async () => {
                                 ...record,
                                 dataSource: dataType,
                                 extractedAt: new Date().toISOString(),
-                                version: 'v5.3.21-final-supabase-fix'
+                                version: 'v5.3.21-production-sealed'
                             });
                         }
                         
@@ -357,7 +369,7 @@ Actor.main(async () => {
     const endTime = Date.now();
     const duration = (endTime - metrics.startTime) / 1000;
     
-    console.log(`\n=== DIVA SCRAPER v5.3.21 - FINAL SUPABASE SCHEMA FIX REPORT ===`);
+    console.log(`\n=== DIVA SCRAPER v5.3.21 - PRODUCTION SEALED FINAL REPORT ===`);
     console.log(`Total Runtime: ${duration.toFixed(1)} seconds`);
     console.log(`Total Records: ${metrics.totalRecords}`);
     console.log(`Successful Records: ${metrics.successfulRecords}`);
@@ -643,7 +655,7 @@ async function extractFinancialTabData(page, tabType) {
                 if (cells.length >= 2) {
                     const rowData = {
                         rowIndex: index + 1,
-                        dataType: 'financial_statements',
+                        dataType: tabType === 'Balance_Sheet' ? 'financial_statements_balance' : 'financial_statements_income',
                         tabType: tabType,
                         extractedAt: new Date().toISOString()
                     };
@@ -907,6 +919,7 @@ function getDataSources(dataSource, urls) {
 // Supabase table mapping for DIVA data (using VCS patterns)
 const SUPABASE_TABLE_MAPPING = {
     investment_performance: 'diva_investment_performance',
+    financial_statements: 'diva_financial_statements',        // Generic financial statements
     financial_statements_balance: 'diva_financial_statements',
     financial_statements_income: 'diva_financial_statements', 
     association_status: 'diva_association_status',
@@ -954,6 +967,19 @@ const COLUMN_MAPPINGS = {
         column_8: 'net_income_before_taxes',  // 법인세비용차감전이익
         column_9: 'net_profit'                // 당기순이익
         // Note: column_10 (상세/Details) omitted - it's just a link, not data
+    },
+    // Financial Statements - Generic (combined mapping)
+    financial_statements: {
+        column_0: 'company_name',              // 회사명
+        column_1: 'financial_resources',      // 재원
+        column_2: 'settlement_month',          // 결산월
+        column_3: 'accounting_standards',      // 회계기준
+        column_4: 'financial_classification', // 재무구분
+        column_5: 'assets',                   // Balance: 자산 / Income: 영업수익
+        column_6: 'startup_investment_assets', // Balance: 창업투자자산 / Income: 영업비용
+        column_7: 'liabilities',              // Balance: 부채 / Income: 영업이익
+        column_8: 'paid_in_capital',          // Balance: 자본금 / Income: 법인세비용차감전이익
+        column_9: 'capital'                   // Balance: 자본 / Income: 당기순이익
     },
     association_status: {
         column_0: 'fund_number',              // 번호
@@ -1021,6 +1047,13 @@ function transformDataForSupabase(dataType, rawData) {
             transformedRecord.tab_type = 'balance_sheet';
         } else if (dataType === 'financial_statements_income') {
             transformedRecord.tab_type = 'income_statement';
+        } else if (dataType === 'financial_statements') {
+            transformedRecord.tab_type = 'combined';  // For generic financial statements
+        }
+        
+        // Handle financial_statements data type detection from tab content
+        if (dataType === 'financial_statements' && record.tab_type) {
+            transformedRecord.tab_type = record.tab_type;  // Use tab_type from source data
         }
         
         // Add required fields with defaults for specific tables
