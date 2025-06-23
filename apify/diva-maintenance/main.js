@@ -52,14 +52,30 @@ Actor.main(async () => {
         
         // DIVA-specific table configuration
         tables: {
-            investment_performance: 'diva_investment_performance_raw',
-            financial_statements: 'diva_financial_statements_raw',
-            association_status: 'diva_association_status_raw',
-            personnel_status: 'diva_personnel_status_raw',
-            professional_personnel: 'diva_professional_personnel_raw',
-            violations: 'diva_violations_raw',
-            vc_map: 'diva_vc_map_raw',
-            statistics: 'diva_statistics_raw'
+            // Raw data tables
+            investment_performance_raw: 'diva_investment_performance_raw',
+            financial_raw: 'diva_financial_raw',
+            association_raw: 'diva_association_raw',
+            personnel_raw: 'diva_personnel_raw',
+            professional_raw: 'diva_professional_raw',
+            disclosure_raw: 'diva_disclosure_raw',
+            fund_raw: 'diva_fund_raw',
+            vcmap_raw: 'diva_vcmap_raw',
+            violation_raw: 'diva_violation_raw',
+            
+            // Processed data tables
+            investment_performance: 'diva_investment_performance',
+            financial_statements: 'diva_financial_statements',
+            association_status: 'diva_association_status',
+            personnel_status: 'diva_personnel_status',
+            professional_personnel: 'diva_professional_personnel',
+            violations: 'diva_violations',
+            vc_map: 'diva_vc_map',
+            
+            // Intelligence tables
+            intelligence: 'diva_intelligence',
+            fund_intelligence: 'diva_fund_intelligence',
+            professional_network: 'diva_professional_network'
         }
     };
     
@@ -261,7 +277,7 @@ async function performEnhancedDuplicateDetection(supabaseClient, config) {
     try {
         const { data, error } = await supabaseClient
             .from(config.tables.investment_performance)
-            .select('company_name, investment_date, investment_amount, id, created_at')
+            .select('company_name, data_year, total_companies, total_amount, id, created_at')
             .order('created_at', { ascending: true });
             
         if (!error && data) {
@@ -279,7 +295,7 @@ async function performEnhancedDuplicateDetection(supabaseClient, config) {
     try {
         const { data, error } = await supabaseClient
             .from(config.tables.financial_statements)
-            .select('company_name, reporting_year, id, created_at')
+            .select('company_name, data_year, assets, id, created_at')
             .order('created_at', { ascending: true });
             
         if (!error && data) {
@@ -293,6 +309,24 @@ async function performEnhancedDuplicateDetection(supabaseClient, config) {
         console.log(`❌ Error detecting financial statement duplicates:`, error.message);
     }
     
+    // VC Map Duplicates
+    try {
+        const { data, error } = await supabaseClient
+            .from(config.tables.vc_map)
+            .select('company_name, data_year, ranking, id, created_at')
+            .order('created_at', { ascending: true });
+            
+        if (!error && data) {
+            const duplicates = findVCMapDuplicates(data);
+            duplicatesFound += duplicates.length;
+            duplicateDetails.vc_map = duplicates;
+            console.log(`🔍 VC Map: ${duplicates.length} duplicates found`);
+        }
+        
+    } catch (error) {
+        console.log(`❌ Error detecting VC map duplicates:`, error.message);
+    }
+    
     return { duplicatesFound, duplicateDetails };
 }
 
@@ -304,14 +338,14 @@ function findInvestmentPerformanceDuplicates(records) {
     const duplicates = [];
     
     for (const record of records) {
-        const key = `${(record.company_name || '').toLowerCase().trim()}_${record.investment_date}_${record.investment_amount}`;
+        const key = `${(record.company_name || '').toLowerCase().trim()}_${record.data_year}`;
         
         if (seen.has(key)) {
             duplicates.push({
                 id: record.id,
                 company_name: record.company_name,
-                investment_date: record.investment_date,
-                investment_amount: record.investment_amount,
+                data_year: record.data_year,
+                total_amount: record.total_amount,
                 created_at: record.created_at,
                 duplicate_of: seen.get(key).id
             });
@@ -331,13 +365,41 @@ function findFinancialStatementDuplicates(records) {
     const duplicates = [];
     
     for (const record of records) {
-        const key = `${(record.company_name || '').toLowerCase().trim()}_${record.reporting_year}`;
+        const key = `${(record.company_name || '').toLowerCase().trim()}_${record.data_year}`;
         
         if (seen.has(key)) {
             duplicates.push({
                 id: record.id,
                 company_name: record.company_name,
-                reporting_year: record.reporting_year,
+                data_year: record.data_year,
+                assets: record.assets,
+                created_at: record.created_at,
+                duplicate_of: seen.get(key).id
+            });
+        } else {
+            seen.set(key, record);
+        }
+    }
+    
+    return duplicates;
+}
+
+/**
+ * Find VC Map Duplicates
+ */
+function findVCMapDuplicates(records) {
+    const seen = new Map();
+    const duplicates = [];
+    
+    for (const record of records) {
+        const key = `${(record.company_name || '').toLowerCase().trim()}_${record.data_year}`;
+        
+        if (seen.has(key)) {
+            duplicates.push({
+                id: record.id,
+                company_name: record.company_name,
+                data_year: record.data_year,
+                ranking: record.ranking,
                 created_at: record.created_at,
                 duplicate_of: seen.get(key).id
             });
@@ -391,6 +453,28 @@ async function performEnhancedCleanup(supabaseClient, config, duplicateResults) 
                 if (!error) {
                     duplicatesRemoved++;
                     console.log(`✅ Removed financial statement duplicate: ${duplicate.company_name}`);
+                } else {
+                    console.log(`⚠️ Failed to remove duplicate:`, error.message);
+                }
+                
+            } catch (error) {
+                console.log(`❌ Error removing duplicate:`, error.message);
+            }
+        }
+    }
+    
+    // Clean VC Map Duplicates
+    if (duplicateResults.duplicateDetails.vc_map) {
+        for (const duplicate of duplicateResults.duplicateDetails.vc_map) {
+            try {
+                const { error } = await supabaseClient
+                    .from(config.tables.vc_map)
+                    .delete()
+                    .eq('id', duplicate.id);
+                    
+                if (!error) {
+                    duplicatesRemoved++;
+                    console.log(`✅ Removed VC map duplicate: ${duplicate.company_name}`);
                 } else {
                     console.log(`⚠️ Failed to remove duplicate:`, error.message);
                 }
