@@ -1,9 +1,9 @@
 {
     "actorSpecification": 1,
     "name": "enhanced-diva-maintenance-system",
-    "title": "Enhanced DIVA Maintenance System v2.0",
-    "description": "🇰🇷 Enhanced DIVA Financial Intelligence Database Maintenance System with advanced duplicate detection, data quality analysis, and email reporting for Korean DIVA portal data.",
-    "version": "2.0.0",
+    "title": "Enhanced DIVA Maintenance System v2.1",
+    "description": "🇰🇷 Enhanced DIVA Financial Intelligence Database Maintenance System with advanced duplicate detection, data quality analysis, email reporting, memory/history tracking, and dashboard integration for Korean DIVA portal data.",
+    "version": "2.1.0",
     "meta": {
         "templateId": "node-puppeteer-chrome"
     },

@@ -85,6 +85,61 @@
             "type": "string",
             "description": "Supabase service role key for database access (or use SUPABASE_SERVICE_ROLE_KEY env var)",
             "isSecret": true
+        },
+        "action": {
+            "title": "Action Type",
+            "type": "string",
+            "description": "Choose whether to perform maintenance or retrieve past maintenance memories",
+            "default": "maintenance",
+            "enum": [
+                "maintenance",
+                "retrieveMemories"
+            ],
+            "enumTitles": [
+                "Perform Maintenance",
+                "Retrieve Past Reports (Memories)"
+            ]
+        },
+        "memoryOptions": {
+            "title": "Memory Retrieval Options",
+            "type": "object",
+            "description": "Options for retrieving past maintenance reports",
+            "properties": {
+                "limit": {
+                    "title": "Number of Reports",
+                    "type": "integer",
+                    "description": "Maximum number of past reports to retrieve",
+                    "default": 10,
+                    "minimum": 1,
+                    "maximum": 100
+                },
+                "sortBy": {
+                    "title": "Sort By",
+                    "type": "string",
+                    "description": "Field to sort the results by",
+                    "default": "created_at",
+                    "enum": ["created_at", "quality_score", "duration_seconds", "records_processed"]
+                },
+                "ascending": {
+                    "title": "Sort Order",
+                    "type": "boolean",
+                    "description": "Sort in ascending order (oldest/lowest first)",
+                    "default": false
+                }
+            }
+        },
+        "dashboard": {
+            "title": "Dashboard Integration",
+            "type": "object",
+            "description": "Dashboard and reporting configuration",
+            "properties": {
+                "enabled": {
+                    "title": "Enable Dashboard Reporting",
+                    "type": "boolean",
+                    "description": "Save maintenance reports to dashboard for historical tracking",
+                    "default": true
+                }
+            }
         }
     },
     "required": []

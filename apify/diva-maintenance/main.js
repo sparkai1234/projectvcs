@@ -2,11 +2,11 @@ const { Actor } = require('apify');
 const { createClient } = require('@supabase/supabase-js');
 const nodemailer = require('nodemailer');
 
-console.log('🔧 === ENHANCED DIVA MAINTENANCE SYSTEM v2.0 ===');
+console.log('🔧 === ENHANCED DIVA MAINTENANCE SYSTEM v2.1 ===');
 console.log('🕐 Enhanced Time:', new Date().toISOString());
 
 /**
- * 🇰🇷 Enhanced DIVA Maintenance System v2.0
+ * 🇰🇷 Enhanced DIVA Maintenance System v2.1
  * Based on successful VCS maintenance architecture
  * 
  * FEATURES:
@@ -14,12 +14,16 @@ console.log('🕐 Enhanced Time:', new Date().toISOString());
  * - Smart cleanup operations with conflict resolution
  * - Comprehensive financial data quality analysis
  * - Enhanced email reporting with HTML formatting
- * - Real-time metrics and dashboard integration
+ * - Memory/history tracking system for past maintenance reports
+ * - Dashboard integration with unified maintenance_reports table
+ * - Configurable actions (maintenance vs memory retrieval)
+ * - Real-time metrics and performance tracking
  */
 
 Actor.main(async () => {
-    console.log('🚀 Starting Enhanced DIVA Maintenance System v2.0...');
+    console.log('🚀 Starting Enhanced DIVA Maintenance System v2.1...');
     console.log('💰 Target: Korean DIVA Financial Intelligence Database');
+    console.log('🧠 NEW: Memory tracking & dashboard integration enabled');
     
     const input = await Actor.getInput();
     
@@ -36,6 +40,11 @@ Actor.main(async () => {
         smtpPort: input?.smtpPort || 587,
         smtpUser: input?.smtpUser || process.env.SMTP_USER,
         smtpPass: input?.smtpPass || process.env.SMTP_PASS,
+        
+        // Dashboard configuration - NEW FEATURE!
+        dashboard: {
+            enabled: input?.dashboard?.enabled !== false
+        },
         
         // Supabase configuration
         supabaseUrl: input?.supabaseUrl || process.env.SUPABASE_URL,
@@ -82,6 +91,21 @@ Actor.main(async () => {
     };
     
     try {
+        // Check for action type - NEW FEATURE!
+        if (input.action === 'retrieveMemories') {
+            console.log('🧠 ACTION: Retrieving DIVA maintenance memories...');
+            const memories = await retrieveMemories(supabaseClient, input.memoryOptions || {});
+            
+            if (memories) {
+                console.log(`✅ Retrieved ${memories.length} DIVA memories successfully.`);
+                console.log('🎉 === DIVA MEMORY RETRIEVAL COMPLETED ===');
+            } else {
+                console.log('❌ Failed to retrieve DIVA memories.');
+                process.exit(1);
+            }
+            return;
+        }
+        
         console.log('🔍 === STARTING ENHANCED DIVA MAINTENANCE ===');
         
         // Phase 1: Database Analysis
@@ -120,6 +144,10 @@ Actor.main(async () => {
             console.log('📧 Phase 6: Sending Enhanced Email Report...');
             await sendEnhancedEmailReport(maintenanceReport, config);
         }
+        
+        // Phase 7: Save Report to Dashboard - NEW FEATURE!
+        console.log('💾 Phase 7: Saving Report to Dashboard...');
+        await saveReportToDashboard(maintenanceReport, config, supabaseClient);
         
         // Export final results
         await Actor.setValue('maintenance_report', maintenanceReport);
@@ -466,10 +494,84 @@ function generateEnhancedMaintenanceReport(metrics, duration, config) {
         qualityScore: metrics.qualityScore,
         
         // System info
-        system: 'Enhanced DIVA Maintenance System v2.0',
+        system: 'Enhanced DIVA Maintenance System v2.1',
         platform: 'Apify Cloud',
-        version: '2.0'
+        version: '2.1',
+        
+        // New features
+        features: {
+            memoryTracking: true,
+            dashboardIntegration: true,
+            configurableActions: true
+        }
     };
+}
+
+/**
+ * 💾 SAVE MAINTENANCE REPORT TO DASHBOARD (SUPABASE)
+ */
+async function saveReportToDashboard(report, config, supabaseClient) {
+    if (!config.dashboard?.enabled) {
+        console.log('📊 Dashboard reporting disabled - skipping save');
+        return;
+    }
+
+    console.log('=== SAVING DIVA REPORT TO DASHBOARD ===');
+
+    try {
+        const reportData = {
+            system_type: 'DIVA',
+            report_data: report,
+            status: report.qualityScore >= 80 ? 'HEALTHY' : 'NEEDS_ATTENTION',
+            duration_seconds: report.duration,
+            quality_score: report.qualityScore,
+            duplicates_removed: report.duplicatesRemoved,
+            records_processed: report.totalRecords,
+            created_at: new Date().toISOString()
+        };
+
+        const { error } = await supabaseClient
+            .from('maintenance_reports')
+            .insert([reportData]);
+
+        if (error) {
+            throw error;
+        }
+
+        console.log('💾 DIVA maintenance report saved to dashboard successfully');
+
+    } catch (error) {
+        console.log(`Failed to save DIVA report to dashboard: ${error.message}`);
+    }
+}
+
+/**
+ * 🧠 RETRIEVE PAST DIVA MAINTENANCE REPORTS (MEMORIES)
+ */
+async function retrieveMemories(supabaseClient, options = {}) {
+    console.log('=== RETRIEVING DIVA MAINTENANCE MEMORIES ===');
+    const { limit = 10, sortBy = 'created_at', ascending = false } = options;
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('maintenance_reports')
+            .select('*')
+            .eq('system_type', 'DIVA')
+            .order(sortBy, { ascending })
+            .limit(limit);
+
+        if (error) {
+            throw error;
+        }
+
+        console.log(`🧠 Retrieved ${data.length} past DIVA maintenance reports.`);
+        await Actor.setValue('retrieved_diva_memories', data);
+        return data;
+
+    } catch (error) {
+        console.log(`Failed to retrieve DIVA memories: ${error.message}`);
+        return null;
+    }
 }
 
 /**
@@ -528,9 +630,10 @@ function generateHtmlReport(report) {
     </head>
     <body>
         <div class="header">
-            <h1>🇰🇷 Enhanced DIVA Maintenance Report v2.0</h1>
+            <h1>🇰🇷 Enhanced DIVA Maintenance Report v2.1</h1>
             <p>Generated: ${report.timestamp}</p>
             <p>Duration: ${report.duration} seconds</p>
+            <p>🧠 NEW: Memory tracking & dashboard integration</p>
         </div>
         
         <div class="section ${report.qualityScore >= 80 ? 'success' : 'warning'}">
