@@ -35,7 +35,7 @@ Actor.main(async () => {
         dryRun: input?.dryRun || false,
         
         // Email configuration
-        emailRecipients: input?.emailRecipients || ['sparkai@sparklabs.co.kr'],
+        emailRecipients: input?.emailRecipients ? input.emailRecipients.split(',').map(email => email.trim()) : ['sparkai@sparklabs.co.kr'],
         smtpHost: input?.smtpHost || 'smtp.gmail.com',
         smtpPort: input?.smtpPort || 587,
         smtpUser: input?.smtpUser || process.env.SMTP_USER,

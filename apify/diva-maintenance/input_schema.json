@@ -1,5 +1,5 @@
 {
-    "title": "Enhanced DIVA Maintenance System v2.0",
+    "title": "Enhanced DIVA Maintenance System v2.1",
     "description": "🇰🇷 Advanced maintenance system for Korean DIVA financial intelligence database with duplicate detection, data quality analysis, and email reporting.",
     "type": "object",
     "schemaVersion": 1,
@@ -42,13 +42,9 @@
         },
         "emailRecipients": {
             "title": "Email Recipients",
-            "type": "array",
-            "description": "List of email addresses to receive maintenance reports",
-            "items": {
-                "type": "string",
-                "format": "email"
-            },
-            "default": ["sparkai@sparklabs.co.kr"]
+            "type": "string",
+            "description": "Email addresses to receive maintenance reports (comma-separated for multiple)",
+            "default": "sparkai@sparklabs.co.kr"
         },
         "smtpHost": {
             "title": "SMTP Host",
