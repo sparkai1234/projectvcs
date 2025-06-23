@@ -48,7 +48,7 @@ Actor.main(async () => {
         
         // Supabase configuration
         supabaseUrl: input?.supabaseUrl || process.env.SUPABASE_URL,
-        supabaseKey: input?.supabaseKey || process.env.SUPABASE_SERVICE_ROLE_KEY,
+        supabaseKey: input?.supabaseKey || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY,
         
         // DIVA-specific table configuration
         tables: {
