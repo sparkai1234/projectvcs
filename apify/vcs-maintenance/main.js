@@ -1,9 +1,272 @@
 import { Actor } from 'apify';
 import { createClient } from '@supabase/supabase-js';
-import { MaintenanceSystemCore } from '../shared-maintenance-core/MaintenanceSystem.js';
 
-console.log('🔧 === VCS MAINTENANCE SYSTEM v3.0 ===');
+console.log('🔧 === VCS MAINTENANCE SYSTEM v3.0 (APIFY STANDALONE) ===');
 console.log('🕐 Maintenance Time:', new Date().toISOString());
+
+/**
+ * 🏗️ EMBEDDED MAINTENANCE SYSTEM CORE
+ * Base class for all maintenance systems (VCS, DIVA, etc.)
+ * Embedded directly for Apify deployment
+ */
+class MaintenanceSystemCore {
+    constructor(systemType, input = {}) {
+        this.systemType = systemType;
+        this.input = input;
+        this.startTime = Date.now();
+        
+        // Initialize metrics
+        this.metrics = {
+            totalRecords: 0,
+            duplicatesFound: 0,
+            duplicatesRemoved: 0,
+            dataQualityIssues: 0,
+            qualityScore: 0,
+            errorsFound: 0
+        };
+        
+        // Initialize change tracking
+        this.changes = {
+            additions: [],
+            duplicateResolutions: [],
+            qualityImprovements: []
+        };
+        
+        // Initialize Supabase client
+        this.initializeSupabase();
+    }
+    
+    /**
+     * 🔌 Initialize Supabase Client
+     */
+    initializeSupabase() {
+        const supabaseUrl = this.input.supabaseUrl || process.env.SUPABASE_URL;
+        const supabaseKey = this.input.supabaseKey || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
+        
+        if (!supabaseUrl || !supabaseKey) {
+            throw new Error('Missing Supabase credentials. Please provide SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+        }
+        
+        this.supabase = createClient(supabaseUrl, supabaseKey);
+        this.log('✅ Supabase client initialized successfully');
+    }
+    
+    /**
+     * 📝 Enhanced Logging with System Type
+     */
+    log(message, level = 'info') {
+        const timestamp = new Date().toISOString();
+        const prefix = level === 'error' ? '❌' : level === 'warning' ? '⚠️' : level === 'success' ? '✅' : '📋';
+        console.log(`${prefix} [${this.systemType}] ${message}`);
+    }
+    
+    /**
+     * 🚀 Main Maintenance Execution
+     */
+    async performMaintenance() {
+        this.log(`=== ${this.systemType} MAINTENANCE STARTED ===`);
+        
+        try {
+            // 1. Database Health Check
+            const healthResult = await this.checkDatabaseHealth();
+            if (!healthResult) {
+                this.log('Database health check failed', 'error');
+                return false;
+            }
+            
+            // 2. Duplicate Detection
+            const duplicateResult = await this.detectDuplicates();
+            if (!duplicateResult) {
+                this.log('Duplicate detection failed', 'error');
+                return false;
+            }
+            
+            // 3. Cleanup (if enabled)
+            let cleanupResult = 0;
+            if (this.input.performCleanup !== false && duplicateResult) {
+                cleanupResult = await this.performCleanup(duplicateResult);
+            }
+            
+            // 4. Data Quality Analysis
+            const qualityResult = await this.analyzeDataQuality();
+            if (!qualityResult) {
+                this.log('Data quality analysis failed', 'error');
+                return false;
+            }
+            
+            // 5. Generate Report
+            const report = this.generateMaintenanceReport(healthResult, duplicateResult, qualityResult);
+            
+            // 6. Save to Actor Storage
+            await this.saveToActorStorage(report);
+            
+            // 7. Dashboard Integration (if enabled)
+            if (this.input.dashboard?.enabled !== false) {
+                await this.saveToDashboard(report);
+            }
+            
+            // 8. Prepare Consolidated Email Data
+            await this.prepareConsolidatedEmailData(report);
+            
+            this.log(`=== ${this.systemType} MAINTENANCE COMPLETED SUCCESSFULLY ===`, 'success');
+            return true;
+            
+        } catch (error) {
+            this.log(`Fatal maintenance error: ${error.message}`, 'error');
+            this.metrics.errorsFound++;
+            return false;
+        }
+    }
+    
+    /**
+     * 📊 Generate Maintenance Report
+     */
+    generateMaintenanceReport(healthResult, duplicateResult, qualityResult) {
+        const duration = Math.round((Date.now() - this.startTime) / 1000);
+        
+        const report = {
+            system_type: this.systemType,
+            timestamp: new Date().toISOString(),
+            duration_seconds: duration,
+            performance: {
+                status: this.metrics.errorsFound === 0 ? 
+                    (this.metrics.qualityScore >= 90 ? 'HEALTHY' : 'NEEDS_ATTENTION') : 'ERROR',
+                quality_score: this.metrics.qualityScore,
+                records_processed: this.metrics.totalRecords,
+                duplicates_found: this.metrics.duplicatesFound,
+                duplicates_removed: this.metrics.duplicatesRemoved,
+                data_quality_issues: this.metrics.dataQualityIssues,
+                errors_found: this.metrics.errorsFound
+            },
+            details: {
+                health_check: healthResult,
+                duplicate_analysis: duplicateResult,
+                quality_analysis: qualityResult,
+                changes_made: this.changes
+            },
+            input_configuration: this.input
+        };
+        
+        this.log(`📊 Report generated - Status: ${report.performance.status}, Quality: ${this.metrics.qualityScore}/100`);
+        return report;
+    }
+    
+    /**
+     * 💾 Save Report to Actor Storage
+     */
+    async saveToActorStorage(report) {
+        try {
+            const storageKey = `${this.systemType.toLowerCase()}_maintenance_report`;
+            const summaryKey = `${this.systemType.toLowerCase()}_maintenance_summary`;
+            
+            await Actor.setValue(storageKey, report);
+            await Actor.setValue(summaryKey, {
+                system_type: report.system_type,
+                status: report.performance.status,
+                quality_score: report.performance.quality_score,
+                duration_seconds: report.duration_seconds,
+                timestamp: report.timestamp
+            });
+            
+            this.log(`💾 ${this.systemType} report saved to Actor storage`);
+        } catch (error) {
+            this.log(`Failed to save to Actor storage: ${error.message}`, 'error');
+        }
+    }
+    
+    /**
+     * 📊 Save to Unified Dashboard
+     */
+    async saveToDashboard(report) {
+        try {
+            const { error } = await this.supabase
+                .from('unified_maintenance_reports')
+                .insert({
+                    system_type: report.system_type,
+                    status: report.performance.status,
+                    duration_seconds: report.duration_seconds,
+                    quality_score: report.performance.quality_score,
+                    duplicates_removed: report.performance.duplicates_removed,
+                    records_processed: report.performance.records_processed,
+                    report_data: report
+                });
+                
+            if (error) {
+                this.log(`Dashboard save error: ${error.message}`, 'warning');
+            } else {
+                this.log(`💾 ${this.systemType} report saved to unified dashboard successfully`);
+            }
+        } catch (error) {
+            this.log(`Dashboard integration failed: ${error.message}`, 'warning');
+        }
+    }
+    
+    /**
+     * 📧 Prepare Consolidated Email Data
+     */
+    async prepareConsolidatedEmailData(report) {
+        try {
+            const emailData = {
+                system_type: report.system_type,
+                timestamp: report.timestamp,
+                status: report.performance.status,
+                quality_score: report.performance.quality_score,
+                summary: {
+                    records_processed: report.performance.records_processed,
+                    duplicates_removed: report.performance.duplicates_removed,
+                    quality_issues: report.performance.data_quality_issues,
+                    duration: report.duration_seconds
+                },
+                key_metrics: this.metrics,
+                notable_changes: this.changes
+            };
+            
+            await Actor.setValue(`${this.systemType.toLowerCase()}_email_data`, emailData);
+            this.log(`📧 ${this.systemType} email data prepared for consolidated reporting`);
+        } catch (error) {
+            this.log(`Email data preparation failed: ${error.message}`, 'warning');
+        }
+    }
+    
+    /**
+     * 🧠 Retrieve Maintenance Memories
+     */
+    async retrieveMemories(options = {}) {
+        try {
+            const limit = options.limit || 10;
+            const sortBy = options.sortBy || 'created_at';
+            const ascending = options.ascending || false;
+            
+            const { data, error } = await this.supabase
+                .from('unified_maintenance_reports')
+                .select('*')
+                .eq('system_type', this.systemType)
+                .order(sortBy, { ascending })
+                .limit(limit);
+                
+            if (error) {
+                this.log(`Memory retrieval error: ${error.message}`, 'error');
+                return null;
+            }
+            
+            this.log(`🧠 Retrieved ${data?.length || 0} ${this.systemType} maintenance memories`);
+            
+            // Save to Actor storage for external access
+            await Actor.setValue(`${this.systemType.toLowerCase()}_memories`, data);
+            
+            return data;
+        } catch (error) {
+            this.log(`Memory retrieval failed: ${error.message}`, 'error');
+            return null;
+        }
+    }
+    
+    // Abstract methods to be implemented by subclasses
+    async checkDatabaseHealth() { throw new Error('checkDatabaseHealth must be implemented'); }
+    async detectDuplicates() { throw new Error('detectDuplicates must be implemented'); }
+    async performCleanup(duplicatesData) { throw new Error('performCleanup must be implemented'); }
+    async analyzeDataQuality() { throw new Error('analyzeDataQuality must be implemented'); }
+}
 
 /**
  * VCS-Specific Maintenance System extending shared core
@@ -359,7 +622,7 @@ class VCSMaintenanceSystem extends MaintenanceSystemCore {
 // ==========================================
 
 Actor.main(async () => {
-    console.log('🇰🇷 VCS Maintenance Actor v3.0 Started');
+    console.log('🇰🇷 VCS Maintenance Actor v3.0 Started (Apify Standalone)');
     console.log('🕐 Execution time:', new Date().toISOString());
     
     // Get input configuration
