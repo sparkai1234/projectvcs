@@ -519,6 +519,42 @@ async function saveReportToDashboard(report, config, supabaseClient) {
     console.log('=== SAVING DIVA REPORT TO DASHBOARD ===');
 
     try {
+        // First, check if maintenance_reports table exists
+        const { data: tableExists, error: tableError } = await supabaseClient
+            .from('maintenance_reports')
+            .select('id')
+            .limit(1);
+        
+        if (tableError) {
+            console.log('⚠️ maintenance_reports table does not exist or is not accessible:', tableError.message);
+            console.log('📋 Creating maintenance_reports table...');
+            
+            // Create the table using SQL
+            const { error: createError } = await supabaseClient.rpc('exec_sql', {
+                sql: `
+                CREATE TABLE IF NOT EXISTS maintenance_reports (
+                    id SERIAL PRIMARY KEY,
+                    system_type VARCHAR(50) NOT NULL,
+                    status VARCHAR(50) NOT NULL,
+                    duration_seconds INTEGER,
+                    quality_score INTEGER,
+                    duplicates_removed INTEGER,
+                    records_processed INTEGER,
+                    report_data JSONB,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+                );
+                `
+            });
+            
+            if (createError) {
+                console.log('❌ Failed to create maintenance_reports table:', createError.message);
+                throw new Error(`Cannot create maintenance_reports table: ${createError.message}`);
+            }
+            
+            console.log('✅ maintenance_reports table created successfully');
+        } else {
+            console.log('✅ maintenance_reports table accessible');
+        }
         const reportData = {
             system_type: 'DIVA',
             report_data: report,
@@ -541,7 +577,8 @@ async function saveReportToDashboard(report, config, supabaseClient) {
         console.log('💾 DIVA maintenance report saved to dashboard successfully');
 
     } catch (error) {
-        console.log(`Failed to save DIVA report to dashboard: ${error?.message || error || 'Unknown error'}`);
+        console.log(`Failed to save DIVA report to dashboard: ${error?.message || JSON.stringify(error) || 'Unknown error'}`);
+        console.log('Dashboard save error details:', error);
     }
 }
 
