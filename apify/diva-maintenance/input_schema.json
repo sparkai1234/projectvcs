@@ -106,6 +106,7 @@
             "title": "Memory Retrieval Options",
             "type": "object",
             "description": "Options for retrieving past maintenance reports",
+            "editor": "json",
             "properties": {
                 "limit": {
                     "title": "Number of Reports",
@@ -134,6 +135,7 @@
             "title": "Dashboard Integration",
             "type": "object",
             "description": "Dashboard and reporting configuration",
+            "editor": "json",
             "properties": {
                 "enabled": {
                     "title": "Enable Dashboard Reporting",
