@@ -5,8 +5,33 @@
  * Quick test to verify Supabase connection and table schema
  */
 
-const { createClient } = require('@supabase/supabase-js');
+import { createClient } from '@supabase/supabase-js';
 require('dotenv').config();
+
+console.log('🧪 Testing Supabase connection...');
+
+// Supabase configuration
+const supabaseUrl = 'https://udfgtccxbqmalgpqyxzz.supabase.co';
+const supabaseKey = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkZmd0Y2N4YnFtYWxncHF5eHp6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNDA5Mjg5MCwiZXhwIjoyMDQ5NjY4ODkwfQ.I9sDa9j4R0OYWLxgF7wq3djQRnHGmAmwJJgn5-ZWoZ4';
+
+console.log('Creating Supabase client...');
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+console.log('Testing connection by counting diva_investment_performance records...');
+
+try {
+    const { data, error, count } = await supabase
+        .from('diva_investment_performance')
+        .select('*', { count: 'exact', head: true });
+        
+    if (error) {
+        console.error('❌ Connection failed:', error);
+    } else {
+        console.log(`✅ Connection successful! Found ${count} records in diva_investment_performance`);
+    }
+} catch (err) {
+    console.error('❌ Error:', err);
+}
 
 async function testSupabaseConnection() {
     console.log('🧪 Testing Supabase connection...');

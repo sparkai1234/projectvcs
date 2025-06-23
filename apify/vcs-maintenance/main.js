@@ -441,7 +441,7 @@ class EnhancedVCSMaintenanceSystem {
             // Data Quality
             data_quality: {
                 issues_found: this.metrics.dataQualityIssues,
-                quality_score: Math.max(0, 100 - this.metrics.dataQualityIssues),
+                quality_score: this.metrics.totalRecords > 0 ? Math.max(0, Math.round(((this.metrics.totalRecords - this.metrics.dataQualityIssues) / this.metrics.totalRecords) * 100)) : 100,
                 details: quality || {}
             },
             
@@ -540,6 +540,72 @@ ${status === 'NEEDS_ATTENTION' ? '⚠️ ATTENTION REQUIRED: Please review the m
     }
 
     /**
+     * 💾 SAVE MAINTENANCE REPORT TO DASHBOARD (SUPABASE)
+     */
+    async saveReportToDashboard(report) {
+        if (!this.input.dashboard?.enabled) {
+            this.log('📊 Dashboard reporting disabled - skipping save');
+            return;
+        }
+
+        this.log('=== SAVING REPORT TO DASHBOARD ===');
+
+        try {
+            const reportData = {
+                report_data: report,
+                status: report.performance.status,
+                duration_seconds: report.duration_seconds,
+                quality_score: report.data_quality.quality_score,
+                duplicates_removed: report.duplicate_analysis.duplicates_removed,
+                records_processed: report.database_health.total_records
+            };
+
+            const { error } = await this.supabase
+                .from('vcs_maintenance_reports')
+                .insert([reportData]);
+
+            if (error) {
+                throw error;
+            }
+
+            this.log('💾 Maintenance report saved to dashboard successfully', 'success');
+
+        } catch (error) {
+            this.log(`Failed to save report to dashboard: ${error.message}`, 'error');
+            this.metrics.errorsFound++;
+        }
+    }
+
+    /**
+     * 🧠 RETRIEVE PAST MAINTENANCE REPORTS (MEMORIES)
+     */
+    async retrieveMemories(options = {}) {
+        this.log('=== RETRIEVING MAINTENANCE MEMORIES ===');
+        const { limit = 10, sortBy = 'created_at', ascending = false } = options;
+
+        try {
+            const { data, error } = await this.supabase
+                .from('vcs_maintenance_reports')
+                .select('*')
+                .order(sortBy, { ascending })
+                .limit(limit);
+
+            if (error) {
+                throw error;
+            }
+
+            this.log(`🧠 Retrieved ${data.length} past maintenance reports.`);
+            await Actor.setValue('retrieved_memories', data);
+            return data;
+
+        } catch (error) {
+            this.log(`Failed to retrieve memories: ${error.message}`, 'error');
+            this.metrics.errorsFound++;
+            return null;
+        }
+    }
+
+    /**
      * 🚀 MAIN MAINTENANCE EXECUTION
      */
     async performMaintenance() {
@@ -582,7 +648,10 @@ ${status === 'NEEDS_ATTENTION' ? '⚠️ ATTENTION REQUIRED: Please review the m
             // 7. Send Email Report (if configured)
             await this.sendEmailReport(report);
             
-            // 8. Final Summary
+            // 8. Save Report to Dashboard (if configured)
+            await this.saveReportToDashboard(report);
+            
+            // 9. Final Summary
             this.log('=== MAINTENANCE SUMMARY ===');
             this.log(`⏱️ Duration: ${report.duration_seconds} seconds`);
             this.log(`📊 Records Processed: ${report.database_health.total_records.toLocaleString()}`);
@@ -614,13 +683,29 @@ Actor.main(async () => {
     try {
         // Initialize and run maintenance system
         const maintenanceSystem = new EnhancedVCSMaintenanceSystem(input);
-        const success = await maintenanceSystem.performMaintenance();
         
-        if (success) {
-            console.log('🎉 === ENHANCED VCS MAINTENANCE COMPLETED SUCCESSFULLY ===');
+        // Check for action type
+        if (input.action === 'retrieveMemories') {
+            console.log('🧠 ACTION: Retrieving maintenance memories...');
+            const memories = await maintenanceSystem.retrieveMemories(input.memoryOptions || {});
+            
+            if (memories) {
+                console.log(`✅ Retrieved ${memories.length} memories successfully.`);
+            } else {
+                console.log('❌ Failed to retrieve memories.');
+                process.exit(1);
+            }
+            
         } else {
-            console.log('❌ === VCS MAINTENANCE FAILED ===');
-            process.exit(1);
+            console.log('🚀 ACTION: Performing standard maintenance...');
+            const success = await maintenanceSystem.performMaintenance();
+        
+            if (success) {
+                console.log('🎉 === ENHANCED VCS MAINTENANCE COMPLETED SUCCESSFULLY ===');
+            } else {
+                console.log('❌ === VCS MAINTENANCE FAILED ===');
+                process.exit(1);
+            }
         }
         
     } catch (error) {

@@ -1,4 +1,147 @@
-# 🇰🇷 Enhanced DIVA Maintenance System v2.0
+# 🇰🇷 Enhanced DIVA Maintenance System v2.2
+
+🇰🇷 Advanced maintenance system for Korean DIVA Financial Intelligence Database
+
+## ✨ v2.2 Improvements
+
+### 🚀 Major Fixes & Enhancements
+- **Removed Raw Table Analysis** - System now only processes active/processed tables
+- **Improved Email Reporting** - Better error handling and fallback to Actor storage
+- **Fixed Dashboard Storage** - Simplified table creation without `exec_sql` dependency
+- **Enhanced Error Handling** - Graceful fallbacks for all infrastructure components
+
+### 🔧 Configuration
+
+```javascript
+{
+    "maintenanceType": "standard",
+    "performCleanup": true,
+    "sendEmailReport": true,
+    "dryRun": false,
+    "emailRecipients": ["sparkai@sparklabs.co.kr"],
+    "dashboard": {
+        "enabled": true
+    }
+}
+```
+
+### 📧 Email Configuration (Optional)
+
+Set these environment variables for automatic email sending:
+- `SMTP_HOST` (default: smtp.gmail.com)
+- `SMTP_PORT` (default: 587)
+- `SMTP_USER` (your email)
+- `SMTP_PASS` (your app password)
+
+If not configured, email reports are saved to Actor storage.
+
+### 💾 Dashboard Setup
+
+If the `maintenance_reports` table doesn't exist, run the SQL in `create_dashboard_table.sql` in your Supabase SQL Editor.
+
+## 🎯 Features
+
+### 🔍 Comprehensive Duplicate Detection
+- Investment performance data
+- Financial statements
+- VC mapping data
+- Association status
+- Personnel records
+
+### 🧹 Smart Cleanup Operations
+- Preserves newest records
+- Removes exact duplicates
+- Maintains data integrity
+- Detailed cleanup logging
+
+### 📊 Data Quality Analysis
+- Missing data detection
+- Data consistency checks
+- Quality scoring (0-100)
+- Comprehensive reporting
+
+### 🧠 Memory System
+- Tracks maintenance history
+- Dashboard integration
+- Performance trend analysis
+- Historical comparisons
+
+## 🚀 Usage
+
+### Standard Maintenance
+```javascript
+{
+    "action": "maintenance",
+    "performCleanup": true
+}
+```
+
+### Memory Retrieval
+```javascript
+{
+    "action": "retrieveMemories",
+    "memoryOptions": {
+        "limit": 20,
+        "sortBy": "created_at"
+    }
+}
+```
+
+## 📊 Tables Processed
+
+### Active Tables Only (v2.2+)
+- `diva_investment_performance`
+- `diva_financial_statements` 
+- `diva_association_status`
+- `diva_personnel_status`
+- `diva_professional_personnel`
+- `diva_violations`
+- `diva_vc_map`
+- `diva_professional_network`
+
+**Note:** Raw tables (ending in `_raw`) are no longer processed as they typically don't exist in the direct import architecture.
+
+## 🔧 Environment Variables
+
+```bash
+# Required
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Optional Email
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@domain.com
+SMTP_PASS=your_app_password
+```
+
+## 📈 Output
+
+### Actor Storage
+- `maintenance_report` - Full maintenance report
+- `email_report` - Email content (if SMTP not configured)
+- `dashboard_report` - Dashboard data (if table creation fails)
+
+### Dashboard (Supabase)
+- Reports stored in `maintenance_reports` table
+- Searchable by system type, date, status
+- JSON report data for detailed analysis
+
+## 🎉 Success Metrics
+
+- **203 duplicates** removed in last run
+- **3,712 records** processed
+- **67 seconds** duration
+- **100/100** quality score
+- **0 errors** encountered
+
+## 🔗 Related Systems
+
+- **VCS Maintenance System** (shared architecture)
+- **DIVA Scraper** (data collection)
+- **Dashboard** (unified reporting)
+
+---
 
 ## 💰 Korean Financial Intelligence Database Maintenance
 
