@@ -1,7 +1,7 @@
 {
-    "name": "enhanced-vcs-maintenance",
-    "version": "2.0.0",
-    "description": "Enhanced VCS Maintenance System with comprehensive duplicate detection, email reporting, and dashboard integration",
+    "name": "vcs-maintenance-system",
+    "version": "3.0.0",
+    "description": "VCS Maintenance System v3.0 - Part of Unified Maintenance Architecture with shared core and consolidated reporting",
     "main": "main.js",
     "type": "module",
     "scripts": {
@@ -21,8 +21,18 @@
         "data-quality",
         "korean-startups",
         "venture-capital",
+        "unified-architecture",
+        "shared-core",
         "apify"
     ],
-    "author": "VCS Maintenance Team",
-    "license": "MIT"
+    "author": "SparkLabs VCS Team",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/sparkai1234/projectvcs.git",
+        "directory": "apify/vcs-maintenance"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
 } 

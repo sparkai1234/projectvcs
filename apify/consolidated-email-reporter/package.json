@@ -1,0 +1,25 @@
+{
+  "name": "consolidated-email-reporter",
+  "version": "1.0.0",
+  "description": "Consolidated email reporting system for VCS and DIVA maintenance",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "start": "node main.js"
+  },
+  "dependencies": {
+    "apify": "^3.1.0",
+    "@supabase/supabase-js": "^2.38.0",
+    "nodemailer": "^6.9.0"
+  },
+  "keywords": [
+    "email",
+    "reporting",
+    "maintenance",
+    "vcs",
+    "diva",
+    "consolidated"
+  ],
+  "author": "SparkLabs",
+  "license": "MIT"
+} 
