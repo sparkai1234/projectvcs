@@ -105,45 +105,14 @@
         "memoryOptions": {
             "title": "Memory Retrieval Options",
             "type": "object",
-            "description": "Options for retrieving past maintenance reports",
-            "editor": "json",
-            "properties": {
-                "limit": {
-                    "title": "Number of Reports",
-                    "type": "integer",
-                    "description": "Maximum number of past reports to retrieve",
-                    "default": 10,
-                    "minimum": 1,
-                    "maximum": 100
-                },
-                "sortBy": {
-                    "title": "Sort By",
-                    "type": "string",
-                    "description": "Field to sort the results by",
-                    "default": "created_at",
-                    "enum": ["created_at", "quality_score", "duration_seconds", "records_processed"]
-                },
-                "ascending": {
-                    "title": "Sort Order",
-                    "type": "boolean",
-                    "description": "Sort in ascending order (oldest/lowest first)",
-                    "default": false
-                }
-            }
+            "description": "Options for retrieving past maintenance reports (JSON format: {\"limit\": 10, \"sortBy\": \"created_at\", \"ascending\": false})",
+            "editor": "json"
         },
         "dashboard": {
             "title": "Dashboard Integration",
             "type": "object",
-            "description": "Dashboard and reporting configuration",
-            "editor": "json",
-            "properties": {
-                "enabled": {
-                    "title": "Enable Dashboard Reporting",
-                    "type": "boolean",
-                    "description": "Save maintenance reports to dashboard for historical tracking",
-                    "default": true
-                }
-            }
+            "description": "Dashboard and reporting configuration (JSON format: {\"enabled\": true})",
+            "editor": "json"
         }
     },
     "required": []
