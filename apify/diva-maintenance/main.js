@@ -541,7 +541,7 @@ async function saveReportToDashboard(report, config, supabaseClient) {
         console.log('💾 DIVA maintenance report saved to dashboard successfully');
 
     } catch (error) {
-        console.log(`Failed to save DIVA report to dashboard: ${error.message}`);
+        console.log(`Failed to save DIVA report to dashboard: ${error?.message || error || 'Unknown error'}`);
     }
 }
 
@@ -581,7 +581,7 @@ async function sendEnhancedEmailReport(report, config) {
     console.log('📧 Sending enhanced email report...');
     
     try {
-        const transporter = nodemailer.createTransporter({
+        const transporter = nodemailer.createTransport({
             host: config.smtpHost,
             port: config.smtpPort,
             secure: config.smtpPort === 465,
@@ -674,7 +674,7 @@ async function sendErrorNotificationEmail(error, config) {
     console.log('📧 Sending error notification email...');
     
     try {
-        const transporter = nodemailer.createTransporter({
+        const transporter = nodemailer.createTransport({
             host: config.smtpHost,
             port: config.smtpPort,
             secure: config.smtpPort === 465,
