@@ -44,13 +44,15 @@
             "title": "Email Recipients",
             "type": "string",
             "description": "Email addresses to receive maintenance reports (comma-separated for multiple)",
-            "default": "sparkai@sparklabs.co.kr"
+            "default": "sparkai@sparklabs.co.kr",
+            "editor": "textfield"
         },
         "smtpHost": {
             "title": "SMTP Host",
             "type": "string",
             "description": "SMTP server hostname for email sending",
-            "default": "smtp.gmail.com"
+            "default": "smtp.gmail.com",
+            "editor": "textfield"
         },
         "smtpPort": {
             "title": "SMTP Port",
@@ -62,25 +64,29 @@
             "title": "SMTP Username",
             "type": "string",
             "description": "SMTP authentication username (or use SMTP_USER env var)",
-            "isSecret": false
+            "isSecret": false,
+            "editor": "textfield"
         },
         "smtpPass": {
             "title": "SMTP Password",
             "type": "string",
             "description": "SMTP authentication password (or use SMTP_PASS env var)",
-            "isSecret": true
+            "isSecret": true,
+            "editor": "textfield"
         },
         "supabaseUrl": {
             "title": "Supabase URL",
             "type": "string",
             "description": "Supabase project URL (or use SUPABASE_URL env var)",
-            "isSecret": false
+            "isSecret": false,
+            "editor": "textfield"
         },
         "supabaseKey": {
             "title": "Supabase Service Role Key",
             "type": "string",
             "description": "Supabase service role key for database access (or use SUPABASE_SERVICE_ROLE_KEY env var)",
-            "isSecret": true
+            "isSecret": true,
+            "editor": "textfield"
         },
         "action": {
             "title": "Action Type",
