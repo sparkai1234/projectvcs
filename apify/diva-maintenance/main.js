@@ -233,6 +233,9 @@ async function performEnhancedDatabaseAnalysis(supabaseClient, config) {
     const tableMetrics = {};
     let totalRecords = 0;
     
+    let rawTableRecords = 0;
+    let processedTableRecords = 0;
+    
     for (const [dataType, tableName] of Object.entries(config.tables)) {
         try {
             console.log(`📋 Analyzing ${tableName}...`);
@@ -249,16 +252,36 @@ async function performEnhancedDatabaseAnalysis(supabaseClient, config) {
                 tableMetrics[dataType] = { 
                     records: recordCount,
                     tableName: tableName,
-                    status: 'healthy'
+                    status: recordCount > 0 ? 'healthy' : 'empty',
+                    category: dataType.includes('_raw') ? 'raw' : 'processed'
                 };
                 totalRecords += recordCount;
-                console.log(`✅ ${tableName}: ${recordCount} records`);
+                
+                // Categorize records
+                if (dataType.includes('_raw')) {
+                    rawTableRecords += recordCount;
+                } else {
+                    processedTableRecords += recordCount;
+                }
+                
+                const status = recordCount > 0 ? '✅' : '⚪';
+                console.log(`${status} ${tableName}: ${recordCount.toLocaleString()} records`);
             }
             
         } catch (error) {
             console.log(`❌ Exception analyzing ${tableName}:`, error.message);
             tableMetrics[dataType] = { records: 0, error: error.message };
         }
+    }
+    
+    // Summary analysis
+    console.log('\n📊 DATA ARCHITECTURE ANALYSIS:');
+    console.log(`🗄️ Raw tables: ${rawTableRecords.toLocaleString()} records`);
+    console.log(`✨ Processed tables: ${processedTableRecords.toLocaleString()} records`);
+    
+    if (rawTableRecords === 0 && processedTableRecords > 0) {
+        console.log('🎯 PATTERN: Direct import architecture detected');
+        console.log('💡 Data imported directly into processed tables');
     }
     
     return { totalRecords, tableMetrics };
