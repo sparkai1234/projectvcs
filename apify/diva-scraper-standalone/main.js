@@ -82,9 +82,9 @@ Actor.main(async () => {
     
     console.log(`🔗 Supabase Client Ready: ${!!supabaseClient}`);
     console.log('🎯 Supabase Integration Configuration:');
-    console.log('TARGET TABLES: 7 perfectly mapped DIVA tables');
+    console.log('TARGET TABLES: 6 perfectly mapped DIVA tables');
     console.log('DUAL SAVE: Apify dataset + Supabase database');
-    console.log('EXPECTED: 5,343 records with 100% accuracy + export');
+    console.log('EXPECTED: 4843 records with 100% accuracy + export (Financial Statements DISABLED)');
     
     const config = {
         updateMode: input?.updateMode || 'incremental',
@@ -99,7 +99,6 @@ Actor.main(async () => {
         baseUrl: 'http://diva.kvca.or.kr',
         urls: {
             investment_performance: 'http://diva.kvca.or.kr/div/dii/DivItmInvstPrfmInq',
-            financial_statements: 'http://diva.kvca.or.kr/div/dii/DivItmFsInq',
             association_status: 'http://diva.kvca.or.kr/div/dii/DivItmAssoInq',
             personnel_status: 'http://diva.kvca.or.kr/div/dii/DivItmMnpwrInq',
             professional_personnel: 'http://diva.kvca.or.kr/div/dii/DivItmProfsInq',
@@ -109,8 +108,8 @@ Actor.main(async () => {
     };
     
     console.log('Production Ready Configuration v5.3.21:');
-    console.log('EXACT TARGETS: 333, 500, 2231, 251, 1685, 92, 251');
-    console.log('FIX 1: Financial statements deduplication (250 unique per tab)');
+    console.log('EXACT TARGETS: 333, 2231, 251, 1685, 92, 251 (Financial Statements DISABLED)');
+    console.log('FIX 1: Financial statements dual-tab scraping disabled');
     console.log('FIX 2: Association status complete extraction (include first 9 records)');
     
     const metrics = {
@@ -134,7 +133,6 @@ Actor.main(async () => {
         
         dataSourceCounts: {
             investment_performance: { records: 0, errors: 0, status: 'pending', target: 333 },
-            financial_statements: { records: 0, errors: 0, status: 'pending', target: 500, subTabs: { balance_sheet: 0, income_statement: 0 } },
             association_status: { records: 0, errors: 0, status: 'pending', target: 2231 },
             personnel_status: { records: 0, errors: 0, status: 'pending', target: 251 },
             professional_personnel: { records: 0, errors: 0, status: 'pending', target: 1685 },
@@ -359,7 +357,7 @@ Actor.main(async () => {
         }
     });
     
-    console.log('Processing 7 data sources for 100% precision accuracy...');
+    console.log('Processing 6 data sources for 100% precision accuracy (Financial Statements DISABLED)...');
     
     const dataSources = getDataSources(config.dataSource, config.urls);
     const requests = dataSources.map(({ url }) => ({ url }));
@@ -417,14 +415,14 @@ Actor.main(async () => {
     const overallPercentage = totalTarget > 0 ? ((totalCaptured / totalTarget) * 100).toFixed(1) : '0.0';
     
     console.log(`\n=== OVERALL PRECISION STATISTICS ===`);
-    console.log(`Perfect Matches: ${perfectMatches}/7`);
+    console.log(`Perfect Matches: ${perfectMatches}/6`);
     console.log(`Total Target: ${totalTarget}`);
     console.log(`Total Captured: ${totalCaptured}`);
     console.log(`Overall Accuracy: ${overallPercentage}%`);
     
-    if (perfectMatches === 7) {
-        console.log('\nPERFECTION ACHIEVED! All 7 data sources match control data exactly!');    
-    } else if (perfectMatches >= 5) {
+    if (perfectMatches === 6) {
+        console.log('\nPERFECTION ACHIEVED! All 6 data sources match control data exactly!');    
+    } else if (perfectMatches >= 4) {
         console.log('\nEXCELLENT! High precision achieved with minimal fine-tuning needed');
     } else if (overallPercentage >= 95) {
         console.log('\nGOOD! Solid performance, minor adjustments required');
