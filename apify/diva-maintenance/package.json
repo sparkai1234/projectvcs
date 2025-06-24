@@ -1,11 +1,12 @@
 {
     "name": "enhanced-diva-maintenance-system",
     "version": "2.0.0",
+    "type": "module",
     "description": "Enhanced DIVA Maintenance System v2.0 - Korean Financial Intelligence Database Maintenance",
-    "main": "main.js",
+    "main": "main-v3.js",
     "scripts": {
-        "start": "node main.js",
-        "test": "node main.js"
+        "start": "node main-v3.js",
+        "test": "node main-v3.js"
     },
     "author": "SparkAI DIVA Intelligence",
     "license": "MIT",
