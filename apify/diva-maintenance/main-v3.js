@@ -461,18 +461,19 @@ class DIVAMaintenanceSystem extends MaintenanceSystemCore {
                 });
             }
 
-            // 🏢 Association Status - Check by company_name
+            // 🏢 Association Status - Check by company_name + fund_name (VC firms can have multiple funds)
             const { data: allAssociationStatus } = await this.supabase
                 .from('diva_association_status')
-                .select('id, company_name, created_at')
-                .order('company_name, created_at');
+                .select('id, company_name, fund_name, created_at')
+                .order('company_name, fund_name, created_at');
                 
             if (allAssociationStatus && allAssociationStatus.length > 0) {
                 const asGroups = new Map();
                 
                 allAssociationStatus.forEach(as => {
-                    if (as.company_name) {
-                        const key = as.company_name.toLowerCase().trim();
+                    if (as.company_name && as.fund_name) {
+                        // Use company_name + fund_name as key since VCs can operate multiple funds
+                        const key = `${as.company_name.toLowerCase().trim()}_${as.fund_name.toLowerCase().trim()}`;
                         if (!asGroups.has(key)) {
                             asGroups.set(key, []);
                         }
