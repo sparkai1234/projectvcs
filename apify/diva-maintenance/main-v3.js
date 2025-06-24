@@ -1,12 +1,263 @@
 import { Actor } from 'apify';
 import { createClient } from '@supabase/supabase-js';
-import { MaintenanceSystemCore } from '../shared-maintenance-core/MaintenanceSystem.js';
 
-console.log('🔧 === DIVA MAINTENANCE SYSTEM v3.0 ===');
+console.log('🔧 === DIVA MAINTENANCE SYSTEM v3.0 (APIFY STANDALONE) ===');
 console.log('🕐 Maintenance Time:', new Date().toISOString());
 
 /**
- * DIVA-Specific Maintenance System extending shared core
+ * 🏗️ EMBEDDED MAINTENANCE SYSTEM CORE
+ * Base class for all maintenance systems (VCS, DIVA, etc.)
+ * Embedded directly for Apify deployment
+ */
+class MaintenanceSystemCore {
+    constructor(systemType, input = {}) {
+        this.systemType = systemType;
+        this.input = input;
+        this.startTime = Date.now();
+        
+        // Initialize metrics
+        this.metrics = {
+            totalRecords: 0,
+            duplicatesFound: 0,
+            duplicatesRemoved: 0,
+            dataQualityIssues: 0,
+            qualityScore: 0,
+            errorsFound: 0
+        };
+        
+        // Initialize change tracking
+        this.changes = {
+            additions: [],
+            duplicateResolutions: [],
+            qualityImprovements: []
+        };
+        
+        // Initialize Supabase client
+        this.initializeSupabase();
+    }
+    
+    /**
+     * 🔌 Initialize Supabase Client
+     */
+    initializeSupabase() {
+        const supabaseUrl = this.input.supabaseUrl || process.env.SUPABASE_URL;
+        const supabaseKey = this.input.supabaseKey || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
+        
+        if (!supabaseUrl || !supabaseKey) {
+            throw new Error('Missing Supabase credentials. Please provide SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+        }
+        
+        this.supabase = createClient(supabaseUrl, supabaseKey);
+        this.log('✅ Supabase client initialized successfully');
+    }
+    
+    /**
+     * 📝 Enhanced Logging with System Type
+     */
+    log(message, level = 'info') {
+        const timestamp = new Date().toISOString();
+        const prefix = level === 'error' ? '❌' : level === 'warning' ? '⚠️' : level === 'success' ? '✅' : '📋';
+        console.log(`${prefix} [${this.systemType}] ${message}`);
+    }
+    
+    /**
+     * 🚀 Main Maintenance Execution
+     */
+    async performMaintenance() {
+        this.log(`=== ${this.systemType} MAINTENANCE STARTED ===`);
+        
+        try {
+            // 1. Database Health Check
+            const healthResult = await this.checkDatabaseHealth();
+            if (!healthResult) {
+                this.log('Database health check failed', 'error');
+                return false;
+            }
+            
+            // 2. Duplicate Detection
+            const duplicateResult = await this.detectDuplicates();
+            if (!duplicateResult) {
+                this.log('Duplicate detection failed', 'error');
+                return false;
+            }
+            
+            // 3. Cleanup (if enabled)
+            let cleanupResult = 0;
+            if (this.input.performCleanup !== false && duplicateResult) {
+                cleanupResult = await this.performCleanup(duplicateResult);
+            }
+            
+            // 4. Data Quality Analysis
+            const qualityResult = await this.analyzeDataQuality();
+            if (!qualityResult) {
+                this.log('Data quality analysis failed', 'error');
+                return false;
+            }
+            
+            // 5. Generate Report
+            const report = this.generateMaintenanceReport(healthResult, duplicateResult, qualityResult);
+            
+            // 6. Save to Actor Storage
+            await this.saveToActorStorage(report);
+            
+            // 7. Dashboard Integration (if enabled)
+            if (this.input.dashboard?.enabled !== false) {
+                await this.saveToDashboard(report);
+            }
+            
+            // 8. Prepare Consolidated Email Data
+            await this.prepareConsolidatedEmailData(report);
+            
+            this.log(`=== ${this.systemType} MAINTENANCE COMPLETED SUCCESSFULLY ===`, 'success');
+            return true;
+            
+        } catch (error) {
+            this.log(`Fatal maintenance error: ${error.message}`, 'error');
+            this.metrics.errorsFound++;
+            return false;
+        }
+    }
+    
+    /**
+     * 📊 Generate Maintenance Report
+     */
+    generateMaintenanceReport(healthResult, duplicateResult, qualityResult) {
+        const duration = Math.round((Date.now() - this.startTime) / 1000);
+        
+        const report = {
+            system_type: this.systemType,
+            timestamp: new Date().toISOString(),
+            duration_seconds: duration,
+            performance: {
+                status: this.metrics.errorsFound === 0 ? 
+                    (this.metrics.qualityScore >= 90 ? 'HEALTHY' : 'NEEDS_ATTENTION') : 'ERROR',
+                quality_score: this.metrics.qualityScore,
+                records_processed: this.metrics.totalRecords,
+                duplicates_found: this.metrics.duplicatesFound,
+                duplicates_removed: this.metrics.duplicatesRemoved,
+                data_quality_issues: this.metrics.dataQualityIssues,
+                errors_found: this.metrics.errorsFound
+            },
+            details: {
+                health_check: healthResult,
+                duplicate_analysis: duplicateResult,
+                quality_analysis: qualityResult,
+                changes_made: this.changes
+            },
+            input_configuration: this.input
+        };
+        
+        this.log(`📊 Report generated - Status: ${report.performance.status}, Quality: ${this.metrics.qualityScore}/100`);
+        return report;
+    }
+    
+    /**
+     * 💾 Save Report to Actor Storage
+     */
+    async saveToActorStorage(report) {
+        try {
+            const storageKey = `${this.systemType.toLowerCase()}_maintenance_report`;
+            const summaryKey = `${this.systemType.toLowerCase()}_maintenance_summary`;
+            
+            await Actor.setValue(storageKey, report);
+            await Actor.setValue(summaryKey, {
+                system_type: report.system_type,
+                status: report.performance.status,
+                quality_score: report.performance.quality_score,
+                duration_seconds: report.duration_seconds,
+                timestamp: report.timestamp
+            });
+            
+            this.log(`💾 ${this.systemType} report saved to Actor storage`);
+        } catch (error) {
+            this.log(`Failed to save to Actor storage: ${error.message}`, 'error');
+        }
+    }
+    
+    /**
+     * 📊 Save to Unified Dashboard
+     */
+    async saveToDashboard(report) {
+        try {
+            const { error } = await this.supabase
+                .from('unified_maintenance_reports')
+                .insert({
+                    system_type: report.system_type,
+                    status: report.performance.status,
+                    duration_seconds: report.duration_seconds,
+                    quality_score: report.performance.quality_score,
+                    duplicates_removed: report.performance.duplicates_removed,
+                    records_processed: report.performance.records_processed,
+                    report_data: report
+                });
+                
+            if (error) {
+                this.log(`Dashboard save error: ${error.message}`, 'warning');
+            } else {
+                this.log(`💾 ${this.systemType} report saved to unified dashboard successfully`);
+            }
+        } catch (error) {
+            this.log(`Dashboard integration failed: ${error.message}`, 'warning');
+        }
+    }
+    
+    /**
+     * 📧 Prepare Consolidated Email Data
+     */
+    async prepareConsolidatedEmailData(report) {
+        try {
+            const emailData = {
+                system_type: report.system_type,
+                status: report.performance.status,
+                quality_score: report.performance.quality_score,
+                records_processed: report.performance.records_processed,
+                duplicates_removed: report.performance.duplicates_removed,
+                duration_seconds: report.duration_seconds,
+                timestamp: report.timestamp,
+                summary: `${report.system_type} maintenance completed with ${report.performance.status} status`
+            };
+            
+            await Actor.setValue('consolidated_email_data', emailData);
+            this.log(`📧 ${this.systemType} email data prepared for consolidated reporting`);
+            
+        } catch (error) {
+            this.log(`Failed to prepare email data: ${error.message}`, 'warning');
+        }
+    }
+    
+    /**
+     * 🧠 Retrieve System Memories
+     */
+    async retrieveMemories(options = {}) {
+        try {
+            const memories = await Actor.getValue('system_memories') || [];
+            const systemMemories = memories.filter(memory => 
+                memory.system_type === this.systemType || memory.system_type === 'ALL'
+            );
+            
+            if (options.limit) {
+                return systemMemories.slice(0, options.limit);
+            }
+            
+            return systemMemories;
+            
+        } catch (error) {
+            this.log(`Failed to retrieve memories: ${error.message}`, 'warning');
+            return [];
+        }
+    }
+    
+    // Abstract methods that must be implemented by subclasses
+    async checkDatabaseHealth() { throw new Error('checkDatabaseHealth must be implemented'); }
+    async detectDuplicates() { throw new Error('detectDuplicates must be implemented'); }
+    async performCleanup(duplicatesData) { throw new Error('performCleanup must be implemented'); }
+    async analyzeDataQuality() { throw new Error('analyzeDataQuality must be implemented'); }
+}
+
+/**
+ * 🏢 DIVA-SPECIFIC MAINTENANCE SYSTEM
+ * Handles all DIVA tables: investment_performance, financial_statements, 
+ * association_status, personnel_status, professional_personnel, violations, vc_map
  */
 class DIVAMaintenanceSystem extends MaintenanceSystemCore {
     constructor(input = {}) {
@@ -20,39 +271,39 @@ class DIVAMaintenanceSystem extends MaintenanceSystemCore {
         this.log('=== DIVA DATABASE HEALTH CHECK ===');
         
         try {
-            // Get current record counts for all DIVA tables
+            // Get current record counts for all DIVA tables (Financial Statements DISABLED)
             const tableChecks = await Promise.all([
-                this.supabase.from('diva_investment_performance').select('*', { count: 'exact' }),
-                this.supabase.from('diva_financial_statements').select('*', { count: 'exact' }),
-                this.supabase.from('diva_association_status').select('*', { count: 'exact' }),
-                this.supabase.from('diva_personnel_status').select('*', { count: 'exact' }),
-                this.supabase.from('diva_professional_personnel').select('*', { count: 'exact' }),
-                this.supabase.from('diva_violations').select('*', { count: 'exact' }),
-                this.supabase.from('diva_vc_map').select('*', { count: 'exact' })
+                this.supabase.from('diva_investment_performance').select('*', { count: 'exact', head: true }),
+                // this.supabase.from('diva_financial_statements').select('*', { count: 'exact', head: true }), // DISABLED
+                this.supabase.from('diva_association_status').select('*', { count: 'exact', head: true }),
+                this.supabase.from('diva_personnel_status').select('*', { count: 'exact', head: true }),
+                this.supabase.from('diva_professional_personnel').select('*', { count: 'exact', head: true }),
+                this.supabase.from('diva_violations').select('*', { count: 'exact', head: true }),
+                this.supabase.from('diva_vc_map').select('*', { count: 'exact', head: true })
             ]);
 
             const tableCounts = {
                 investment_performance: tableChecks[0].count || 0,
-                financial_statements: tableChecks[1].count || 0,
-                association_status: tableChecks[2].count || 0,
-                personnel_status: tableChecks[3].count || 0,
-                professional_personnel: tableChecks[4].count || 0,
-                violations: tableChecks[5].count || 0,
-                vc_map: tableChecks[6].count || 0
+                // financial_statements: tableChecks[1].count || 0, // DISABLED
+                association_status: tableChecks[1].count || 0,
+                personnel_status: tableChecks[2].count || 0,
+                professional_personnel: tableChecks[3].count || 0,
+                violations: tableChecks[4].count || 0,
+                vc_map: tableChecks[5].count || 0
             };
 
             const totalRecords = Object.values(tableCounts).reduce((sum, count) => sum + count, 0);
             this.metrics.totalRecords = totalRecords;
 
-            this.log(`📊 DIVA Records Summary:`);
-            this.log(`   • Investment Performance: ${tableCounts.investment_performance}`);
-            this.log(`   • Financial Statements: ${tableCounts.financial_statements}`);
-            this.log(`   • Association Status: ${tableCounts.association_status}`);
-            this.log(`   • Personnel Status: ${tableCounts.personnel_status}`);
-            this.log(`   • Professional Personnel: ${tableCounts.professional_personnel}`);
-            this.log(`   • Violations: ${tableCounts.violations}`);
-            this.log(`   • VC Map: ${tableCounts.vc_map}`);
-            this.log(`📊 Total DIVA Records: ${totalRecords}`);
+            this.log(`📊 DIVA Records Summary (Financial Statements DISABLED):`);
+            this.log(`   • Investment Performance: ${tableCounts.investment_performance.toLocaleString()}`);
+            // this.log(`   • Financial Statements: ${tableCounts.financial_statements.toLocaleString()}`); // DISABLED
+            this.log(`   • Association Status: ${tableCounts.association_status.toLocaleString()}`);
+            this.log(`   • Personnel Status: ${tableCounts.personnel_status.toLocaleString()}`);
+            this.log(`   • Professional Personnel: ${tableCounts.professional_personnel.toLocaleString()}`);
+            this.log(`   • Violations: ${tableCounts.violations.toLocaleString()}`);
+            this.log(`   • VC Map: ${tableCounts.vc_map.toLocaleString()}`);
+            this.log(`📊 Total DIVA Records: ${totalRecords.toLocaleString()}`);
             
             // Check for recent activity (data freshness)
             await this.checkDataFreshness();
@@ -73,17 +324,17 @@ class DIVAMaintenanceSystem extends MaintenanceSystemCore {
         try {
             const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
             
-            // Check recent activity across DIVA tables
+            // Check recent activity across key DIVA tables (Financial Statements DISABLED)
             const recentChecks = await Promise.all([
-                this.supabase.from('diva_investment_performance').select('*', { count: 'exact' }).gte('created_at', oneHourAgo),
-                this.supabase.from('diva_financial_statements').select('*', { count: 'exact' }).gte('created_at', oneHourAgo),
-                this.supabase.from('diva_association_status').select('*', { count: 'exact' }).gte('created_at', oneHourAgo)
+                this.supabase.from('diva_investment_performance').select('*', { count: 'exact', head: true }).gte('created_at', oneHourAgo),
+                // this.supabase.from('diva_financial_statements').select('*', { count: 'exact', head: true }).gte('created_at', oneHourAgo), // DISABLED
+                this.supabase.from('diva_association_status').select('*', { count: 'exact', head: true }).gte('created_at', oneHourAgo)
             ]);
 
             const recentActivity = {
                 investment_performance: recentChecks[0].count || 0,
-                financial_statements: recentChecks[1].count || 0,
-                association_status: recentChecks[2].count || 0
+                // financial_statements: recentChecks[1].count || 0, // DISABLED
+                association_status: recentChecks[1].count || 0
             };
 
             const totalRecentActivity = Object.values(recentActivity).reduce((sum, count) => sum + count, 0);
@@ -99,6 +350,27 @@ class DIVAMaintenanceSystem extends MaintenanceSystemCore {
                 this.log(`📊 No recent DIVA activity (expected for maintenance runs)`);
             }
             
+            // Financial statements data span check DISABLED - no longer tracking this data
+            /*
+            const { data: oldestFS } = await this.supabase
+                .from('diva_financial_statements')
+                .select('data_year, company_name')
+                .order('data_year', { ascending: true })
+                .limit(1);
+                
+            const { data: newestFS } = await this.supabase
+                .from('diva_financial_statements')
+                .select('data_year, company_name')
+                .order('data_year', { ascending: false })
+                .limit(1);
+                
+            if (oldestFS?.[0] && newestFS?.[0]) {
+                const yearSpan = newestFS[0].data_year - oldestFS[0].data_year;
+                this.log(`📅 Financial Data Span: ${yearSpan} years (${oldestFS[0].data_year} to ${newestFS[0].data_year})`);
+                this.log(`🏢 Oldest: ${oldestFS[0].company_name} | Newest: ${newestFS[0].company_name}`);
+            }
+            */
+            
         } catch (error) {
             this.log(`DIVA data freshness check failed: ${error.message}`, 'warning');
         }
@@ -112,29 +384,33 @@ class DIVAMaintenanceSystem extends MaintenanceSystemCore {
         
         try {
             const duplicateDetails = {
-                financialStatements: [],
+                // financialStatements: [], // DISABLED
                 investmentPerformance: [],
                 associationStatus: [],
-                professionalPersonnel: []
+                professionalPersonnel: [],
+                violations: []
             };
             
             let totalDuplicates = 0;
 
-            // 📊 Financial Statements - Check by company_name + data_year + tab_type
+            // 📊 Financial Statements - DISABLED - no longer checking for duplicates
+            /*
             const { data: allFinancialStatements } = await this.supabase
                 .from('diva_financial_statements')
                 .select('id, company_name, data_year, tab_type, created_at')
                 .order('company_name, data_year, tab_type, created_at');
                 
-            if (allFinancialStatements) {
+            if (allFinancialStatements && allFinancialStatements.length > 0) {
                 const fsGroups = new Map();
                 
                 allFinancialStatements.forEach(fs => {
-                    const key = `${fs.company_name?.toLowerCase().trim()}_${fs.data_year}_${fs.tab_type}`;
-                    if (!fsGroups.has(key)) {
-                        fsGroups.set(key, []);
+                    if (fs.company_name && fs.data_year && fs.tab_type) {
+                        const key = `${fs.company_name.toLowerCase().trim()}_${fs.data_year}_${fs.tab_type}`;
+                        if (!fsGroups.has(key)) {
+                            fsGroups.set(key, []);
+                        }
+                        fsGroups.get(key).push(fs);
                     }
-                    fsGroups.get(key).push(fs);
                 });
                 
                 fsGroups.forEach((group, key) => {
@@ -150,6 +426,7 @@ class DIVAMaintenanceSystem extends MaintenanceSystemCore {
                     }
                 });
             }
+            */
 
             // 💼 Investment Performance - Check by company_name + data_year
             const { data: allInvestmentPerformance } = await this.supabase
@@ -157,15 +434,17 @@ class DIVAMaintenanceSystem extends MaintenanceSystemCore {
                 .select('id, company_name, data_year, created_at')
                 .order('company_name, data_year, created_at');
                 
-            if (allInvestmentPerformance) {
+            if (allInvestmentPerformance && allInvestmentPerformance.length > 0) {
                 const ipGroups = new Map();
                 
                 allInvestmentPerformance.forEach(ip => {
-                    const key = `${ip.company_name?.toLowerCase().trim()}_${ip.data_year}`;
-                    if (!ipGroups.has(key)) {
-                        ipGroups.set(key, []);
+                    if (ip.company_name && ip.data_year) {
+                        const key = `${ip.company_name.toLowerCase().trim()}_${ip.data_year}`;
+                        if (!ipGroups.has(key)) {
+                            ipGroups.set(key, []);
+                        }
+                        ipGroups.get(key).push(ip);
                     }
-                    ipGroups.get(key).push(ip);
                 });
                 
                 ipGroups.forEach((group, key) => {
@@ -188,15 +467,17 @@ class DIVAMaintenanceSystem extends MaintenanceSystemCore {
                 .select('id, company_name, created_at')
                 .order('company_name, created_at');
                 
-            if (allAssociationStatus) {
+            if (allAssociationStatus && allAssociationStatus.length > 0) {
                 const asGroups = new Map();
                 
                 allAssociationStatus.forEach(as => {
-                    const key = as.company_name?.toLowerCase().trim();
-                    if (!asGroups.has(key)) {
-                        asGroups.set(key, []);
+                    if (as.company_name) {
+                        const key = as.company_name.toLowerCase().trim();
+                        if (!asGroups.has(key)) {
+                            asGroups.set(key, []);
+                        }
+                        asGroups.get(key).push(as);
                     }
-                    asGroups.get(key).push(as);
                 });
                 
                 asGroups.forEach((group, key) => {
@@ -213,21 +494,23 @@ class DIVAMaintenanceSystem extends MaintenanceSystemCore {
                 });
             }
 
-            // 👥 Professional Personnel - Check by company_name + person_name
+            // 👥 Professional Personnel - Check by company_name + name
             const { data: allProfessionalPersonnel } = await this.supabase
                 .from('diva_professional_personnel')
-                .select('id, company_name, person_name, created_at')
-                .order('company_name, person_name, created_at');
+                .select('id, company_name, name, created_at')
+                .order('company_name, name, created_at');
                 
-            if (allProfessionalPersonnel) {
+            if (allProfessionalPersonnel && allProfessionalPersonnel.length > 0) {
                 const ppGroups = new Map();
                 
                 allProfessionalPersonnel.forEach(pp => {
-                    const key = `${pp.company_name?.toLowerCase().trim()}_${pp.person_name?.toLowerCase().trim()}`;
-                    if (!ppGroups.has(key)) {
-                        ppGroups.set(key, []);
+                    if (pp.company_name && pp.name) {
+                        const key = `${pp.company_name.toLowerCase().trim()}_${pp.name.toLowerCase().trim()}`;
+                        if (!ppGroups.has(key)) {
+                            ppGroups.set(key, []);
+                        }
+                        ppGroups.get(key).push(pp);
                     }
-                    ppGroups.get(key).push(pp);
                 });
                 
                 ppGroups.forEach((group, key) => {
@@ -243,20 +526,53 @@ class DIVAMaintenanceSystem extends MaintenanceSystemCore {
                     }
                 });
             }
-            
+
+            // ⚠️ Violations - Check by company_name + violation_type + data_year
+            const { data: allViolations } = await this.supabase
+                .from('diva_violations')
+                .select('id, company_name, violation_type, data_year, created_at')
+                .order('company_name, violation_type, data_year, created_at');
+                
+            if (allViolations && allViolations.length > 0) {
+                const vGroups = new Map();
+                
+                allViolations.forEach(v => {
+                    if (v.company_name && v.violation_type && v.data_year) {
+                        const key = `${v.company_name.toLowerCase().trim()}_${v.violation_type}_${v.data_year}`;
+                        if (!vGroups.has(key)) {
+                            vGroups.set(key, []);
+                        }
+                        vGroups.get(key).push(v);
+                    }
+                });
+                
+                vGroups.forEach((group, key) => {
+                    if (group.length > 1) {
+                        const duplicateCount = group.length - 1;
+                        totalDuplicates += duplicateCount;
+                        duplicateDetails.violations.push({
+                            key: key,
+                            count: group.length,
+                            records: group,
+                            duplicateIds: group.slice(1).map(v => v.id)
+                        });
+                    }
+                });
+            }
+
             this.metrics.duplicatesFound = totalDuplicates;
             
             if (totalDuplicates > 0) {
-                this.log(`🔄 DIVA Duplicates Found: ${totalDuplicates} total`, 'warning');
-                this.log(`   • Financial Statements: ${duplicateDetails.financialStatements.length} groups`);
+                this.log(`🔍 DIVA Duplicates Found: ${totalDuplicates} total`, 'warning');
                 this.log(`   • Investment Performance: ${duplicateDetails.investmentPerformance.length} groups`);
                 this.log(`   • Association Status: ${duplicateDetails.associationStatus.length} groups`);
                 this.log(`   • Professional Personnel: ${duplicateDetails.professionalPersonnel.length} groups`);
+                this.log(`   • Violations: ${duplicateDetails.violations.length} groups`);
             } else {
                 this.log(`✅ No duplicates detected - DIVA database is clean!`, 'success');
             }
             
-            return { 
+            return {
                 totalDuplicates,
                 details: duplicateDetails
             };
@@ -280,62 +596,39 @@ class DIVAMaintenanceSystem extends MaintenanceSystemCore {
         this.log('=== DIVA DUPLICATE CLEANUP ===');
         
         let totalRemoved = 0;
+        const batchSize = 100;
         
         try {
-            // Clean Financial Statements duplicates
-            for (const duplicateGroup of duplicatesData.details.financialStatements) {
-                if (duplicateGroup.duplicateIds.length > 0) {
-                    const { error } = await this.supabase
-                        .from('diva_financial_statements')
-                        .delete()
-                        .in('id', duplicateGroup.duplicateIds);
-                        
-                    if (!error) {
-                        const removedCount = duplicateGroup.duplicateIds.length;
-                        totalRemoved += removedCount;
-                        this.log(`🗑️ Removed ${removedCount} duplicate Financial Statements for: ${duplicateGroup.key}`);
-                        
-                        this.changes.duplicateResolutions.push({
-                            type: 'financial_statements_duplicates_removed',
-                            key: duplicateGroup.key,
-                            count: removedCount,
-                            keptRecord: duplicateGroup.records[0].id,
-                            removedIds: duplicateGroup.duplicateIds
-                        });
-                    } else {
-                        this.log(`❌ Failed to remove Financial Statements duplicates for ${duplicateGroup.key}: ${error.message}`, 'error');
-                        this.metrics.errorsFound++;
-                    }
-                }
-            }
-
             // Clean Investment Performance duplicates
             for (const duplicateGroup of duplicatesData.details.investmentPerformance) {
                 if (duplicateGroup.duplicateIds.length > 0) {
-                    const { error } = await this.supabase
-                        .from('diva_investment_performance')
-                        .delete()
-                        .in('id', duplicateGroup.duplicateIds);
-                        
-                    if (!error) {
-                        const removedCount = duplicateGroup.duplicateIds.length;
-                        totalRemoved += removedCount;
-                        this.log(`🗑️ Removed ${removedCount} duplicate Investment Performance for: ${duplicateGroup.key}`);
-                        
-                        this.changes.duplicateResolutions.push({
-                            type: 'investment_performance_duplicates_removed',
-                            key: duplicateGroup.key,
-                            count: removedCount,
-                            keptRecord: duplicateGroup.records[0].id,
-                            removedIds: duplicateGroup.duplicateIds
-                        });
-                    } else {
-                        this.log(`❌ Failed to remove Investment Performance duplicates for ${duplicateGroup.key}: ${error.message}`, 'error');
-                        this.metrics.errorsFound++;
+                    for (let i = 0; i < duplicateGroup.duplicateIds.length; i += batchSize) {
+                        const batch = duplicateGroup.duplicateIds.slice(i, i + batchSize);
+                        const { error } = await this.supabase
+                            .from('diva_investment_performance')
+                            .delete()
+                            .in('id', batch);
+                            
+                        if (!error) {
+                            totalRemoved += batch.length;
+                        } else {
+                            this.log(`❌ Failed to remove investment performance batch: ${error.message}`, 'error');
+                            this.metrics.errorsFound++;
+                        }
                     }
+                    
+                    this.log(`🗑️ Removed ${duplicateGroup.duplicateIds.length} duplicate Investment Performance for: ${duplicateGroup.key}`);
+                    
+                    this.changes.duplicateResolutions.push({
+                        type: 'investment_performance_duplicates_removed',
+                        key: duplicateGroup.key,
+                        count: duplicateGroup.duplicateIds.length,
+                        keptRecord: duplicateGroup.records[0].id,
+                        removedIds: duplicateGroup.duplicateIds
+                    });
                 }
             }
-
+            
             // Clean Association Status duplicates
             for (const duplicateGroup of duplicatesData.details.associationStatus) {
                 if (duplicateGroup.duplicateIds.length > 0) {
@@ -345,24 +638,23 @@ class DIVAMaintenanceSystem extends MaintenanceSystemCore {
                         .in('id', duplicateGroup.duplicateIds);
                         
                     if (!error) {
-                        const removedCount = duplicateGroup.duplicateIds.length;
-                        totalRemoved += removedCount;
-                        this.log(`🗑️ Removed ${removedCount} duplicate Association Status for: ${duplicateGroup.key}`);
+                        totalRemoved += duplicateGroup.duplicateIds.length;
+                        this.log(`🗑️ Removed ${duplicateGroup.duplicateIds.length} duplicate Association Status for: ${duplicateGroup.key}`);
                         
                         this.changes.duplicateResolutions.push({
                             type: 'association_status_duplicates_removed',
                             key: duplicateGroup.key,
-                            count: removedCount,
+                            count: duplicateGroup.duplicateIds.length,
                             keptRecord: duplicateGroup.records[0].id,
                             removedIds: duplicateGroup.duplicateIds
                         });
                     } else {
-                        this.log(`❌ Failed to remove Association Status duplicates for ${duplicateGroup.key}: ${error.message}`, 'error');
+                        this.log(`❌ Failed to remove association status duplicates: ${error.message}`, 'error');
                         this.metrics.errorsFound++;
                     }
                 }
             }
-
+            
             // Clean Professional Personnel duplicates
             for (const duplicateGroup of duplicatesData.details.professionalPersonnel) {
                 if (duplicateGroup.duplicateIds.length > 0) {
@@ -372,24 +664,49 @@ class DIVAMaintenanceSystem extends MaintenanceSystemCore {
                         .in('id', duplicateGroup.duplicateIds);
                         
                     if (!error) {
-                        const removedCount = duplicateGroup.duplicateIds.length;
-                        totalRemoved += removedCount;
-                        this.log(`🗑️ Removed ${removedCount} duplicate Professional Personnel for: ${duplicateGroup.key}`);
+                        totalRemoved += duplicateGroup.duplicateIds.length;
+                        this.log(`🗑️ Removed ${duplicateGroup.duplicateIds.length} duplicate Professional Personnel for: ${duplicateGroup.key}`);
                         
                         this.changes.duplicateResolutions.push({
                             type: 'professional_personnel_duplicates_removed',
                             key: duplicateGroup.key,
-                            count: removedCount,
+                            count: duplicateGroup.duplicateIds.length,
                             keptRecord: duplicateGroup.records[0].id,
                             removedIds: duplicateGroup.duplicateIds
                         });
                     } else {
-                        this.log(`❌ Failed to remove Professional Personnel duplicates for ${duplicateGroup.key}: ${error.message}`, 'error');
+                        this.log(`❌ Failed to remove professional personnel duplicates: ${error.message}`, 'error');
                         this.metrics.errorsFound++;
                     }
                 }
             }
             
+            // Clean Violations duplicates
+            for (const duplicateGroup of duplicatesData.details.violations) {
+                if (duplicateGroup.duplicateIds.length > 0) {
+                    const { error } = await this.supabase
+                        .from('diva_violations')
+                        .delete()
+                        .in('id', duplicateGroup.duplicateIds);
+                        
+                    if (!error) {
+                        totalRemoved += duplicateGroup.duplicateIds.length;
+                        this.log(`🗑️ Removed ${duplicateGroup.duplicateIds.length} duplicate Violations for: ${duplicateGroup.key}`);
+                        
+                        this.changes.duplicateResolutions.push({
+                            type: 'violations_duplicates_removed',
+                            key: duplicateGroup.key,
+                            count: duplicateGroup.duplicateIds.length,
+                            keptRecord: duplicateGroup.records[0].id,
+                            removedIds: duplicateGroup.duplicateIds
+                        });
+                    } else {
+                        this.log(`❌ Failed to remove violations duplicates: ${error.message}`, 'error');
+                        this.metrics.errorsFound++;
+                    }
+                }
+            }
+
             this.metrics.duplicatesRemoved = totalRemoved;
             this.log(`✅ Total DIVA duplicates cleaned: ${totalRemoved}`, 'success');
             
@@ -409,53 +726,73 @@ class DIVAMaintenanceSystem extends MaintenanceSystemCore {
         
         try {
             const qualityIssues = {
-                financialStatementsNoCompany: 0,
-                investmentPerformanceNoCompany: 0,
-                associationStatusNoCompany: 0,
-                professionalPersonnelNoName: 0,
-                missingDataYears: 0,
-                invalidNumericValues: 0
+                // financialMissingData: 0, // DISABLED
+                investmentMissingData: 0,
+                associationMissingData: 0,
+                personnelMissingData: 0,
+                violationsMissingData: 0,
+                // invalidFinancialAmounts: 0, // DISABLED
+                missingCompanyNames: 0
             };
             
-            // Check for missing company names in financial statements
-            const { count: fsNoCompany } = await this.supabase
+            // Financial Statements quality checks DISABLED - no longer tracking this data
+            /*
+            const { count: fsMissingData } = await this.supabase
                 .from('diva_financial_statements')
-                .select('*', { count: 'exact' })
-                .or('company_name.is.null,company_name.eq.""');
+                .select('*', { count: 'exact', head: true })
+                .or('company_name.is.null,data_year.is.null,tab_type.is.null');
                 
-            qualityIssues.financialStatementsNoCompany = fsNoCompany || 0;
-
-            // Check for missing company names in investment performance
-            const { count: ipNoCompany } = await this.supabase
+            const { count: fsInvalidAmounts } = await this.supabase
+                .from('diva_financial_statements')
+                .select('*', { count: 'exact', head: true })
+                .or('total_assets.lt.0,total_liabilities.lt.0,total_equity.lt.0');
+                
+            qualityIssues.financialMissingData = fsMissingData || 0;
+            qualityIssues.invalidFinancialAmounts = fsInvalidAmounts || 0;
+            */
+            
+            // Check Investment Performance quality
+            const { count: ipMissingData } = await this.supabase
                 .from('diva_investment_performance')
-                .select('*', { count: 'exact' })
-                .or('company_name.is.null,company_name.eq.""');
+                .select('*', { count: 'exact', head: true })
+                .or('company_name.is.null,data_year.is.null');
                 
-            qualityIssues.investmentPerformanceNoCompany = ipNoCompany || 0;
-
-            // Check for missing company names in association status
-            const { count: asNoCompany } = await this.supabase
+            qualityIssues.investmentMissingData = ipMissingData || 0;
+            
+            // Check Association Status quality
+            const { count: asMissingData } = await this.supabase
                 .from('diva_association_status')
-                .select('*', { count: 'exact' })
-                .or('company_name.is.null,company_name.eq.""');
+                .select('*', { count: 'exact', head: true })
+                .or('company_name.is.null,status.is.null');
                 
-            qualityIssues.associationStatusNoCompany = asNoCompany || 0;
-
-            // Check for missing person names in professional personnel
-            const { count: ppNoName } = await this.supabase
+            qualityIssues.associationMissingData = asMissingData || 0;
+            
+            // Check Professional Personnel quality
+            const { count: ppMissingData } = await this.supabase
                 .from('diva_professional_personnel')
-                .select('*', { count: 'exact' })
-                .or('person_name.is.null,person_name.eq.""');
+                .select('*', { count: 'exact', head: true })
+                .or('company_name.is.null,name.is.null');
                 
-            qualityIssues.professionalPersonnelNoName = ppNoName || 0;
-
-            // Check for missing data years
-            const { count: missingDataYears } = await this.supabase
-                .from('diva_financial_statements')
-                .select('*', { count: 'exact' })
-                .or('data_year.is.null,data_year.eq.""');
+            qualityIssues.personnelMissingData = ppMissingData || 0;
+            
+            // Check Violations quality
+            const { count: vMissingData } = await this.supabase
+                .from('diva_violations')
+                .select('*', { count: 'exact', head: true })
+                .or('company_name.is.null,violation_type.is.null');
                 
-            qualityIssues.missingDataYears = missingDataYears || 0;
+            qualityIssues.violationsMissingData = vMissingData || 0;
+            
+            // Overall missing company names check
+            const companyNameChecks = await Promise.all([
+                this.supabase.from('diva_financial_statements').select('*', { count: 'exact', head: true }).is('company_name', null),
+                this.supabase.from('diva_investment_performance').select('*', { count: 'exact', head: true }).is('company_name', null),
+                this.supabase.from('diva_association_status').select('*', { count: 'exact', head: true }).is('company_name', null)
+            ]);
+            
+            qualityIssues.missingCompanyNames = (companyNameChecks[0].count || 0) + 
+                                              (companyNameChecks[1].count || 0) + 
+                                              (companyNameChecks[2].count || 0);
             
             const totalIssues = Object.values(qualityIssues).reduce((sum, count) => sum + count, 0);
             this.metrics.dataQualityIssues = totalIssues;
@@ -464,11 +801,11 @@ class DIVAMaintenanceSystem extends MaintenanceSystemCore {
             
             if (totalIssues > 0) {
                 this.log(`⚠️ DIVA Data Quality Issues Found: ${totalIssues} total`, 'warning');
-                this.log(`   • Financial Statements missing company: ${qualityIssues.financialStatementsNoCompany}`);
-                this.log(`   • Investment Performance missing company: ${qualityIssues.investmentPerformanceNoCompany}`);
-                this.log(`   • Association Status missing company: ${qualityIssues.associationStatusNoCompany}`);
-                this.log(`   • Professional Personnel missing name: ${qualityIssues.professionalPersonnelNoName}`);
-                this.log(`   • Missing data years: ${qualityIssues.missingDataYears}`);
+                this.log(`💼 Investment Performance - Missing data: ${qualityIssues.investmentMissingData}`);
+                this.log(`🏢 Association Status - Missing data: ${qualityIssues.associationMissingData}`);
+                this.log(`👥 Professional Personnel - Missing data: ${qualityIssues.personnelMissingData}`);
+                this.log(`⚠️ Violations - Missing data: ${qualityIssues.violationsMissingData}`);
+                this.log(`🏷️ Missing Company Names: ${qualityIssues.missingCompanyNames}`);
             } else {
                 this.log(`✅ DIVA data quality is excellent - no issues found!`, 'success');
             }
@@ -488,7 +825,7 @@ class DIVAMaintenanceSystem extends MaintenanceSystemCore {
 // ==========================================
 
 Actor.main(async () => {
-    console.log('🇰🇷 DIVA Maintenance Actor v3.0 Started');
+    console.log('🇰🇷 DIVA Maintenance Actor v3.0 Started (Apify Standalone)');
     console.log('🕐 Execution time:', new Date().toISOString());
     
     // Get input configuration
@@ -500,7 +837,7 @@ Actor.main(async () => {
         const divaMaintenanceSystem = new DIVAMaintenanceSystem(input);
         
         // Check for action type
-        if (input.action === 'retrieveMemories') {
+        if (input?.action === 'retrieveMemories') {
             console.log('🧠 ACTION: Retrieving DIVA maintenance memories...');
             const memories = await divaMaintenanceSystem.retrieveMemories(input.memoryOptions || {});
             
@@ -527,4 +864,7 @@ Actor.main(async () => {
         console.error('💥 Fatal DIVA maintenance error:', error.message);
         process.exit(1);
     }
-}); 
+});
+
+// Export for testing and external usage
+export { DIVAMaintenanceSystem }; 
