@@ -1198,13 +1198,38 @@ async function saveToSupabase(supabaseClient, dataType, data) {
         if (error) {
             console.log(`❌ Supabase insert error for ${tableName}:`, error.message);
             
-            // VCS pattern: Smart conflict resolution
+            // VCS pattern: Smart conflict resolution with proper business keys
             if (error.message.includes('duplicate') || error.message.includes('conflict')) {
                 console.log('🔄 Attempting upsert for duplicate handling...');
                 
+                // Define proper conflict resolution keys for each table
+                let conflictColumns;
+                switch (dataType) {
+                    case 'investment_performance':
+                        conflictColumns = 'company_name,data_year';
+                        break;
+                    case 'association_status':
+                        conflictColumns = 'company_name,fund_name';
+                        break;
+                    case 'personnel_status':
+                        conflictColumns = 'company_name,data_year';
+                        break;
+                    case 'professional_personnel':
+                        conflictColumns = 'company_name,person_name,data_year';
+                        break;
+                    case 'violations':
+                        conflictColumns = 'company_name,violation_type,data_year';
+                        break;
+                    case 'vc_map':
+                        conflictColumns = 'company_name,data_year';
+                        break;
+                    default:
+                        conflictColumns = 'company_name,data_year';
+                }
+                
                 const { data: upsertResult, error: upsertError } = await supabaseClient
                     .from(tableName)
-                    .upsert(transformedData, { onConflict: 'extracted_at,company_name' });
+                    .upsert(transformedData, { onConflict: conflictColumns });
                     
                 if (upsertError) {
                     console.log(`❌ Supabase upsert failed for ${tableName}:`, upsertError.message);

@@ -1,7 +1,7 @@
 import { Actor } from 'apify';
 import { createClient } from '@supabase/supabase-js';
 
-console.log('🔧 === VCS MAINTENANCE SYSTEM v3.0 (APIFY STANDALONE) ===');
+console.log('🔧 === DIVA MAINTENANCE SYSTEM v3.0 (APIFY STANDALONE) ===');
 console.log('🕐 Maintenance Time:', new Date().toISOString());
 
 /**
@@ -35,7 +35,7 @@ class MaintenanceSystemCore {
         // Initialize Supabase client
         this.initializeSupabase();
     }
-
+    
     /**
      * 🔌 Initialize Supabase Client
      */
@@ -47,8 +47,8 @@ class MaintenanceSystemCore {
             throw new Error('Missing Supabase credentials. Please provide SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
         }
         
-            this.supabase = createClient(supabaseUrl, supabaseKey);
-            this.log('✅ Supabase client initialized successfully');
+        this.supabase = createClient(supabaseUrl, supabaseKey);
+        this.log('✅ Supabase client initialized successfully');
     }
     
     /**
@@ -103,7 +103,7 @@ class MaintenanceSystemCore {
             // 7. Dashboard Integration (if enabled)
             if (this.input.dashboard?.enabled !== false) {
                 await this.saveToDashboard(report);
-        }
+            }
             
             // 8. Prepare Consolidated Email Data
             await this.prepareConsolidatedEmailData(report);
@@ -269,59 +269,63 @@ class MaintenanceSystemCore {
 }
 
 /**
- * VCS-Specific Maintenance System extending shared core
+ * 🏢 DIVA-SPECIFIC MAINTENANCE SYSTEM
+ * Handles all DIVA tables: investment_performance, financial_statements, 
+ * association_status, personnel_status, professional_personnel, violations, vc_map
  */
-class VCSMaintenanceSystem extends MaintenanceSystemCore {
+class DIVAMaintenanceSystem extends MaintenanceSystemCore {
     constructor(input = {}) {
-        super('VCS', input);
+        super('DIVA', input);
     }
 
     /**
-     * 🏥 VCS DATABASE HEALTH CHECK
+     * 🏥 DIVA DATABASE HEALTH CHECK
      */
     async checkDatabaseHealth() {
-        this.log('=== VCS DATABASE HEALTH CHECK ===');
+        this.log('=== DIVA DATABASE HEALTH CHECK ===');
         
         try {
-            // Get current record counts
-            const { count: vcCount } = await this.supabase.from('vc_table').select('*', { count: 'exact' });
-            const { count: fundCount } = await this.supabase.from('fund_table').select('*', { count: 'exact' });
-            const totalRecords = (vcCount || 0) + (fundCount || 0);
-            
+            // Get current record counts for all DIVA tables
+            const tableChecks = await Promise.all([
+                this.supabase.from('diva_investment_performance').select('*', { count: 'exact', head: true }),
+                this.supabase.from('diva_financial_statements').select('*', { count: 'exact', head: true }),
+                this.supabase.from('diva_association_status').select('*', { count: 'exact', head: true }),
+                this.supabase.from('diva_personnel_status').select('*', { count: 'exact', head: true }),
+                this.supabase.from('diva_professional_personnel').select('*', { count: 'exact', head: true }),
+                this.supabase.from('diva_violations').select('*', { count: 'exact', head: true }),
+                this.supabase.from('diva_vc_map').select('*', { count: 'exact', head: true })
+            ]);
+
+            const tableCounts = {
+                investment_performance: tableChecks[0].count || 0,
+                financial_statements: tableChecks[1].count || 0,
+                association_status: tableChecks[2].count || 0,
+                personnel_status: tableChecks[3].count || 0,
+                professional_personnel: tableChecks[4].count || 0,
+                violations: tableChecks[5].count || 0,
+                vc_map: tableChecks[6].count || 0
+            };
+
+            const totalRecords = Object.values(tableCounts).reduce((sum, count) => sum + count, 0);
             this.metrics.totalRecords = totalRecords;
-            this.log(`📊 Current Records: ${vcCount} VCs, ${fundCount} Funds (Total: ${totalRecords})`);
+
+            this.log(`📊 DIVA Records Summary:`);
+            this.log(`   • Investment Performance: ${tableCounts.investment_performance.toLocaleString()}`);
+            this.log(`   • Financial Statements: ${tableCounts.financial_statements.toLocaleString()}`);
+            this.log(`   • Association Status: ${tableCounts.association_status.toLocaleString()}`);
+            this.log(`   • Personnel Status: ${tableCounts.personnel_status.toLocaleString()}`);
+            this.log(`   • Professional Personnel: ${tableCounts.professional_personnel.toLocaleString()}`);
+            this.log(`   • Violations: ${tableCounts.violations.toLocaleString()}`);
+            this.log(`   • VC Map: ${tableCounts.vc_map.toLocaleString()}`);
+            this.log(`📊 Total DIVA Records: ${totalRecords.toLocaleString()}`);
             
             // Check for recent activity (data freshness)
-            const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-            const { count: recentVCs } = await this.supabase
-                .from('vc_table')
-                .select('*', { count: 'exact' })
-                .gte('created_at', oneHourAgo);
-                
-            const { count: recentFunds } = await this.supabase
-                .from('fund_table')
-                .select('*', { count: 'exact' })
-                .gte('created_at', oneHourAgo);
-                
-            if (recentVCs > 0 || recentFunds > 0) {
-                this.log(`🔥 Recent Activity: ${recentVCs} VCs, ${recentFunds} Funds in last hour`);
-                this.changes.additions.push({
-                    type: 'recent_activity',
-                    vcCount: recentVCs,
-                    fundCount: recentFunds,
-                    timeframe: '1 hour'
-                });
-            } else {
-                this.log(`📊 No recent activity (expected for maintenance runs)`);
-            }
-            
-            // Check data age and freshness
             await this.checkDataFreshness();
             
-            return { vcCount, fundCount, recentVCs, recentFunds, totalRecords };
+            return { ...tableCounts, totalRecords };
             
         } catch (error) {
-            this.log(`VCS health check failed: ${error.message}`, 'error');
+            this.log(`DIVA health check failed: ${error.message}`, 'error');
             this.metrics.errorsFound++;
             return null;
         }
@@ -622,7 +626,7 @@ class VCSMaintenanceSystem extends MaintenanceSystemCore {
 // ==========================================
 
 Actor.main(async () => {
-    console.log('🇰🇷 VCS Maintenance Actor v3.0 Started (Apify Standalone)');
+    console.log('🇰🇷 DIVA Maintenance Actor v3.0 Started (Apify Standalone)');
     console.log('🕐 Execution time:', new Date().toISOString());
     
     // Get input configuration
@@ -630,38 +634,38 @@ Actor.main(async () => {
     console.log('⚙️ Input configuration:', JSON.stringify(input, null, 2));
     
     try {
-        // Initialize and run VCS maintenance system
-        const vcsMaintenanceSystem = new VCSMaintenanceSystem(input);
+        // Initialize and run DIVA maintenance system
+        const divaMaintenanceSystem = new DIVAMaintenanceSystem(input);
         
         // Check for action type
-        if (input.action === 'retrieveMemories') {
-            console.log('🧠 ACTION: Retrieving VCS maintenance memories...');
-            const memories = await vcsMaintenanceSystem.retrieveMemories(input.memoryOptions || {});
+        if (input?.action === 'retrieveMemories') {
+            console.log('🧠 ACTION: Retrieving DIVA maintenance memories...');
+            const memories = await divaMaintenanceSystem.retrieveMemories(input.memoryOptions || {});
             
             if (memories) {
-                console.log(`✅ Retrieved ${memories.length} VCS memories successfully.`);
+                console.log(`✅ Retrieved ${memories.length} DIVA memories successfully.`);
             } else {
-                console.log('❌ Failed to retrieve VCS memories.');
+                console.log('❌ Failed to retrieve DIVA memories.');
                 process.exit(1);
             }
             
         } else {
-            console.log('🚀 ACTION: Performing VCS maintenance...');
-            const success = await vcsMaintenanceSystem.performMaintenance();
+            console.log('🚀 ACTION: Performing DIVA maintenance...');
+            const success = await divaMaintenanceSystem.performMaintenance();
         
             if (success) {
-                console.log('🎉 === VCS MAINTENANCE COMPLETED SUCCESSFULLY ===');
+                console.log('🎉 === DIVA MAINTENANCE COMPLETED SUCCESSFULLY ===');
             } else {
-                console.log('❌ === VCS MAINTENANCE FAILED ===');
+                console.log('❌ === DIVA MAINTENANCE FAILED ===');
                 process.exit(1);
             }
         }
         
     } catch (error) {
-        console.error('💥 Fatal VCS maintenance error:', error.message);
+        console.error('💥 Fatal DIVA maintenance error:', error.message);
         process.exit(1);
     }
-}); 
+});
 
 // Export for testing and external usage
-export { VCSMaintenanceSystem }; 
+export { DIVAMaintenanceSystem }; 
