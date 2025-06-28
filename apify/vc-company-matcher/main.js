@@ -652,13 +652,11 @@ Actor.main(async () => {
         errors: 0
     };
     
-    // Launch browser using Apify's built-in Playwright
+    // Launch browser using Apify's built-in Puppeteer
     console.log('🚀 Launching browser...');
-    const browser = await Actor.launchPlaywright({
+    const browser = await Actor.launchPuppeteer({
         headless: true,
-        launchOptions: {
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        }
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     
     try {
