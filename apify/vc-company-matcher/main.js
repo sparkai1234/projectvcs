@@ -16,7 +16,6 @@
 
 const { Actor } = require('apify');
 const { createClient } = require('@supabase/supabase-js');
-const { PuppeteerCrawler } = require('crawlee');
 
 // Default company list - will be overridden by input
 const DEFAULT_VC_COMPANIES = [];
@@ -633,55 +632,64 @@ Actor.main(async () => {
         errors: 0
     };
     
-    // Initialize Puppeteer crawler
-    const crawler = new PuppeteerCrawler({
-        maxConcurrency,
-        launchContext: {
-            launchOptions: {
-                headless: true,
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
-            }
-        },
-        requestHandler: async ({ page, request }) => {
-            const companyName = request.userData.companyName;
-            
-            // Process company
-            const result = await processCompany(page, companyName);
-            
-            // Update statistics
-            stats.processed++;
-            if (result.website_url) stats.foundUrls++;
-            if (result.representative) stats.foundRepresentatives++;
-            if (result.error) stats.errors++;
-            
-            // Update Supabase
-            if (result.website_url || result.representative) {
-                const updated = await updateSupabaseRecord(supabase, result);
-                if (updated) stats.updatedRecords++;
-            }
-            
-            // Save to dataset
-            await Actor.pushData(result);
-            
-            console.log(`📊 Progress: ${stats.processed}/${companiesToProcess.length}`);
-            
-            // Rate limiting
-            await new Promise(resolve => setTimeout(resolve, delayBetweenRequests));
-        },
-        failedRequestHandler: async ({ request }) => {
-            console.log(`❌ Failed to process: ${request.userData.companyName}`);
-            stats.errors++;
+    // Launch browser using Apify's built-in Playwright
+    console.log('🚀 Launching browser...');
+    const browser = await Actor.launchPlaywright({
+        headless: true,
+        launchOptions: {
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
         }
     });
     
-    // Create requests for all companies
-    const requests = companiesToProcess.map(companyName => ({
-        url: 'https://www.k-startup.go.kr', // Dummy URL, actual processing in requestHandler
-        userData: { companyName }
-    }));
-    
-    // Start crawling
-    await crawler.run(requests);
+    try {
+        const page = await browser.newPage();
+        
+        // Process each company sequentially for better stability
+        for (let i = 0; i < companiesToProcess.length; i++) {
+            const companyName = companiesToProcess[i];
+            
+            try {
+                console.log(`\n📋 Processing ${i + 1}/${companiesToProcess.length}: ${companyName}`);
+                
+                // Process company
+                const result = await processCompany(page, companyName);
+                
+                // Update statistics
+                stats.processed++;
+                if (result.website_url) stats.foundUrls++;
+                if (result.representative) stats.foundRepresentatives++;
+                if (result.error) stats.errors++;
+                
+                // Update Supabase
+                if (result.website_url || result.representative) {
+                    const updated = await updateSupabaseRecord(supabase, result);
+                    if (updated) stats.updatedRecords++;
+                }
+                
+                // Save to dataset
+                await Actor.pushData(result);
+                
+                console.log(`📊 Progress: ${stats.processed}/${companiesToProcess.length}`);
+                
+                // Rate limiting between companies
+                if (i < companiesToProcess.length - 1) {
+                    console.log(`⏱️ Waiting ${delayBetweenRequests}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, delayBetweenRequests));
+                }
+                
+            } catch (error) {
+                console.log(`❌ Failed to process ${companyName}:`, error.message);
+                stats.errors++;
+                
+                // Continue with next company
+                continue;
+            }
+        }
+        
+    } finally {
+        await browser.close();
+        console.log('🔒 Browser closed');
+    }
     
     // Final statistics
     console.log('\n🎉 === PROCESSING COMPLETED ===');
