@@ -12,11 +12,15 @@ For a list of Korean VC companies, updating your Supabase `vc_table` with this i
 
 ## 📊 Data Sources & Priority Order
 
-1. **혁신의 숲 (InnoForest)** - Basic company info and website URLs
-2. **News Articles (최우선)** - **HIGHEST PRIORITY** for current 대표이사 information
-3. **Company Websites** - Team pages and 인사말 sections for verification
+1. **혁신의 숲 (InnoForest) with Login** - **BEST**: Authenticated database access for URLs and 대표이사
+2. **Public Korean Business Sources** - Fallback: Naver search, Google Korea for company info  
+3. **News Articles (최우선)** - **HIGHEST PRIORITY** for current 대표이사 information
+4. **Company Websites** - Team pages and 인사말 sections for verification
 
-**Priority Logic**: News articles have the most current and accurate 대표이사 information, overriding other sources.
+**Priority Logic**: 
+- **InnoForest authenticated** provides most comprehensive company data
+- **News articles** always override 대표이사 information (most current)
+- **Public sources** used when InnoForest login fails or credentials not provided
 
 ## 🚀 Quick Start
 
@@ -37,6 +41,8 @@ This creates `vc_companies_apify_input.json` ready for Apify.
 3. **Set Environment Variables**:
    - `SUPABASE_URL` - Your Supabase project URL
    - `SUPABASE_KEY` - Your Supabase service role key
+   - `INNOFOREST_USERNAME` - Your InnoForest login email (optional)
+   - `INNOFOREST_PASSWORD` - Your InnoForest login password (optional)
 
 ### 3. Configure Input
 
@@ -49,6 +55,8 @@ This creates `vc_companies_apify_input.json` ready for Apify.
   ],
   "supabaseUrl": "https://your-project.supabase.co",
   "supabaseKey": "your-service-role-key",
+  "innoforestUsername": "your-innoforest-email",
+  "innoforestPassword": "your-innoforest-password",
   "maxConcurrency": 1,
   "delayBetweenRequests": 3000,
   "maxCompanies": 10
@@ -70,9 +78,21 @@ The actor will:
 | `vcCompanies` | Array[String] | ✅ | List of Korean VC company names |
 | `supabaseUrl` | String | ❌ | Your Supabase project URL |
 | `supabaseKey` | String | ❌ | Your Supabase API key (service role) |
+| `innoforestUsername` | String | ❌ | InnoForest login username/email |
+| `innoforestPassword` | String | ❌ | InnoForest login password |
 | `maxConcurrency` | Integer | ❌ | Max concurrent requests (default: 1) |
 | `delayBetweenRequests` | Integer | ❌ | Delay between requests in ms (default: 3000) |
 | `maxCompanies` | Integer | ❌ | Limit companies for testing |
+
+### 🌲 InnoForest Authentication (Recommended)
+
+For best results, provide InnoForest credentials:
+- **Primary Source**: Uses authenticated InnoForest database access
+- **Better Data Quality**: More accurate company URLs and 대표이사 information  
+- **Fallback**: If login fails or no data found, falls back to public Korean business sources
+- **Environment Variables**: Can also use `INNOFOREST_USERNAME` and `INNOFOREST_PASSWORD`
+
+**Note**: Without InnoForest credentials, the actor uses public Naver/Google searches which may have lower accuracy.
 
 ## 📈 Output Format
 
@@ -138,7 +158,9 @@ The actor automatically updates your `vc_table` with:
   "maxConcurrency": 2,
   "delayBetweenRequests": 3000,
   "supabaseUrl": "your-url",
-  "supabaseKey": "your-key"
+  "supabaseKey": "your-key",
+  "innoforestUsername": "your-innoforest-email",
+  "innoforestPassword": "your-innoforest-password"
 }
 ```
 

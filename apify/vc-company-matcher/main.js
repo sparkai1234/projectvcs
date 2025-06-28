@@ -35,11 +35,21 @@ const DEFAULT_VC_COMPANIES = [
  * 🔍 Search for company information in 혁신의 숲 (Innovation Forest)
  * Primary source for company URL, basic 대표이사 info (potentially outdated)
  */
-async function searchInnovationForest(page, companyName) {
+async function searchInnovationForest(page, companyName, innoforestCredentials = null) {
     try {
-        console.log(`🔍 Searching Korean business sources for: ${companyName}`);
+        // PRIORITY 1: Try InnoForest with login if credentials provided
+        if (innoforestCredentials && innoforestCredentials.username && innoforestCredentials.password) {
+            console.log(`🌲 Attempting InnoForest login for: ${companyName}`);
+            const innoforestResult = await searchInnoforestWithLogin(page, companyName, innoforestCredentials);
+            if (innoforestResult) {
+                console.log(`✅ InnoForest login successful - found data for ${companyName}`);
+                return innoforestResult;
+            }
+            console.log(`⚠️ InnoForest login failed or no data found - falling back to public sources`);
+        }
         
-        // Try multiple Korean business information sources
+        // FALLBACK: Public Korean business information sources
+        console.log(`🔍 Searching public Korean business sources for: ${companyName}`);
         const sources = [
             `https://search.naver.com/search.naver?where=nexearch&query=${encodeURIComponent(companyName + ' 회사 홈페이지')}`,
             `https://www.google.com/search?q=${encodeURIComponent(companyName + ' site:co.kr 대표이사')}`,
@@ -180,6 +190,226 @@ async function searchInnovationForest(page, companyName) {
         
     } catch (error) {
         console.log(`❌ Error searching Korean business sources for ${companyName}:`, error.message);
+        return null;
+    }
+}
+
+/**
+ * 🌲 Search InnoForest with login credentials for authenticated access
+ */
+async function searchInnoforestWithLogin(page, companyName, credentials) {
+    try {
+        console.log(`🔐 Logging into InnoForest...`);
+        
+        // Navigate to InnoForest login page
+        await page.goto('https://www.innoforest.co.kr/login', {
+            waitUntil: 'networkidle0',
+            timeout: 30000
+        });
+        
+        // Fill login form
+        const usernameInput = await page.$('input[name="username"], input[name="id"], input[type="email"], #username, #id');
+        const passwordInput = await page.$('input[name="password"], input[type="password"], #password');
+        
+        if (!usernameInput || !passwordInput) {
+            console.log(`❌ Could not find login form on InnoForest`);
+            return null;
+        }
+        
+        await usernameInput.fill(credentials.username);
+        await passwordInput.fill(credentials.password);
+        
+        // Submit login form
+        const loginButton = await page.$('button[type="submit"], input[type="submit"], .login-btn, .btn-login');
+        if (loginButton) {
+            await loginButton.click();
+        } else {
+            await page.keyboard.press('Enter');
+        }
+        
+        // Wait for login to complete
+        await page.waitForTimeout(3000);
+        
+        // Check if login was successful (look for logout button or dashboard)
+        const loginSuccess = await page.$('button:has-text("로그아웃"), a:has-text("로그아웃"), .logout, .dashboard');
+        if (!loginSuccess) {
+            console.log(`❌ InnoForest login failed - could not find logout button`);
+            return null;
+        }
+        
+        console.log(`✅ InnoForest login successful`);
+        
+        // Now search for the company in the authenticated section
+        console.log(`🔍 Searching InnoForest database for: ${companyName}`);
+        
+        // Try to navigate to company directory or search page
+        const searchPaths = [
+            '/company', '/companies', '/search', '/directory', '/기업검색', '/투자사'
+        ];
+        
+        let searchPageFound = false;
+        for (const path of searchPaths) {
+            try {
+                await page.goto(`https://www.innoforest.co.kr${path}`, {
+                    waitUntil: 'networkidle0',
+                    timeout: 10000
+                });
+                
+                // Check if this page has search functionality
+                const searchInput = await page.$('input[type="search"], input[name="search"], input[placeholder*="검색"], .search-input, input[placeholder*="회사"], input[placeholder*="기업"]');
+                if (searchInput) {
+                    searchPageFound = true;
+                    console.log(`📂 Found search page at: ${path}`);
+                    break;
+                }
+            } catch (error) {
+                continue;
+            }
+        }
+        
+        // If no specific search page found, try searching from main page
+        if (!searchPageFound) {
+            await page.goto('https://www.innoforest.co.kr/', {
+                waitUntil: 'networkidle0',
+                timeout: 20000
+            });
+        }
+        
+        // Perform search
+        const searchInput = await page.$('input[type="search"], input[name="search"], input[placeholder*="검색"], .search-input, input[placeholder*="회사"], input[placeholder*="기업"]');
+        
+        if (searchInput) {
+            await searchInput.clear();
+            await searchInput.fill(companyName);
+            await page.keyboard.press('Enter');
+            await page.waitForTimeout(5000);
+        }
+        
+        // Extract company information from authenticated results
+        const companyInfo = await page.evaluate((searchCompanyName) => {
+            const results = [];
+            
+            // Look for company cards, listings, or table rows
+            const companyElements = document.querySelectorAll(
+                '.company-card, .company-item, .company-row, .company-info, ' +
+                'tr:has(td), .list-item, .search-result, .result-item'
+            );
+            
+            const allLinks = document.querySelectorAll('a[href]');
+            const pageText = document.body.textContent || '';
+            
+            // Enhanced URL filtering for authenticated results
+            function isValidCompanyUrl(url) {
+                if (!url || !url.startsWith('http')) return false;
+                
+                // More selective exclusions for authenticated data
+                const excludePatterns = [
+                    'linkedin.com', 'facebook.com', 'instagram.com', 'twitter.com', 'youtube.com',
+                    'search.naver.com', 'google.com', 'blog.naver.com', 'tistory.com'
+                ];
+                
+                if (excludePatterns.some(pattern => url.includes(pattern))) return false;
+                
+                // Prefer Korean company domains and InnoForest internal links
+                return url.includes('.co.kr') || url.includes('.kr') || url.includes('.com') || url.includes('innoforest.co.kr');
+            }
+            
+            // Extract URLs with enhanced scoring
+            let bestUrl = null;
+            let urlScore = 0;
+            
+            allLinks.forEach(link => {
+                const href = link.href;
+                const linkText = link.textContent?.trim() || '';
+                const linkContext = link.closest('tr, .company-card, .company-item')?.textContent || '';
+                
+                if (isValidCompanyUrl(href)) {
+                    let score = 1;
+                    
+                    // Highest score for .co.kr domains
+                    if (href.includes('.co.kr')) score += 8;
+                    if (href.includes('.kr')) score += 5;
+                    
+                    // High score if in company context
+                    if (linkContext.includes(searchCompanyName)) score += 10;
+                    if (linkText.includes(searchCompanyName)) score += 8;
+                    
+                    // Bonus for official indicators
+                    if (linkText.includes('홈페이지') || linkText.includes('웹사이트') || linkText.includes('공식사이트')) score += 5;
+                    if (href.includes('www.')) score += 2;
+                    
+                    // Penalty for InnoForest internal links (we want external company URLs)
+                    if (href.includes('innoforest.co.kr')) score -= 5;
+                    
+                    if (score > urlScore) {
+                        bestUrl = href;
+                        urlScore = score;
+                    }
+                }
+            });
+            
+            // Enhanced 대표이사 extraction for authenticated data
+            let representative = null;
+            const representativePatterns = [
+                // Company-specific patterns with higher priority
+                new RegExp(`${searchCompanyName}[^가-힣]{0,20}대표이사[\\s:：]*([가-힣]{2,4})`, 'gi'),
+                new RegExp(`${searchCompanyName}[^가-힣]{0,20}([가-힣]{2,4})[\\s]*대표이사`, 'gi'),
+                new RegExp(`${searchCompanyName}[^가-힣]{0,20}CEO[\\s:：]*([가-힣]{2,4})`, 'gi'),
+                
+                // General patterns in company context
+                /대표이사[\\s:：]+([가-힣]{2,4})/g,
+                /CEO[\\s:：]+([가-힣]{2,4})/g,
+                /([가-힣]{2,4})[\\s]+대표이사/g,
+                /([가-힣]{2,4})[\\s]+CEO/g,
+                
+                // Table/structured data patterns
+                /대표자[\\s:：]+([가-힣]{2,4})/g,
+                /창립자[\\s:：]+([가-힣]{2,4})/g
+            ];
+            
+            const foundNames = new Set();
+            representativePatterns.forEach(pattern => {
+                let match;
+                while ((match = pattern.exec(pageText)) !== null) {
+                    const name = match[1]?.trim();
+                    if (name && name.length >= 2 && name.length <= 4) {
+                        // Enhanced blacklist for authenticated data
+                        const blacklist = [
+                            '대표', '이사', '회장', '사장', '임원', '직원', '벤처', '투자', '기업', '회사',
+                            '설립', '창업', '경영', '운영', '관리', '개발', '마케팅', '영업', '재무'
+                        ];
+                        if (!blacklist.includes(name) && /^[가-힣]{2,4}$/.test(name)) {
+                            foundNames.add(name);
+                        }
+                    }
+                }
+            });
+            
+            representative = Array.from(foundNames).slice(0, 2).join(', ') || null;
+            
+            if (bestUrl || representative) {
+                results.push({
+                    name: searchCompanyName,
+                    websiteUrl: bestUrl,
+                    representative,
+                    source: 'InnoForest_Authenticated',
+                    urlScore: urlScore
+                });
+            }
+            
+            return results;
+        }, companyName);
+        
+        if (companyInfo.length > 0) {
+            console.log(`🎯 InnoForest authenticated results for ${companyName}:`, companyInfo[0]);
+            return companyInfo[0];
+        }
+        
+        console.log(`⚠️ No results found in InnoForest for ${companyName}`);
+        return null;
+        
+    } catch (error) {
+        console.log(`❌ InnoForest login/search error for ${companyName}:`, error.message);
         return null;
     }
 }
@@ -533,7 +763,7 @@ async function searchNewsForRepresentative(page, companyName) {
  * 2. News Articles (최우선 for 대표이사 - most current)
  * 3. Company Website (보조 확인 for 대표이사)
  */
-async function processCompany(page, companyName) {
+async function processCompany(page, companyName, innoforestCredentials = null) {
     console.log(`\n🔍 Processing: ${companyName}`);
             console.log(`📋 Three-fold process: Korean Business Search → News (우선) → Company Website`);
     
@@ -543,7 +773,8 @@ async function processCompany(page, companyName) {
         representative: null,
         representative_sources: [],
         sources: [],
-        processing_date: new Date().toISOString()
+        processing_date: new Date().toISOString(),
+        innoforestCredentials: innoforestCredentials
     };
     
     try {
@@ -551,7 +782,7 @@ async function processCompany(page, companyName) {
         // STEP 1: Korean Business Search - Get basic info + URL
         // ============================================
         console.log(`🔍 Step 1: Searching Korean business sources for basic info...`);
-        const innovationResult = await searchInnovationForest(page, companyName);
+        const innovationResult = await searchInnovationForest(page, companyName, result.innoforestCredentials);
         if (innovationResult) {
             result.sources.push('InnoForest');
             
@@ -689,10 +920,18 @@ Actor.main(async () => {
         vcCompanies = null,
         supabaseUrl = process.env.SUPABASE_URL,
         supabaseKey = process.env.SUPABASE_KEY,
+        innoforestUsername = process.env.INNOFOREST_USERNAME,
+        innoforestPassword = process.env.INNOFOREST_PASSWORD,
         maxConcurrency = 1,
         delayBetweenRequests = 3000,
         maxCompanies = null
     } = input || {};
+    
+    // Setup InnoForest credentials if provided
+    const innoforestCredentials = (innoforestUsername && innoforestPassword) ? {
+        username: innoforestUsername,
+        password: innoforestPassword
+    } : null;
     
     // Handle both 'companies' and 'vcCompanies' input formats, fallback to default
     let companiesList = companies || vcCompanies || DEFAULT_VC_COMPANIES;
@@ -701,8 +940,15 @@ Actor.main(async () => {
         companiesCount: companiesList.length,
         maxConcurrency,
         delayBetweenRequests,
-        maxCompanies
+        maxCompanies,
+        innoforestEnabled: !!innoforestCredentials
     });
+    
+    if (innoforestCredentials) {
+        console.log('🌲 InnoForest credentials provided - will attempt authenticated access');
+    } else {
+        console.log('⚠️ InnoForest credentials not provided - will use public sources only');
+    }
     
     // Initialize Supabase client (optional for testing)
     let supabase = null;
@@ -748,7 +994,7 @@ Actor.main(async () => {
                 console.log(`\n📋 Processing ${i + 1}/${companiesToProcess.length}: ${companyName}`);
                 
                 // Process company
-                const result = await processCompany(page, companyName);
+                const result = await processCompany(page, companyName, innoforestCredentials);
                 
                 // Update statistics
                 stats.processed++;
