@@ -77,76 +77,99 @@ async function searchInnovationForest(page, companyName) {
         const companyInfo = await page.evaluate((searchCompanyName) => {
             const results = [];
             
-            // Look for company cards, listings, or profile sections
-            const selectors = [
-                '.company-card', '.company-item', '.investor-card', '.vc-item',
-                '.company-profile', '.business-card', '[data-company]',
-                '.company-list-item', '.search-result'
-            ];
+            // Look for ALL links on the page
+            const allLinks = document.querySelectorAll('a[href]');
+            const pageText = document.body.textContent || '';
             
-            let foundElements = [];
-            for (const selector of selectors) {
-                const elements = document.querySelectorAll(selector);
-                if (elements.length > 0) {
-                    foundElements = Array.from(elements);
-                    break;
-                }
-            }
-            
-            // If no specific elements found, search in text content
-            if (foundElements.length === 0) {
-                const allElements = document.querySelectorAll('div, section, article');
-                foundElements = Array.from(allElements).filter(el => 
-                    el.textContent?.includes(searchCompanyName)
-                );
-            }
-            
-            foundElements.forEach(element => {
-                const text = element.textContent || '';
-                const links = element.querySelectorAll('a[href]');
+            // Smart URL filtering for Korean companies
+            function isValidCompanyUrl(url) {
+                if (!url || !url.startsWith('http')) return false;
                 
-                // Extract company name
-                const namePattern = new RegExp(searchCompanyName, 'i');
-                if (namePattern.test(text)) {
+                // Exclude social media and generic sites
+                const excludePatterns = [
+                    'linkedin.com', 'facebook.com', 'instagram.com', 'twitter.com', 'youtube.com',
+                    'naver.com', 'kakao.com', 'google.com', 'innoforest.co.kr',
+                    'github.com', 'blog.naver.com', 'tistory.com', 'wordpress.com'
+                ];
+                
+                if (excludePatterns.some(pattern => url.includes(pattern))) return false;
+                
+                // Prefer Korean company domains
+                const preferredPatterns = ['.co.kr', '.kr', '.com'];
+                return preferredPatterns.some(pattern => url.includes(pattern));
+            }
+            
+            // Extract company URLs
+            let bestUrl = null;
+            let urlScore = 0;
+            
+            allLinks.forEach(link => {
+                const href = link.href;
+                const linkText = link.textContent?.trim() || '';
+                
+                if (isValidCompanyUrl(href)) {
+                    let score = 1;
                     
-                    // Extract website URL
-                    let websiteUrl = null;
-                    links.forEach(link => {
-                        const href = link.href;
-                        if (href && !href.includes('innoforest.co.kr') && 
-                            (href.startsWith('http') || href.startsWith('www'))) {
-                            websiteUrl = href;
-                        }
-                    });
+                    // Higher score for .co.kr domains
+                    if (href.includes('.co.kr')) score += 3;
+                    if (href.includes('.kr')) score += 2;
                     
-                    // Extract 대표이사 information
-                    let representative = null;
-                    const repPatterns = [
-                        /대표이사[:\s]*([가-힣]{2,4})/g,
-                        /대표[:\s]*([가-힣]{2,4})/g,
-                        /CEO[:\s]*([가-힣]{2,4})/g,
-                        /창립자[:\s]*([가-힣]{2,4})/g
-                    ];
+                    // Higher score if link text contains company name parts
+                    const companyParts = searchCompanyName.replace(/기술지주회사?|벤처스?|투자|파트너스?/g, '').trim();
+                    if (companyParts && linkText.includes(companyParts)) score += 2;
                     
-                    const representatives = [];
-                    repPatterns.forEach(pattern => {
-                        let match;
-                        while ((match = pattern.exec(text)) !== null) {
-                            representatives.push(match[0]);
-                        }
-                    });
+                    // Higher score for official-looking URLs
+                    if (href.includes('www.')) score += 1;
+                    if (linkText.includes('홈페이지') || linkText.includes('웹사이트')) score += 2;
                     
-                    representative = [...new Set(representatives)].slice(0, 2).join(', ') || null;
-                    
-                    results.push({
-                        name: searchCompanyName,
-                        websiteUrl,
-                        representative,
-                        fullText: text.slice(0, 200),
-                        source: 'InnoForest'
-                    });
+                    if (score > urlScore) {
+                        bestUrl = href;
+                        urlScore = score;
+                    }
                 }
             });
+            
+            // Enhanced 대표이사 extraction with better patterns
+            let representative = null;
+            const enhancedPatterns = [
+                // More specific patterns
+                /대표이사\s*[:：]\s*([가-힣]{2,4})/g,
+                /대표이사\s+([가-힣]{2,4})/g,
+                /대표\s*[:：]\s*([가-힣]{2,4})/g,
+                /CEO\s*[:：]?\s*([가-힣]{2,4})/g,
+                /회장\s*[:：]?\s*([가-힣]{2,4})/g,
+                /사장\s*[:：]?\s*([가-힣]{2,4})/g,
+                // Look for appointment patterns
+                /([가-힣]{2,4})\s*대표이사/g,
+                /([가-힣]{2,4})\s*대표/g,
+                /([가-힣]{2,4})\s*CEO/g
+            ];
+            
+            const foundNames = new Set();
+            enhancedPatterns.forEach(pattern => {
+                let match;
+                while ((match = pattern.exec(pageText)) !== null) {
+                    const name = match[1]?.trim();
+                    if (name && name.length >= 2 && name.length <= 4) {
+                        // Filter out common non-names
+                        if (!['대표', '이사', '회장', '사장', '임원', '직원'].includes(name)) {
+                            foundNames.add(name);
+                        }
+                    }
+                }
+            });
+            
+            representative = Array.from(foundNames).slice(0, 2).join(', ') || null;
+            
+            if (bestUrl || representative) {
+                results.push({
+                    name: searchCompanyName,
+                    websiteUrl: bestUrl,
+                    representative,
+                    source: 'InnoForest_Enhanced',
+                    urlScore: urlScore
+                });
+            }
             
             return results;
         }, companyName);
@@ -281,34 +304,57 @@ async function extractFromCompanyWebsite(page, websiteUrl, companyName) {
             await page.goto(teamPageUrl, { waitUntil: 'networkidle0', timeout: 20000 });
         }
         
-        // Extract representative information
-        const representative = await page.evaluate(() => {
-            const patterns = [
-                '대표이사',
-                '대표',
-                'CEO',
-                '창립자',
-                '회장',
-                '사장'
+        // Extract representative information with enhanced patterns
+        const representative = await page.evaluate((companyName) => {
+            const text = document.body.textContent || '';
+            const foundNames = new Set();
+            
+            // Enhanced patterns specifically for company websites
+            const websitePatterns = [
+                // Direct title patterns with various separators
+                /대표이사[\\s:：]*([가-힣]{2,4})/g,
+                /대표[\\s:：]*([가-힣]{2,4})/g,
+                /CEO[\\s:：]*([가-힣]{2,4})/g,
+                /회장[\\s:：]*([가-힣]{2,4})/g,
+                /사장[\\s:：]*([가-힣]{2,4})/g,
+                /창립자[\\s:：]*([가-힣]{2,4})/g,
+                
+                // Reverse patterns (name first)
+                /([가-힣]{2,4})[\\s]*대표이사/g,
+                /([가-힣]{2,4})[\\s]*대표/g,
+                /([가-힣]{2,4})[\\s]*CEO/g,
+                
+                // Team page specific patterns
+                /대표[\\s]*([가-힣]{2,4})[\\s]*님/g,
+                /([가-힣]{2,4})[\\s]*대표님/g,
+                /([가-힣]{2,4})[\\s]*대표이사님/g
             ];
             
-            const text = document.body.textContent || '';
-            const representatives = [];
+            // Blacklist for filtering out non-names
+            const blacklist = [
+                '대표', '이사', '회장', '사장', '임원', '직원', '팀장', '과장',
+                '관리', '담당', '책임', '총괄', '전무', '상무', '부장', '차장',
+                '기업', '회사', '법인', '그룹', '센터', '사업', '개발', '마케팅',
+                '투자', '벤처', '기술', '서비스', '솔루션', '플랫폼', '시스템'
+            ];
             
-            patterns.forEach(pattern => {
-                const regex = new RegExp(`${pattern}[\\s:]*([가-힣]{2,4})`, 'g');
+            websitePatterns.forEach(pattern => {
                 let match;
-                while ((match = regex.exec(text)) !== null) {
-                    const name = match[1].trim();
+                while ((match = pattern.exec(text)) !== null) {
+                    const name = match[1]?.trim();
                     if (name && name.length >= 2 && name.length <= 4) {
-                        representatives.push(`${pattern} ${name}`);
+                        // Filter validation
+                        if (!blacklist.includes(name) && /^[가-힣]{2,4}$/.test(name)) {
+                            foundNames.add(name);
+                        }
                     }
                 }
             });
             
-            const uniqueReps = [...new Set(representatives)];
-            return uniqueReps.slice(0, 2).join(', ') || null;
-        });
+            // Convert to array and format with titles
+            const representatives = Array.from(foundNames).slice(0, 2);
+            return representatives.length > 0 ? representatives.map(name => `대표 ${name}`).join(', ') : null;
+        }, companyName);
         
         console.log(`🎯 Website representative for ${companyName}:`, representative);
         return { representative };
@@ -360,20 +406,35 @@ async function searchNewsForRepresentative(page, companyName) {
                         // Only process if text contains company name
                         if (text.includes(companyName)) {
                             
-                            // Enhanced patterns for finding 대표이사
+                            // Enhanced patterns for finding 대표이사 (improved accuracy)
                             const patterns = [
-                                // Pattern 1: "회사명 대표이사 이름"
-                                new RegExp(`${companyName}[\\s]*대표이사[\\s]*([가-힣]{2,4})`, 'g'),
-                                // Pattern 2: "대표이사 이름은"
-                                new RegExp(`대표이사[\\s]*([가-힣]{2,4})[는은이]`, 'g'),
-                                // Pattern 3: "이름 대표이사"
-                                new RegExp(`([가-힣]{2,4})[\\s]*대표이사`, 'g'),
-                                // Pattern 4: "CEO 이름"
-                                new RegExp(`CEO[\\s]*([가-힣]{2,4})`, 'g'),
-                                // Pattern 5: "대표 이름"
-                                new RegExp(`대표[\\s]*([가-힣]{2,4})`, 'g'),
-                                // Pattern 6: "이름 대표" 
-                                new RegExp(`([가-힣]{2,4})[\\s]*대표`, 'g')
+                                // High-priority: Company-specific patterns
+                                new RegExp(`${companyName}[^가-힣]{0,10}대표이사[\\s:：]*([가-힣]{2,4})`, 'g'),
+                                new RegExp(`${companyName}[^가-힣]{0,10}([가-힣]{2,4})[\\s]*대표이사`, 'g'),
+                                new RegExp(`${companyName}[^가-힣]{0,10}CEO[\\s:：]*([가-힣]{2,4})`, 'g'),
+                                
+                                // Medium-priority: Contextual patterns
+                                new RegExp(`대표이사[\\s:：]*([가-힣]{2,4})[^가-힣]{0,20}${companyName}`, 'g'),
+                                new RegExp(`([가-힣]{2,4})[\\s]*대표이사[^가-힣]{0,20}${companyName}`, 'g'),
+                                
+                                // Appointment patterns (high relevance)
+                                new RegExp(`([가-힣]{2,4})[^가-힣]*${companyName}[^가-힣]*대표이사[^가-힣]*임명`, 'g'),
+                                new RegExp(`${companyName}[^가-힣]*신임[^가-힣]*대표이사[^가-힣]*([가-힣]{2,4})`, 'g'),
+                                new RegExp(`${companyName}[^가-힣]*([가-힣]{2,4})[^가-힣]*대표이사[^가-힣]*선임`, 'g'),
+                                
+                                // Generic patterns (lower priority, company name context required)
+                                new RegExp(`대표이사[\\s:：]*([가-힣]{2,4})[는은이]?`, 'g'),
+                                new RegExp(`([가-힣]{2,4})[\\s]*대표이사[는은이가]?`, 'g')
+                            ];
+                            
+                            // Filter out common Korean words that aren't names
+                            const blacklistWords = [
+                                '대표', '이사', '회장', '사장', '임원', '직원', '부사장', '전무', '상무',
+                                '팀장', '과장', '차장', '실장', '본부장', '센터', '파트', '나스',
+                                '임명', '선임', '취임', '인사', '발표', '공지', '교체', '변경',
+                                '기업', '회사', '법인', '그룹', '홀딩', '지주', '투자', '벤처',
+                                '포함', '관련', '이전', '기존', '신규', '새로', '최근', '당시',
+                                '등등', '기타', '모든', '전체', '일부', '각각', '여러', '다수'
                             ];
                             
                             patterns.forEach((pattern, patternIndex) => {
@@ -381,16 +442,30 @@ async function searchNewsForRepresentative(page, companyName) {
                                 while ((match = pattern.exec(text)) !== null) {
                                     const name = match[1]?.trim();
                                     if (name && name.length >= 2 && name.length <= 4) {
-                                        // Determine title based on pattern
+                                        // Filter out blacklisted words
+                                        if (blacklistWords.includes(name)) continue;
+                                        
+                                        // Additional validation: should contain proper Korean name characters
+                                        if (!/^[가-힣]{2,4}$/.test(name)) continue;
+                                        
+                                        // Determine title and priority based on pattern
                                         let title = '대표이사';
-                                        if (patternIndex === 3) title = 'CEO';
-                                        else if (patternIndex >= 4) title = '대표';
+                                        let priority = patternIndex;
+                                        
+                                        if (patternIndex === 2) {
+                                            title = 'CEO';
+                                        } else if (patternIndex >= 5 && patternIndex <= 7) {
+                                            priority += 5; // Lower priority for appointment patterns
+                                        } else if (patternIndex >= 8) {
+                                            priority += 10; // Lowest priority for generic patterns
+                                        }
                                         
                                         const fullTitle = `${title} ${name}`;
                                         results.push({
                                             representative: fullTitle,
                                             context: text.slice(Math.max(0, match.index - 50), match.index + 100),
-                                            pattern: patternIndex
+                                            pattern: priority,
+                                            name: name
                                         });
                                     }
                                 }
