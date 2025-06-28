@@ -1,0 +1,110 @@
+{
+  "name": "vc-company-matcher",
+  "version": "1.0.0",
+  "description": "Automated system to match Korean VC company names with URLs and representatives",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "apify": "^3.1.10",
+    "@supabase/supabase-js": "^2.38.5",
+    "crawlee": "^3.5.8",
+    "puppeteer": "^21.5.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/vc-company-matcher"
+  },
+  "keywords": [
+    "apify",
+    "scraping",
+    "korean",
+    "vc",
+    "venture-capital",
+    "company-data",
+    "supabase"
+  ],
+  "apify": {
+    "actorSpecification": 1,
+    "name": "vc-company-matcher",
+    "title": "VC Company URL & Representative Matcher",
+    "description": "Finds company URLs and CEO/representatives for Korean VC companies using 혁신의 숲 and other sources",
+    "version": "1.0.0",
+    "storages": {
+      "dataset": {
+        "actorSpecification": 1,
+        "title": "VC Company Data",
+        "description": "Extracted company URLs and representative information",
+        "views": {
+          "overview": {
+            "title": "Overview",
+            "transformation": {
+              "fields": [
+                "company_name",
+                "website_url",
+                "representative",
+                "sources",
+                "processing_date"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "input": {
+      "title": "VC Company Matcher Input",
+      "type": "object",
+      "schemaVersion": 1,
+      "properties": {
+        "vcCompanies": {
+          "title": "VC Company Names",
+          "type": "array",
+          "description": "List of Korean VC company names to process",
+          "editor": "json",
+          "items": {
+            "type": "string"
+          }
+        },
+        "supabaseUrl": {
+          "title": "Supabase URL",
+          "type": "string",
+          "description": "Your Supabase project URL",
+          "isSecret": false
+        },
+        "supabaseKey": {
+          "title": "Supabase API Key",
+          "type": "string",
+          "description": "Your Supabase API key (service role)",
+          "isSecret": true
+        },
+        "maxConcurrency": {
+          "title": "Max Concurrency",
+          "type": "integer",
+          "description": "Maximum number of concurrent requests",
+          "default": 1,
+          "minimum": 1,
+          "maximum": 5
+        },
+        "delayBetweenRequests": {
+          "title": "Delay Between Requests (ms)",
+          "type": "integer",
+          "description": "Delay between requests in milliseconds",
+          "default": 3000,
+          "minimum": 1000,
+          "maximum": 10000
+        },
+        "maxCompanies": {
+          "title": "Max Companies to Process",
+          "type": "integer",
+          "description": "Limit the number of companies to process (for testing)",
+          "minimum": 1
+        }
+      },
+      "required": ["vcCompanies"]
+    }
+  }
+} 
