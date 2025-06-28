@@ -16,6 +16,7 @@
 
 const { Actor } = require('apify');
 const { createClient } = require('@supabase/supabase-js');
+const puppeteer = require('puppeteer');
 
 // Default company list for testing
 const DEFAULT_VC_COMPANIES = [
@@ -652,9 +653,9 @@ Actor.main(async () => {
         errors: 0
     };
     
-    // Launch browser using Apify's built-in Puppeteer
+    // Launch browser using Puppeteer
     console.log('🚀 Launching browser...');
-    const browser = await Actor.launchPuppeteer({
+    const browser = await puppeteer.launch({
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
