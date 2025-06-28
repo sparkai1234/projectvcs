@@ -37,148 +37,149 @@ const DEFAULT_VC_COMPANIES = [
  */
 async function searchInnovationForest(page, companyName) {
     try {
-        console.log(`🌲 Searching 혁신의 숲 (innoforest.co.kr) for: ${companyName}`);
+        console.log(`🔍 Searching Korean business sources for: ${companyName}`);
         
-        // Navigate to Innovation Forest main site
-        await page.goto('https://www.innoforest.co.kr/', {
-            waitUntil: 'networkidle0',
-            timeout: 30000
-        });
+        // Try multiple Korean business information sources
+        const sources = [
+            `https://search.naver.com/search.naver?where=nexearch&query=${encodeURIComponent(companyName + ' 회사 홈페이지')}`,
+            `https://www.google.com/search?q=${encodeURIComponent(companyName + ' site:co.kr 대표이사')}`,
+            `https://search.naver.com/search.naver?query=${encodeURIComponent(companyName + ' 기업정보')}`
+        ];
         
-        // Look for search functionality on innoforest
-        const searchInput = await page.$('input[type="search"], input[name="search"], input[placeholder*="검색"], .search-input');
-        
-        if (searchInput) {
-            await searchInput.fill(companyName);
-            await page.keyboard.press('Enter');
-            await page.waitForTimeout(3000);
-        } else {
-            // Try alternative search approach or navigate to company directory
-            console.log(`🔍 Looking for company directory on InnoForest...`);
-            
-            // Look for company listings or directory links
-            const directoryLinks = await page.$$eval('a', links => 
-                links.filter(link => 
-                    link.textContent?.includes('기업') || 
-                    link.textContent?.includes('투자사') ||
-                    link.textContent?.includes('VC') ||
-                    link.href?.includes('company') ||
-                    link.href?.includes('investor')
-                ).map(link => ({ text: link.textContent?.trim(), href: link.href }))
-            );
-            
-            if (directoryLinks.length > 0) {
-                console.log(`📂 Found directory links:`, directoryLinks.slice(0, 3));
-                await page.goto(directoryLinks[0].href, { waitUntil: 'networkidle0', timeout: 20000 });
+        for (const [index, searchUrl] of sources.entries()) {
+            try {
+                console.log(`🔍 Source ${index + 1}/3: Searching business directories...`);
+                await page.goto(searchUrl, {
+                    waitUntil: 'networkidle0',
+                    timeout: 20000
+                });
+                
+                // Extract company information from current page
+                const companyInfo = await page.evaluate((searchCompanyName) => {
+                    const results = [];
+                    
+                    // Look for ALL links on the page
+                    const allLinks = document.querySelectorAll('a[href]');
+                    const pageText = document.body.textContent || '';
+                    
+                    // Smart URL filtering for Korean companies
+                    function isValidCompanyUrl(url) {
+                        if (!url || !url.startsWith('http')) return false;
+                        
+                        // Exclude social media and generic sites
+                        const excludePatterns = [
+                            'linkedin.com', 'facebook.com', 'instagram.com', 'twitter.com', 'youtube.com',
+                            'naver.com', 'kakao.com', 'google.com', 'search.naver.com', 'brunch.co.kr',
+                            'github.com', 'blog.naver.com', 'tistory.com', 'wordpress.com'
+                        ];
+                        
+                        if (excludePatterns.some(pattern => url.includes(pattern))) return false;
+                        
+                        // Prefer Korean company domains
+                        const preferredPatterns = ['.co.kr', '.kr', '.com'];
+                        return preferredPatterns.some(pattern => url.includes(pattern));
+                    }
+                    
+                    // Extract company URLs with better scoring
+                    let bestUrl = null;
+                    let urlScore = 0;
+                    
+                    allLinks.forEach(link => {
+                        const href = link.href;
+                        const linkText = link.textContent?.trim() || '';
+                        
+                        if (isValidCompanyUrl(href)) {
+                            let score = 1;
+                            
+                            // Higher score for .co.kr domains
+                            if (href.includes('.co.kr')) score += 5;
+                            if (href.includes('.kr')) score += 3;
+                            
+                            // Higher score if link text contains company name parts
+                            const companyParts = searchCompanyName.replace(/기술지주회사?|벤처스?|투자|파트너스?/g, '').trim();
+                            if (companyParts && linkText.includes(companyParts)) score += 3;
+                            if (linkText.includes(searchCompanyName)) score += 5;
+                            
+                            // Higher score for official-looking URLs
+                            if (href.includes('www.')) score += 2;
+                            if (linkText.includes('홈페이지') || linkText.includes('웹사이트') || linkText.includes('공식')) score += 3;
+                            
+                            // Check if URL path looks like a company domain
+                            if (href.split('/').length <= 4) score += 2; // Simple domain structure
+                            
+                            if (score > urlScore) {
+                                bestUrl = href;
+                                urlScore = score;
+                            }
+                        }
+                    });
+                    
+                    // Enhanced 대표이사 extraction with better patterns
+                    let representative = null;
+                    const enhancedPatterns = [
+                        // Company-specific patterns (highest priority)
+                        new RegExp(`${searchCompanyName}[^가-힣]{0,10}대표이사[\\s:：]*([가-힣]{2,4})`, 'gi'),
+                        new RegExp(`${searchCompanyName}[^가-힣]{0,10}([가-힣]{2,4})[\\s]*대표이사`, 'gi'),
+                        new RegExp(`${searchCompanyName}[^가-힣]{0,10}CEO[\\s:：]*([가-힣]{2,4})`, 'gi'),
+                        
+                        // More specific patterns
+                        /대표이사\s*[:：]\s*([가-힣]{2,4})/g,
+                        /대표이사\s+([가-힣]{2,4})/g,
+                        /CEO\s*[:：]?\s*([가-힣]{2,4})/g,
+                        /([가-힣]{2,4})\s*대표이사/g,
+                        /([가-힣]{2,4})\s*CEO/g
+                    ];
+                    
+                    const foundNames = new Set();
+                    enhancedPatterns.forEach(pattern => {
+                        let match;
+                        while ((match = pattern.exec(pageText)) !== null) {
+                            const name = match[1]?.trim();
+                            if (name && name.length >= 2 && name.length <= 4) {
+                                // Filter out common non-names
+                                const blacklist = ['대표', '이사', '회장', '사장', '임원', '직원', '벤처', '투자', '기업', '회사'];
+                                if (!blacklist.includes(name) && /^[가-힣]{2,4}$/.test(name)) {
+                                    foundNames.add(name);
+                                }
+                            }
+                        }
+                    });
+                    
+                    representative = Array.from(foundNames).slice(0, 2).join(', ') || null;
+                    
+                    if (bestUrl || representative) {
+                        results.push({
+                            name: searchCompanyName,
+                            websiteUrl: bestUrl,
+                            representative,
+                            source: 'Korean_Business_Search',
+                            urlScore: urlScore
+                        });
+                    }
+                    
+                    return results;
+                }, companyName);
+                
+                // If we found good results, return them
+                if (companyInfo.length > 0 && (companyInfo[0].websiteUrl || companyInfo[0].representative)) {
+                    console.log(`✅ Found results from source ${index + 1}:`, companyInfo[0]);
+                    return companyInfo[0];
+                }
+                
+                // Small delay between sources
+                await page.waitForTimeout(1000);
+                
+            } catch (sourceError) {
+                console.log(`⚠️ Source ${index + 1} failed:`, sourceError.message);
+                continue;
             }
         }
         
-        // Extract company information from current page
-        const companyInfo = await page.evaluate((searchCompanyName) => {
-            const results = [];
-            
-            // Look for ALL links on the page
-            const allLinks = document.querySelectorAll('a[href]');
-            const pageText = document.body.textContent || '';
-            
-            // Smart URL filtering for Korean companies
-            function isValidCompanyUrl(url) {
-                if (!url || !url.startsWith('http')) return false;
-                
-                // Exclude social media and generic sites
-                const excludePatterns = [
-                    'linkedin.com', 'facebook.com', 'instagram.com', 'twitter.com', 'youtube.com',
-                    'naver.com', 'kakao.com', 'google.com', 'innoforest.co.kr',
-                    'github.com', 'blog.naver.com', 'tistory.com', 'wordpress.com'
-                ];
-                
-                if (excludePatterns.some(pattern => url.includes(pattern))) return false;
-                
-                // Prefer Korean company domains
-                const preferredPatterns = ['.co.kr', '.kr', '.com'];
-                return preferredPatterns.some(pattern => url.includes(pattern));
-            }
-            
-            // Extract company URLs
-            let bestUrl = null;
-            let urlScore = 0;
-            
-            allLinks.forEach(link => {
-                const href = link.href;
-                const linkText = link.textContent?.trim() || '';
-                
-                if (isValidCompanyUrl(href)) {
-                    let score = 1;
-                    
-                    // Higher score for .co.kr domains
-                    if (href.includes('.co.kr')) score += 3;
-                    if (href.includes('.kr')) score += 2;
-                    
-                    // Higher score if link text contains company name parts
-                    const companyParts = searchCompanyName.replace(/기술지주회사?|벤처스?|투자|파트너스?/g, '').trim();
-                    if (companyParts && linkText.includes(companyParts)) score += 2;
-                    
-                    // Higher score for official-looking URLs
-                    if (href.includes('www.')) score += 1;
-                    if (linkText.includes('홈페이지') || linkText.includes('웹사이트')) score += 2;
-                    
-                    if (score > urlScore) {
-                        bestUrl = href;
-                        urlScore = score;
-                    }
-                }
-            });
-            
-            // Enhanced 대표이사 extraction with better patterns
-            let representative = null;
-            const enhancedPatterns = [
-                // More specific patterns
-                /대표이사\s*[:：]\s*([가-힣]{2,4})/g,
-                /대표이사\s+([가-힣]{2,4})/g,
-                /대표\s*[:：]\s*([가-힣]{2,4})/g,
-                /CEO\s*[:：]?\s*([가-힣]{2,4})/g,
-                /회장\s*[:：]?\s*([가-힣]{2,4})/g,
-                /사장\s*[:：]?\s*([가-힣]{2,4})/g,
-                // Look for appointment patterns
-                /([가-힣]{2,4})\s*대표이사/g,
-                /([가-힣]{2,4})\s*대표/g,
-                /([가-힣]{2,4})\s*CEO/g
-            ];
-            
-            const foundNames = new Set();
-            enhancedPatterns.forEach(pattern => {
-                let match;
-                while ((match = pattern.exec(pageText)) !== null) {
-                    const name = match[1]?.trim();
-                    if (name && name.length >= 2 && name.length <= 4) {
-                        // Filter out common non-names
-                        if (!['대표', '이사', '회장', '사장', '임원', '직원'].includes(name)) {
-                            foundNames.add(name);
-                        }
-                    }
-                }
-            });
-            
-            representative = Array.from(foundNames).slice(0, 2).join(', ') || null;
-            
-            if (bestUrl || representative) {
-                results.push({
-                    name: searchCompanyName,
-                    websiteUrl: bestUrl,
-                    representative,
-                    source: 'InnoForest_Enhanced',
-                    urlScore: urlScore
-                });
-            }
-            
-            return results;
-        }, companyName);
-        
-        console.log(`🎯 InnoForest results for ${companyName}:`, companyInfo.length);
-        return companyInfo.length > 0 ? companyInfo[0] : null;
+        console.log(`⚠️ No results found from any Korean business sources for ${companyName}`);
+        return null;
         
     } catch (error) {
-        console.log(`❌ Error searching InnoForest for ${companyName}:`, error.message);
+        console.log(`❌ Error searching Korean business sources for ${companyName}:`, error.message);
         return null;
     }
 }
@@ -534,7 +535,7 @@ async function searchNewsForRepresentative(page, companyName) {
  */
 async function processCompany(page, companyName) {
     console.log(`\n🔍 Processing: ${companyName}`);
-    console.log(`📋 Three-fold process: InnoForest → News (우선) → Company Website`);
+            console.log(`📋 Three-fold process: Korean Business Search → News (우선) → Company Website`);
     
     const result = {
         company_name: companyName,
@@ -547,9 +548,9 @@ async function processCompany(page, companyName) {
     
     try {
         // ============================================
-        // STEP 1: InnoForest - Get basic info + URL
+        // STEP 1: Korean Business Search - Get basic info + URL
         // ============================================
-        console.log(`🌲 Step 1: Searching InnoForest for basic info...`);
+        console.log(`🔍 Step 1: Searching Korean business sources for basic info...`);
         const innovationResult = await searchInnovationForest(page, companyName);
         if (innovationResult) {
             result.sources.push('InnoForest');
@@ -563,8 +564,8 @@ async function processCompany(page, companyName) {
             // Get initial 대표이사 info (potentially outdated)
             if (innovationResult.representative) {
                 result.representative = innovationResult.representative;
-                result.representative_sources.push('InnoForest (potential outdated)');
-                console.log(`👤 InnoForest 대표이사: ${result.representative}`);
+                result.representative_sources.push('Korean Business Search (potential outdated)');
+                console.log(`👤 Korean business source 대표이사: ${result.representative}`);
             }
         }
         
