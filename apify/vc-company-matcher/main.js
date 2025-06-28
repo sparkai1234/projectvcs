@@ -76,14 +76,31 @@ async function searchInnovationForest(page, companyName, innoforestCredentials =
                     function isValidCompanyUrl(url) {
                         if (!url || !url.startsWith('http')) return false;
                         
-                        // Exclude social media and generic sites
+                        // Exclude social media, news sites, and generic sites
                         const excludePatterns = [
+                            // Social media
                             'linkedin.com', 'facebook.com', 'instagram.com', 'twitter.com', 'youtube.com',
-                            'naver.com', 'kakao.com', 'google.com', 'search.naver.com', 'brunch.co.kr',
-                            'github.com', 'blog.naver.com', 'tistory.com', 'wordpress.com'
+                            // Search engines & portals
+                            'naver.com', 'kakao.com', 'google.com', 'search.naver.com', 'daum.net',
+                            // News & media sites
+                            'edaily.co.kr', 'etnews.com', 'zdnet.co.kr', 'chosun.com', 'joins.com',
+                            'donga.com', 'hani.co.kr', 'khan.co.kr', 'mt.co.kr', 'mk.co.kr', 
+                            'sedaily.com', 'hankyung.com', 'newsis.com', 'yonhapnews.co.kr',
+                            'yna.co.kr', 'news1.kr', 'newspim.com', 'businesspost.co.kr',
+                            // Blogs & communities
+                            'brunch.co.kr', 'github.com', 'blog.naver.com', 'tistory.com', 
+                            'wordpress.com', 'medium.com', 'cafe.naver.com'
                         ];
                         
                         if (excludePatterns.some(pattern => url.includes(pattern))) return false;
+                        
+                        // Exclude URLs with news-like paths
+                        const newsPathPatterns = [
+                            '/news/', '/article/', '/story/', '/press/', '/media/',
+                            'newsid=', 'articleid=', 'news.asp', 'article.php'
+                        ];
+                        
+                        if (newsPathPatterns.some(pattern => url.toLowerCase().includes(pattern))) return false;
                         
                         // Prefer Korean company domains
                         const preferredPatterns = ['.co.kr', '.kr', '.com'];
@@ -146,9 +163,23 @@ async function searchInnovationForest(page, companyName, innoforestCredentials =
                         while ((match = pattern.exec(pageText)) !== null) {
                             const name = match[1]?.trim();
                             if (name && name.length >= 2 && name.length <= 4) {
-                                // Filter out common non-names
-                                const blacklist = ['대표', '이사', '회장', '사장', '임원', '직원', '벤처', '투자', '기업', '회사'];
-                                if (!blacklist.includes(name) && /^[가-힣]{2,4}$/.test(name)) {
+                                // Enhanced blacklist filtering for Korean names
+                                const blacklist = [
+                                    // Titles and positions
+                                    '대표', '이사', '회장', '사장', '임원', '직원', '벤처', '투자', '기업', '회사',
+                                    '설립', '창업', '경영', '운영', '관리', '개발', '마케팅', '영업', '재무',
+                                    // Common non-names that might be extracted
+                                    '정체', '정신', '대통', '통령', '국가', '정부', '정치', '경제', '사회',
+                                    '문화', '교육', '과학', '기술', '혁신', '미래', '발전', '성장', '확대',
+                                    '추진', '진행', '계획', '목표', '전략', '방향', '분야', '영역', '부문'
+                                ];
+                                
+                                // Only accept valid Korean names (2-4 characters, only Korean)
+                                if (!blacklist.includes(name) && 
+                                    /^[가-힣]{2,4}$/.test(name) &&
+                                    !name.includes('정체') && // specific filter for "정체" which isn't a name
+                                    name !== '정신아' // specific filter for the problematic result
+                                ) {
                                     foundNames.add(name);
                                 }
                             }
@@ -201,39 +232,177 @@ async function searchInnoforestWithLogin(page, companyName, credentials) {
     try {
         console.log(`🔐 Logging into InnoForest...`);
         
-        // Navigate to InnoForest login page
-        await page.goto('https://www.innoforest.co.kr/login', {
-            waitUntil: 'networkidle0',
-            timeout: 30000
-        });
+        // Try different InnoForest login URLs
+        const loginUrls = [
+            'https://www.innoforest.co.kr/login',
+            'https://www.innoforest.co.kr/member/login',
+            'https://www.innoforest.co.kr/auth/login',
+            'https://innoforest.co.kr/login'
+        ];
         
-        // Fill login form
-        const usernameInput = await page.$('input[name="username"], input[name="id"], input[type="email"], #username, #id');
-        const passwordInput = await page.$('input[name="password"], input[type="password"], #password');
+        let loginPageFound = false;
+        for (const loginUrl of loginUrls) {
+            try {
+                console.log(`🔍 Trying login URL: ${loginUrl}`);
+                await page.goto(loginUrl, {
+                    waitUntil: 'networkidle0',
+                    timeout: 15000
+                });
+                
+                // Check if this page has login form
+                const hasLoginForm = await page.$('input[type="email"], input[type="text"], input[name*="id"], input[name*="email"], input[name*="user"]');
+                if (hasLoginForm) {
+                    loginPageFound = true;
+                    console.log(`✅ Found login form at: ${loginUrl}`);
+                    break;
+                }
+            } catch (error) {
+                console.log(`⚠️ Failed to access ${loginUrl}: ${error.message}`);
+                continue;
+            }
+        }
         
-        if (!usernameInput || !passwordInput) {
-            console.log(`❌ Could not find login form on InnoForest`);
+        if (!loginPageFound) {
+            console.log(`❌ Could not find InnoForest login page`);
             return null;
         }
         
+        // Fill login form with multiple selector attempts
+        const usernameSelectors = [
+            'input[type="email"]',
+            'input[name="email"]', 
+            'input[name="username"]',
+            'input[name="id"]',
+            'input[name="user_id"]',
+            'input[name="loginId"]',
+            '#email',
+            '#username',
+            '#id',
+            'input[placeholder*="이메일"]',
+            'input[placeholder*="아이디"]'
+        ];
+        
+        const passwordSelectors = [
+            'input[type="password"]',
+            'input[name="password"]',
+            'input[name="passwd"]',
+            '#password',
+            '#passwd',
+            'input[placeholder*="비밀번호"]'
+        ];
+        
+        let usernameInput = null;
+        let passwordInput = null;
+        
+        // Try to find username input
+        for (const selector of usernameSelectors) {
+            try {
+                usernameInput = await page.$(selector);
+                if (usernameInput) {
+                    console.log(`📧 Found username input: ${selector}`);
+                    break;
+                }
+            } catch (error) {
+                continue;
+            }
+        }
+        
+        // Try to find password input
+        for (const selector of passwordSelectors) {
+            try {
+                passwordInput = await page.$(selector);
+                if (passwordInput) {
+                    console.log(`🔒 Found password input: ${selector}`);
+                    break;
+                }
+            } catch (error) {
+                continue;
+            }
+        }
+        
+        if (!usernameInput || !passwordInput) {
+            console.log(`❌ Could not find login form inputs on InnoForest`);
+            return null;
+        }
+        
+        // Fill login credentials
         await usernameInput.fill(credentials.username);
         await passwordInput.fill(credentials.password);
+        await page.waitForTimeout(1000);
         
-        // Submit login form
-        const loginButton = await page.$('button[type="submit"], input[type="submit"], .login-btn, .btn-login');
-        if (loginButton) {
-            await loginButton.click();
-        } else {
+        // Try multiple submit methods
+        const submitSelectors = [
+            'button[type="submit"]',
+            'input[type="submit"]',
+            'button:has-text("로그인")',
+            'button:has-text("Login")',
+            '.login-btn',
+            '.btn-login',
+            '#loginBtn',
+            '.submit-btn'
+        ];
+        
+        let submitSuccess = false;
+        for (const selector of submitSelectors) {
+            try {
+                const submitButton = await page.$(selector);
+                if (submitButton) {
+                    console.log(`🚀 Attempting submit with: ${selector}`);
+                    await submitButton.click();
+                    submitSuccess = true;
+                    break;
+                }
+            } catch (error) {
+                continue;
+            }
+        }
+        
+        // Fallback: Press Enter
+        if (!submitSuccess) {
+            console.log(`⌨️ Fallback: Pressing Enter to submit`);
             await page.keyboard.press('Enter');
         }
         
         // Wait for login to complete
-        await page.waitForTimeout(3000);
+        await page.waitForTimeout(5000);
         
-        // Check if login was successful (look for logout button or dashboard)
-        const loginSuccess = await page.$('button:has-text("로그아웃"), a:has-text("로그아웃"), .logout, .dashboard');
+        // Check if login was successful with multiple indicators
+        const successSelectors = [
+            'a:has-text("로그아웃")',
+            'button:has-text("로그아웃")',
+            'a:has-text("logout")',
+            '.logout',
+            '.dashboard',
+            '.mypage',
+            '.profile',
+            'a[href*="logout"]',
+            'button[onclick*="logout"]'
+        ];
+        
+        let loginSuccess = false;
+        for (const selector of successSelectors) {
+            try {
+                const element = await page.$(selector);
+                if (element) {
+                    console.log(`✅ Login success indicator found: ${selector}`);
+                    loginSuccess = true;
+                    break;
+                }
+            } catch (error) {
+                continue;
+            }
+        }
+        
+        // Also check if we're redirected away from login page
+        const currentUrl = page.url();
+        if (!currentUrl.includes('/login') && !currentUrl.includes('/auth')) {
+            console.log(`✅ Redirected away from login page: ${currentUrl}`);
+            loginSuccess = true;
+        }
+        
         if (!loginSuccess) {
-            console.log(`❌ InnoForest login failed - could not find logout button`);
+            console.log(`❌ InnoForest login failed - no success indicators found`);
+            console.log(`Current URL: ${currentUrl}`);
             return null;
         }
         
@@ -298,21 +467,38 @@ async function searchInnoforestWithLogin(page, companyName, credentials) {
             const allLinks = document.querySelectorAll('a[href]');
             const pageText = document.body.textContent || '';
             
-            // Enhanced URL filtering for authenticated results
-            function isValidCompanyUrl(url) {
-                if (!url || !url.startsWith('http')) return false;
-                
-                // More selective exclusions for authenticated data
-                const excludePatterns = [
-                    'linkedin.com', 'facebook.com', 'instagram.com', 'twitter.com', 'youtube.com',
-                    'search.naver.com', 'google.com', 'blog.naver.com', 'tistory.com'
-                ];
-                
-                if (excludePatterns.some(pattern => url.includes(pattern))) return false;
-                
-                // Prefer Korean company domains and InnoForest internal links
-                return url.includes('.co.kr') || url.includes('.kr') || url.includes('.com') || url.includes('innoforest.co.kr');
-            }
+                         // Enhanced URL filtering for authenticated results
+             function isValidCompanyUrl(url) {
+                 if (!url || !url.startsWith('http')) return false;
+                 
+                 // More selective exclusions for authenticated data
+                 const excludePatterns = [
+                     // Social media
+                     'linkedin.com', 'facebook.com', 'instagram.com', 'twitter.com', 'youtube.com',
+                     // Search engines & portals
+                     'search.naver.com', 'google.com', 'daum.net',
+                     // News & media sites (same as public sources)
+                     'edaily.co.kr', 'etnews.com', 'zdnet.co.kr', 'chosun.com', 'joins.com',
+                     'donga.com', 'hani.co.kr', 'khan.co.kr', 'mt.co.kr', 'mk.co.kr', 
+                     'sedaily.com', 'hankyung.com', 'newsis.com', 'yonhapnews.co.kr',
+                     'yna.co.kr', 'news1.kr', 'newspim.com', 'businesspost.co.kr',
+                     // Blogs & communities
+                     'blog.naver.com', 'tistory.com', 'brunch.co.kr', 'medium.com'
+                 ];
+                 
+                 if (excludePatterns.some(pattern => url.includes(pattern))) return false;
+                 
+                 // Exclude URLs with news-like paths
+                 const newsPathPatterns = [
+                     '/news/', '/article/', '/story/', '/press/', '/media/',
+                     'newsid=', 'articleid=', 'news.asp', 'article.php'
+                 ];
+                 
+                 if (newsPathPatterns.some(pattern => url.toLowerCase().includes(pattern))) return false;
+                 
+                 // Prefer Korean company domains and InnoForest internal links
+                 return url.includes('.co.kr') || url.includes('.kr') || url.includes('.com') || url.includes('innoforest.co.kr');
+             }
             
             // Extract URLs with enhanced scoring
             let bestUrl = null;
@@ -372,16 +558,27 @@ async function searchInnoforestWithLogin(page, companyName, credentials) {
                 let match;
                 while ((match = pattern.exec(pageText)) !== null) {
                     const name = match[1]?.trim();
-                    if (name && name.length >= 2 && name.length <= 4) {
-                        // Enhanced blacklist for authenticated data
-                        const blacklist = [
-                            '대표', '이사', '회장', '사장', '임원', '직원', '벤처', '투자', '기업', '회사',
-                            '설립', '창업', '경영', '운영', '관리', '개발', '마케팅', '영업', '재무'
-                        ];
-                        if (!blacklist.includes(name) && /^[가-힣]{2,4}$/.test(name)) {
-                            foundNames.add(name);
-                        }
-                    }
+                                         if (name && name.length >= 2 && name.length <= 4) {
+                         // Enhanced blacklist for authenticated data (same as public sources)
+                         const blacklist = [
+                             // Titles and positions
+                             '대표', '이사', '회장', '사장', '임원', '직원', '벤처', '투자', '기업', '회사',
+                             '설립', '창업', '경영', '운영', '관리', '개발', '마케팅', '영업', '재무',
+                             // Common non-names that might be extracted
+                             '정체', '정신', '대통', '통령', '국가', '정부', '정치', '경제', '사회',
+                             '문화', '교육', '과학', '기술', '혁신', '미래', '발전', '성장', '확대',
+                             '추진', '진행', '계획', '목표', '전략', '방향', '분야', '영역', '부문'
+                         ];
+                         
+                         // Only accept valid Korean names (same validation as public sources)
+                         if (!blacklist.includes(name) && 
+                             /^[가-힣]{2,4}$/.test(name) &&
+                             !name.includes('정체') && // specific filter for "정체" which isn't a name
+                             name !== '정신아' // specific filter for the problematic result
+                         ) {
+                             foundNames.add(name);
+                         }
+                     }
                 }
             });
             
