@@ -16,7 +16,7 @@
 
 const { Actor } = require('apify');
 const { createClient } = require('@supabase/supabase-js');
-const { PlaywrightCrawler } = require('crawlee');
+const { chromium } = require('playwright');
 
 // Default company list for testing
 const DEFAULT_VC_COMPANIES = [
@@ -653,21 +653,14 @@ Actor.main(async () => {
         errors: 0
     };
     
-    // Setup PlaywrightCrawler for browser automation
-    console.log('🚀 Initializing PlaywrightCrawler...');
+    // Setup browser using Playwright
+    console.log('🚀 Launching browser...');
     
-    const crawler = new PlaywrightCrawler({
-        launchContext: {
-            launchOptions: {
-                headless: true,
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
-            }
-        },
-        maxConcurrency: 1
+    const browser = await chromium.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     
-    // Process each company manually (not using crawler's automatic queue)
-    const browser = await crawler.launchContext.launcher();
     const page = await browser.newPage();
     
     try {
