@@ -11,8 +11,7 @@
   "license": "MIT",
   "dependencies": {
     "apify": "^3.1.10",
-    "@supabase/supabase-js": "^2.38.5",
-    "puppeteer": "^21.0.0"
+    "@supabase/supabase-js": "^2.38.5"
   },
   "repository": {
     "type": "git",

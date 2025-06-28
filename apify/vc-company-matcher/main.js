@@ -16,7 +16,7 @@
 
 const { Actor } = require('apify');
 const { createClient } = require('@supabase/supabase-js');
-const puppeteer = require('puppeteer');
+const { launchPlaywright } = require('crawlee');
 
 // Default company list for testing
 const DEFAULT_VC_COMPANIES = [
@@ -653,11 +653,13 @@ Actor.main(async () => {
         errors: 0
     };
     
-    // Launch browser using Puppeteer
+    // Launch browser using Crawlee's Playwright launcher
     console.log('🚀 Launching browser...');
-    const browser = await puppeteer.launch({
+    const browser = await launchPlaywright({
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        launchOptions: {
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        }
     });
     
     try {
