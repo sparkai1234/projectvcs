@@ -17,8 +17,14 @@
 const { Actor } = require('apify');
 const { createClient } = require('@supabase/supabase-js');
 
-// Default company list - will be overridden by input
-const DEFAULT_VC_COMPANIES = [];
+// Default company list for testing
+const DEFAULT_VC_COMPANIES = [
+    '강원대학교기술지주회사',
+    '카카오벤처스', 
+    '네이버투자',
+    '한국투자파트너스',
+    '알토스벤처스'
+];
 
 /**
  * 🔍 Search for company information in 혁신의 숲 (Innovation Forest)
@@ -540,6 +546,12 @@ async function processCompany(page, companyName) {
  * 💾 Update Supabase vc_table with collected information
  */
 async function updateSupabaseRecord(supabase, companyData) {
+    // Skip Supabase update if running in test mode
+    if (!supabase) {
+        console.log(`🧪 TEST MODE: Would update Supabase for ${companyData.company_name} (skipping)`);
+        return true;
+    }
+    
     try {
         // Find existing record by company name
         const { data: existingRecords } = await supabase
@@ -592,7 +604,8 @@ Actor.main(async () => {
     // Get input
     const input = await Actor.getInput();
     const {
-        vcCompanies = DEFAULT_VC_COMPANIES,
+        companies = null,
+        vcCompanies = null,
         supabaseUrl = process.env.SUPABASE_URL,
         supabaseKey = process.env.SUPABASE_KEY,
         maxConcurrency = 1,
@@ -600,26 +613,29 @@ Actor.main(async () => {
         maxCompanies = null
     } = input || {};
     
+    // Handle both 'companies' and 'vcCompanies' input formats, fallback to default
+    let companiesList = companies || vcCompanies || DEFAULT_VC_COMPANIES;
+    
     console.log(`📊 Input received:`, {
-        companiesCount: vcCompanies.length,
+        companiesCount: companiesList.length,
         maxConcurrency,
         delayBetweenRequests,
         maxCompanies
     });
     
-    // Validate Supabase credentials
-    if (!supabaseUrl || !supabaseKey) {
-        throw new Error('❌ Missing Supabase credentials');
+    // Initialize Supabase client (optional for testing)
+    let supabase = null;
+    if (supabaseUrl && supabaseKey) {
+        supabase = createClient(supabaseUrl, supabaseKey);
+        console.log('✅ Supabase client initialized');
+    } else {
+        console.log('⚠️ Supabase credentials not provided - running in TEST MODE (data will only be saved to Apify dataset)');
     }
-    
-    // Initialize Supabase client
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    console.log('✅ Supabase client initialized');
     
     // Prepare companies list
     const companiesToProcess = maxCompanies ? 
-        vcCompanies.slice(0, maxCompanies) : 
-        vcCompanies;
+        companiesList.slice(0, maxCompanies) : 
+        companiesList;
     
     console.log(`🎯 Processing ${companiesToProcess.length} companies`);
     
