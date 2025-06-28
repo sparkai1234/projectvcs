@@ -16,7 +16,7 @@
 
 const { Actor } = require('apify');
 const { createClient } = require('@supabase/supabase-js');
-const { launchPlaywright } = require('crawlee');
+const { PlaywrightCrawler } = require('crawlee');
 
 // Default company list for testing
 const DEFAULT_VC_COMPANIES = [
@@ -653,18 +653,24 @@ Actor.main(async () => {
         errors: 0
     };
     
-    // Launch browser using Crawlee's Playwright launcher
-    console.log('🚀 Launching browser...');
-    const browser = await launchPlaywright({
-        headless: true,
-        launchOptions: {
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        }
+    // Setup PlaywrightCrawler for browser automation
+    console.log('🚀 Initializing PlaywrightCrawler...');
+    
+    const crawler = new PlaywrightCrawler({
+        launchContext: {
+            launchOptions: {
+                headless: true,
+                args: ['--no-sandbox', '--disable-setuid-sandbox']
+            }
+        },
+        maxConcurrency: 1
     });
     
+    // Process each company manually (not using crawler's automatic queue)
+    const browser = await crawler.launchContext.launcher();
+    const page = await browser.newPage();
+    
     try {
-        const page = await browser.newPage();
-        
         // Process each company sequentially for better stability
         for (let i = 0; i < companiesToProcess.length; i++) {
             const companyName = companiesToProcess[i];
